@@ -175,11 +175,17 @@ function frontmatter(value) {
   return String(value).replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', ' ')
 }
 
+function stripFirstHeading(readme) {
+  return readme.replace(/^# .*(?:\r?\n)+/, '').trim()
+}
+
 function mdxPage({ title, description, readme, sourceUrl, install }) {
   return `---
 title: "${frontmatter(title)}"
 description: "${frontmatter(description)}"
 ---
+
+# ${title}
 
 > Source: [README](${sourceUrl})
 
@@ -189,7 +195,7 @@ description: "${frontmatter(description)}"
 ${install}
 \`\`\`
 
-${readme.trim()}
+${stripFirstHeading(readme)}
 `
 }
 
