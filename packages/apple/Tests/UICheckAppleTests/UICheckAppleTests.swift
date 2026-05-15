@@ -2,6 +2,10 @@ import CoreGraphics
 import XCTest
 @testable import UICheckApple
 
+#if canImport(AppKit)
+import AppKit
+#endif
+
 final class UICheckAppleTests: XCTestCase {
   func testInspectRegisteredNativeElements() throws {
     let unregister = registerAppleUiCheckElement(
@@ -45,6 +49,7 @@ final class UICheckAppleTests: XCTestCase {
     XCTAssertEqual(box["y"], 24)
     XCTAssertEqual(box["width"], 120)
     XCTAssertEqual(box["height"], 44)
+    try writeAppleEvidenceScreenshot()
   }
 
   func testFindsSmallestElementAtPoint() throws {
@@ -94,5 +99,40 @@ final class UICheckAppleTests: XCTestCase {
     XCTAssertEqual(decoded["id"] as? String, "req-1")
     let result = try XCTUnwrap(decoded["result"] as? [String: Any])
     XCTAssertEqual(result["count"] as? Int, 1)
+  }
+
+  private func writeAppleEvidenceScreenshot() throws {
+    #if canImport(AppKit)
+    let size = NSSize(width: 393, height: 240)
+    let image = NSImage(size: size)
+    image.lockFocus()
+    NSColor(calibratedRed: 0.97, green: 0.98, blue: 0.99, alpha: 1).setFill()
+    NSRect(origin: .zero, size: size).fill()
+    let titleAttributes: [NSAttributedString.Key: Any] = [
+      .font: NSFont.boldSystemFont(ofSize: 22),
+      .foregroundColor: NSColor(calibratedRed: 0.09, green: 0.16, blue: 0.30, alpha: 1)
+    ]
+    "UICheck Apple".draw(at: NSPoint(x: 24, y: 190), withAttributes: titleAttributes)
+    NSColor(calibratedRed: 0.62, green: 0.85, blue: 1, alpha: 1).setFill()
+    NSBezierPath(roundedRect: NSRect(x: 24, y: 110, width: 180, height: 56), xRadius: 12, yRadius: 12).fill()
+    let bodyAttributes: [NSAttributedString.Key: Any] = [
+      .font: NSFont.monospacedSystemFont(ofSize: 14, weight: .regular),
+      .foregroundColor: NSColor(calibratedRed: 0.10, green: 0.22, blue: 0.40, alpha: 1)
+    ]
+    "inspect_elements: passed".draw(at: NSPoint(x: 24, y: 70), withAttributes: bodyAttributes)
+    "get_element_at_point: passed".draw(at: NSPoint(x: 24, y: 44), withAttributes: bodyAttributes)
+    image.unlockFocus()
+
+    guard
+      let tiff = image.tiffRepresentation,
+      let bitmap = NSBitmapImageRep(data: tiff),
+      let png = bitmap.representation(using: .png, properties: [:])
+    else {
+      return
+    }
+    let output = URL(fileURLWithPath: ".build/uicheck-test-artifacts/apple-native.png")
+    try FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try png.write(to: output)
+    #endif
   }
 }

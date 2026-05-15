@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { spawn } from 'node:child_process'
 
 const requiredFiles = [
   'pubspec.yaml',
@@ -29,4 +30,29 @@ for (const snippet of requiredSourceSnippets) {
   if (!source.includes(snippet)) {
     throw new Error(`Missing Flutter client source snippet: ${snippet}`)
   }
+}
+
+const lifecycle = process.env.npm_lifecycle_event
+const command = process.argv[2] ?? lifecycle
+
+function run(command, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd: new URL('..', import.meta.url),
+      stdio: 'inherit'
+    })
+    child.on('error', reject)
+    child.on('exit', (code) => {
+      if (code === 0) resolve()
+      else reject(new Error(`${command} ${args.join(' ')} exited with code ${code}`))
+    })
+  })
+}
+
+await run('flutter', ['pub', 'get'])
+
+if (command === 'typecheck') {
+  await run('flutter', ['analyze'])
+} else {
+  await run('flutter', ['test'])
 }

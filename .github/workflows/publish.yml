@@ -8,9 +8,15 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
-  publish:
+  verify:
+    uses: ./.github/workflows/ci.yml
+
+  publish-js:
+    name: Publish npm packages
+    needs: verify
     runs-on: ubuntu-latest
 
     steps:
@@ -30,14 +36,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test
-
-      - name: Build
-        run: pnpm build
+      - name: Build workspace dependencies
+        run: pnpm run prepare:workspace
 
       - name: Publish core
         working-directory: packages/core
@@ -69,8 +69,73 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  publish-flutter:
+    name: Publish Flutter package
+    needs: verify
+    runs-on: ubuntu-latest
+    env:
+      PUB_DEV_CREDENTIALS: ${{ secrets.PUB_DEV_CREDENTIALS }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Configure pub.dev credentials
+        if: env.PUB_DEV_CREDENTIALS != ''
+        run: |
+          mkdir -p "$HOME/.config/dart"
+          printf '%s' "$PUB_DEV_CREDENTIALS" > "$HOME/.config/dart/pub-credentials.json"
+
+      - name: Publish to pub.dev
+        if: env.PUB_DEV_CREDENTIALS != ''
+        working-directory: packages/flutter
+        run: flutter pub publish --force
+
+      - name: Skip pub.dev publish
+        if: env.PUB_DEV_CREDENTIALS == ''
+        run: echo "PUB_DEV_CREDENTIALS is not configured; skipping pub.dev publish."
+
+  publish-android:
+    name: Publish Android package
+    needs: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "platform-tools"
+
+      - name: Publish to GitHub Packages
+        working-directory: packages/android
+        run: ./gradlew publishReleasePublicationToGitHubPackagesRepository
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  release:
+    name: Create GitHub Release
+    needs: [verify, publish-js, publish-flutter, publish-android]
+    if: ${{ always() && needs.verify.result == 'success' && needs.publish-js.result == 'success' && needs.publish-android.result == 'success' && needs.publish-flutter.result == 'success' && startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
         run: gh release create "$GITHUB_REF_NAME" --title "uicheck $GITHUB_REF_NAME" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}

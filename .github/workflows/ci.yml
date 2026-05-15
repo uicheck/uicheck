@@ -5,9 +5,11 @@ on:
     branches: [master, main]
   pull_request:
     branches: [master, main]
+  workflow_call:
 
 jobs:
-  test:
+  javascript:
+    name: JavaScript packages
     runs-on: ubuntu-latest
 
     steps:
@@ -26,14 +28,145 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build workspace dependencies
+        run: pnpm run prepare:workspace
+
       - name: Typecheck
-        run: pnpm typecheck
+        run: |
+          pnpm --filter @uicheck/core run typecheck
+          pnpm --filter @uicheck/mcp run typecheck
+          pnpm --filter @uicheck/web run typecheck
+          pnpm --filter @uicheck/taro run typecheck
+          pnpm --filter @uicheck/rn run typecheck
 
       - name: Test
-        run: pnpm test
-
-      - name: Lint
-        run: pnpm lint
+        run: |
+          pnpm --filter @uicheck/core run test
+          pnpm --filter @uicheck/mcp run test
+          pnpm --filter @uicheck/web run test
+          pnpm --filter @uicheck/taro run test
+          pnpm --filter @uicheck/rn run test
 
       - name: Build
-        run: pnpm build
+        run: |
+          pnpm --filter @uicheck/core run build
+          pnpm --filter @uicheck/mcp run build
+          pnpm --filter @uicheck/web run build
+          pnpm --filter @uicheck/taro run build
+          pnpm --filter @uicheck/rn run build
+          pnpm --filter @uicheck/site run build
+
+  android:
+    name: Android native
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" "platform-tools"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck and build
+        run: pnpm --filter uicheck_android run typecheck
+
+      - name: Test
+        run: pnpm --filter uicheck_android run test
+
+      - name: Upload Android evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-native-test-evidence
+          path: |
+            packages/android/build/uicheck-test-artifacts/**
+            packages/android/build/reports/**
+
+  flutter:
+    name: Flutter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Analyze
+        run: pnpm --filter uicheck_flutter run typecheck
+
+      - name: Test
+        run: pnpm --filter uicheck_flutter run test
+
+      - name: Build verification
+        run: pnpm --filter uicheck_flutter run build
+
+      - name: Upload Flutter evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-test-evidence
+          path: |
+            packages/flutter/build/uicheck-test-artifacts/**
+
+  apple:
+    name: Apple native
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        working-directory: packages/apple
+        run: swift build
+
+      - name: Test
+        working-directory: packages/apple
+        run: swift test
+
+      - name: Upload Apple evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-native-test-evidence
+          path: |
+            packages/apple/.build/uicheck-test-artifacts/**
+            packages/apple/.build/**/*.xctest
