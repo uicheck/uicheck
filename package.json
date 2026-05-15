@@ -1,0 +1,20 @@
+{
+  "name": "uicheck",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "dev:core": "pnpm --filter @uicheck/core run dev",
+    "dev:mcp": "pnpm --filter @uicheck/mcp run start",
+    "dev:site": "pnpm --filter @uicheck/site run dev",
+    "lint": "pnpm --filter @uicheck/site run lint",
+    "test": "pnpm -r run test",
+    "typecheck": "pnpm -r run typecheck"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": "^8.5.10"
+    }
+  }
+}

@@ -1,0 +1,324 @@
+import { createServer, type IncomingMessage, type Server as HttpServer, type ServerResponse } from 'node:http'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
+import * as z from 'zod/v4'
+import { UiCheckSocketHub } from './socket-hub'
+import type { ResolvedUiCheckMcpServerOptions, UiCheckMcpServerOptions } from './types'
+
+export class UiCheckMcpServer {
+  private readonly options: ResolvedUiCheckMcpServerOptions
+  private readonly hub: UiCheckSocketHub
+  private httpServer?: HttpServer
+
+  constructor(options: UiCheckMcpServerOptions = {}) {
+    this.options = resolveOptions(options)
+    this.hub = new UiCheckSocketHub(this.options)
+  }
+
+  async listen(): Promise<void> {
+    if (this.httpServer) return
+
+    this.httpServer = createServer((request, response) => {
+      void this.handleHttpRequest(request, response)
+    })
+
+    this.httpServer.on('upgrade', (request, socket, head) => {
+      const handled = this.hub.handleUpgrade(request, socket, head)
+      if (!handled) socket.destroy()
+    })
+
+    await new Promise<void>((resolve, reject) => {
+      this.httpServer?.once('error', reject)
+      this.httpServer?.listen(this.options.port, this.options.host, () => {
+        this.httpServer?.off('error', reject)
+        resolve()
+      })
+    })
+  }
+
+  async close(): Promise<void> {
+    await this.hub.close()
+    if (!this.httpServer) return
+
+    const server = this.httpServer
+    this.httpServer = undefined
+    await new Promise<void>((resolve) => server.close(() => resolve()))
+  }
+
+  get mcpUrl(): string {
+    return `http://${this.options.host}:${this.options.port}${this.options.mcpEndpoint}`
+  }
+
+  get socketUrl(): string {
+    return `ws://${this.options.host}:${this.options.port}${this.options.socketEndpoint}`
+  }
+
+  private async handleHttpRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    const url = new URL(request.url ?? '/', `http://${request.headers.host ?? `${this.options.host}:${this.options.port}`}`)
+    setCorsHeaders(response)
+
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204)
+      response.end()
+      return
+    }
+
+    if (url.pathname === '/health') {
+      response.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' })
+      response.end(
+        JSON.stringify({
+          ok: true,
+          mcp: this.mcpUrl,
+          socket: this.socketUrl,
+          clients: this.hub.listClients()
+        })
+      )
+      return
+    }
+
+    if (url.pathname !== this.options.mcpEndpoint) {
+      response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' })
+      response.end('Not found')
+      return
+    }
+
+    if (request.method !== 'POST') {
+      response.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' })
+      response.end(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          error: { code: -32000, message: 'Method not allowed. Use POST for this stateless MCP endpoint.' },
+          id: null
+        })
+      )
+      return
+    }
+
+    const mcpServer = this.createMcpServer()
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined
+    })
+
+    try {
+      await mcpServer.connect(transport)
+      await transport.handleRequest(request, response)
+      response.on('close', () => {
+        void transport.close()
+        void mcpServer.close()
+      })
+    } catch (error) {
+      await transport.close().catch(() => undefined)
+      await mcpServer.close().catch(() => undefined)
+      if (!response.headersSent) {
+        response.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' })
+        response.end(
+          JSON.stringify({
+            jsonrpc: '2.0',
+            error: {
+              code: -32603,
+              message: error instanceof Error ? error.message : 'Internal server error'
+            },
+            id: null
+          })
+        )
+      }
+    }
+  }
+
+  private createMcpServer(): McpServer {
+    const server = new McpServer({
+      name: 'uicheck-mcp',
+      version: '0.1.0'
+    })
+
+    const clientArgs = {
+      clientId: z.string().optional().describe('Target @uicheck/core socket client id. Defaults to the first connected client.'),
+      timeoutMs: z.number().int().min(500).max(120_000).optional().describe('Request timeout. Defaults to the server timeout.')
+    }
+
+    server.registerTool(
+      'list_clients',
+      {
+        title: 'List UI Check Clients',
+        description: 'List browser pages currently connected through @uicheck/core WebSocket.',
+        inputSchema: {},
+        annotations: {
+          readOnlyHint: true,
+          openWorldHint: false
+        }
+      },
+      async () => ({
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(this.hub.listClients(), null, 2)
+          }
+        ]
+      })
+    )
+
+    server.registerTool(
+      'capture_page',
+      {
+        title: 'Capture Connected Page Screenshot',
+        description: 'Ask the connected @uicheck/core page to return a PNG screenshot.',
+        inputSchema: {
+          ...clientArgs,
+          waitMs: z.number().int().min(0).max(30_000).optional().describe('Extra wait time before capture.'),
+          captureTimeoutMs: z
+            .number()
+            .int()
+            .min(500)
+            .max(120_000)
+            .optional()
+            .describe('Browser-side screenshot timeout. Defaults to 10000.'),
+          forceHtml2Canvas: z
+            .boolean()
+            .optional()
+            .describe('Force html2canvas capture in environments where it is normally skipped, such as Electron.')
+        },
+        annotations: {
+          readOnlyHint: true,
+          openWorldHint: false
+        }
+      },
+      async (args) => {
+        const result = await this.hub.request(
+          'capture_page',
+          { waitMs: args.waitMs, timeoutMs: args.captureTimeoutMs, forceHtml2Canvas: args.forceHtml2Canvas },
+          args.clientId,
+          args.timeoutMs
+        )
+        const screenshot = asScreenshot(result)
+        return {
+          content: [
+            {
+              type: 'image',
+              mimeType: screenshot.mimeType,
+              data: screenshot.base64
+            },
+            {
+              type: 'text',
+              text: JSON.stringify({ url: screenshot.url, title: screenshot.title, width: screenshot.width, height: screenshot.height }, null, 2)
+            }
+          ]
+        }
+      }
+    )
+
+    server.registerTool(
+      'inspect_elements',
+      {
+        title: 'Inspect Connected Page Elements',
+        description: 'Ask the connected @uicheck/core page to return DOM selectors, text, layout boxes, and spacing info.',
+        inputSchema: {
+          ...clientArgs,
+          selector: z.string().optional().describe('Optional root selector to inspect under.'),
+          limit: z.number().int().min(1).max(500).optional().describe('Maximum elements to return. Defaults to 80.'),
+          includeHidden: z.boolean().optional().describe('Include hidden or zero-size elements. Defaults to false.')
+        },
+        annotations: {
+          readOnlyHint: true,
+          openWorldHint: false
+        }
+      },
+      async (args) => {
+        const result = await this.hub.request(
+          'inspect_elements',
+          {
+            selector: args.selector,
+            limit: args.limit,
+            includeHidden: args.includeHidden
+          },
+          args.clientId,
+          args.timeoutMs
+        )
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        }
+      }
+    )
+
+    server.registerTool(
+      'get_element_at_point',
+      {
+        title: 'Get Connected Page Element At Point',
+        description: 'Ask the connected @uicheck/core page to return the element and ancestors at viewport coordinates.',
+        inputSchema: {
+          ...clientArgs,
+          x: z.number().int().min(0).describe('Viewport x coordinate.'),
+          y: z.number().int().min(0).describe('Viewport y coordinate.')
+        },
+        annotations: {
+          readOnlyHint: true,
+          openWorldHint: false
+        }
+      },
+      async (args) => {
+        const result = await this.hub.request('get_element_at_point', { x: args.x, y: args.y }, args.clientId, args.timeoutMs)
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        }
+      }
+    )
+
+    return server
+  }
+}
+
+export function resolveOptions(options: UiCheckMcpServerOptions): ResolvedUiCheckMcpServerOptions {
+  return {
+    host: options.host ?? '127.0.0.1',
+    port: options.port ?? 17322,
+    mcpEndpoint: normalizeEndpoint(options.mcpEndpoint ?? '/mcp'),
+    socketEndpoint: normalizeEndpoint(options.socketEndpoint ?? '/socket'),
+    requestTimeoutMs: options.requestTimeoutMs ?? 30_000
+  }
+}
+
+function normalizeEndpoint(value: string): string {
+  return value.startsWith('/') ? value : `/${value}`
+}
+
+function setCorsHeaders(response: ServerResponse): void {
+  response.setHeader('Access-Control-Allow-Origin', '*')
+  response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  response.setHeader('Access-Control-Allow-Headers', 'content-type, mcp-session-id')
+  response.setHeader('Access-Control-Expose-Headers', 'mcp-session-id')
+}
+
+function asScreenshot(value: unknown): {
+  mimeType: string
+  base64: string
+  url?: string
+  title?: string
+  width?: number
+  height?: number
+} {
+  if (!isObject(value) || typeof value.base64 !== 'string') {
+    throw new Error('Connected client returned an invalid screenshot payload')
+  }
+
+  return {
+    mimeType: typeof value.mimeType === 'string' ? value.mimeType : 'image/png',
+    base64: value.base64,
+    url: typeof value.url === 'string' ? value.url : undefined,
+    title: typeof value.title === 'string' ? value.title : undefined,
+    width: typeof value.width === 'number' ? value.width : undefined,
+    height: typeof value.height === 'number' ? value.height : undefined
+  }
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
