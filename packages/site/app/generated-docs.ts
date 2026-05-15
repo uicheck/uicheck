@@ -26,7 +26,7 @@ export const generatedDocsByLocale = {
     {
       "id": "web",
       "name": "@uicheck/web",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "description": "浏览器 DOM 页面客户端",
       "install": "npm install @uicheck/web html2canvas",
       "source": "packages/web",
@@ -125,7 +125,7 @@ export const generatedDocsByLocale = {
     {
       "id": "taro",
       "name": "@uicheck/taro",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "description": "Taro 小程序页面客户端",
       "install": "npm install @uicheck/taro",
       "source": "packages/taro",
@@ -145,7 +145,7 @@ export const generatedDocsByLocale = {
     {
       "id": "mcp",
       "name": "@uicheck/mcp",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "description": "通过 WebSocket 连接 uicheck 客户端的 MCP 服务",
       "install": "npm install -g @uicheck/mcp",
       "source": "packages/mcp",
@@ -242,7 +242,7 @@ export const generatedDocsByLocale = {
     {
       "id": "core",
       "name": "@uicheck/core",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "description": "uicheck 客户端共享协议 runtime 和类型",
       "install": "npm install @uicheck/core",
       "source": "packages/core",
@@ -270,7 +270,7 @@ export const generatedDocsByLocale = {
     {
       "id": "web",
       "name": "@uicheck/web",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "description": "Browser DOM client for uicheck",
       "install": "npm install @uicheck/web html2canvas",
       "source": "packages/web",
@@ -369,7 +369,7 @@ export const generatedDocsByLocale = {
     {
       "id": "taro",
       "name": "@uicheck/taro",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "description": "Taro Mini Program client for uicheck",
       "install": "npm install @uicheck/taro",
       "source": "packages/taro",
@@ -389,7 +389,7 @@ export const generatedDocsByLocale = {
     {
       "id": "mcp",
       "name": "@uicheck/mcp",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "description": "MCP server that communicates with uicheck clients over WebSocket",
       "install": "npm install -g @uicheck/mcp",
       "source": "packages/mcp",
@@ -486,7 +486,7 @@ export const generatedDocsByLocale = {
     {
       "id": "core",
       "name": "@uicheck/core",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "description": "Shared protocol runtime and types for uicheck clients",
       "install": "npm install @uicheck/core",
       "source": "packages/core",

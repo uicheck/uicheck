@@ -5,6 +5,7 @@ import { generatedDocsByLocale, type GeneratedDocBlock, type GeneratedLocale } f
 
 const locales = ['zh-CN', 'en'] as const satisfies GeneratedLocale[]
 type Locale = (typeof locales)[number]
+const githubUrl = 'https://github.com/uicheck/uicheck'
 
 const dictionaries = {
   'zh-CN': {
@@ -13,7 +14,8 @@ const dictionaries = {
       workflow: '工作流',
       tools: 'MCP Tools',
       docs: '文档',
-      install: '接入'
+      install: '接入',
+      github: 'GitHub'
     },
     languageLabel: '语言',
     hero: {
@@ -76,7 +78,8 @@ const dictionaries = {
       workflow: 'Workflow',
       tools: 'MCP Tools',
       docs: 'Docs',
-      install: 'Install'
+      install: 'Install',
+      github: 'GitHub'
     },
     languageLabel: 'Language',
     hero: {
@@ -241,6 +244,9 @@ installUiCheck(html2canvas, {
               <a href="#tools">{t.nav.tools}</a>
               <a href="#docs">{t.nav.docs}</a>
               <a href="#install">{t.nav.install}</a>
+              <a href={githubUrl} rel="noreferrer" target="_blank">
+                {t.nav.github}
+              </a>
             </div>
             <div className="locale-switcher" aria-label={t.languageLabel}>
               {locales.map((item) => (
@@ -263,6 +269,9 @@ installUiCheck(html2canvas, {
               </a>
               <a className="button secondary" href="#tools">
                 {t.hero.secondary}
+              </a>
+              <a className="button secondary" href={githubUrl} rel="noreferrer" target="_blank">
+                GitHub
               </a>
             </div>
           </div>
