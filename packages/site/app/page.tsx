@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { generatedDocsByLocale, type GeneratedDocBlock, type GeneratedLocale } from './generated-docs'
+import { generatedDocsByLocale, type GeneratedLocale } from './generated-docs'
 
 const locales = ['zh-CN', 'en'] as const satisfies GeneratedLocale[]
 type Locale = (typeof locales)[number]
@@ -60,9 +60,10 @@ const dictionaries = {
       ]
     },
     docs: {
-      eyebrow: 'Generated Docs',
-      title: '从包 README 自动生成的文档',
-      text: '官网构建前会读取 workspace 包的 package.json 和对应语言 README，同步生成文档数据，避免官网内容和包文档分叉。'
+      eyebrow: 'Docs',
+      title: '文档独立维护，首页只保留入口',
+      text: '完整包文档、安装方式和 API 说明已经移动到独立文档页。官网构建时仍会从 workspace README 自动生成内容。',
+      action: '打开文档'
     },
     install: {
       eyebrow: 'Install',
@@ -124,9 +125,10 @@ const dictionaries = {
       ]
     },
     docs: {
-      eyebrow: 'Generated Docs',
-      title: 'Documentation generated from package READMEs',
-      text: 'Before the website builds, it reads workspace package.json files and localized READMEs to keep the website docs aligned with package docs.'
+      eyebrow: 'Docs',
+      title: 'Docs live in their own workspace',
+      text: 'Package docs, install notes, and API details now live on a dedicated docs page. The website still generates them from workspace READMEs before build.',
+      action: 'Open docs'
     },
     install: {
       eyebrow: 'Install',
@@ -147,53 +149,11 @@ function getInitialLocale(): Locale {
   return navigator.language.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en'
 }
 
-function renderDocBlock(block: GeneratedDocBlock, index: number) {
-  if (block.type === 'heading') {
-    const HeadingTag = block.level >= 3 ? 'h5' : 'h4'
-    return <HeadingTag key={index}>{block.text}</HeadingTag>
-  }
-
-  if (block.type === 'paragraph') return <p key={index}>{block.text}</p>
-  if (block.type === 'code') return <pre key={index}>{block.code}</pre>
-
-  if (block.type === 'list') {
-    return (
-      <ul key={index}>
-        {block.items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    )
-  }
-
-  return (
-    <div className="doc-table-wrap" key={index}>
-      <table>
-        <thead>
-          <tr>
-            {block.headers.map((header) => (
-              <th key={header}>{header}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {block.rows.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {row.map((cell, cellIndex) => (
-                <td key={`${rowIndex}-${cellIndex}`}>{cell}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
 export default function Home() {
   const [locale, setLocale] = useState<Locale>(getInitialLocale)
   const t = dictionaries[locale]
   const docs = generatedDocsByLocale[locale]
+  const docsBase = `/docs/${locale}/`
 
   useEffect(() => {
     document.documentElement.lang = dictionaries[locale].htmlLang
@@ -242,7 +202,7 @@ installUiCheck(html2canvas, {
             <div className="nav-links">
               <a href="#workflow">{t.nav.workflow}</a>
               <a href="#tools">{t.nav.tools}</a>
-              <a href="#docs">{t.nav.docs}</a>
+              <a href={docsBase}>{t.nav.docs}</a>
               <a href="#install">{t.nav.install}</a>
               <a href={githubUrl} rel="noreferrer" target="_blank">
                 {t.nav.github}
@@ -398,25 +358,26 @@ capture_page({ waitMs: 300 })`}</pre>
       </section>
 
       <section className="section docs" id="docs">
-        <div className="section-head">
-          <p className="eyebrow">{t.docs.eyebrow}</p>
-          <h2>{t.docs.title}</h2>
-          <p>{t.docs.text}</p>
+        <div className="docs-callout">
+          <div>
+            <p className="eyebrow">{t.docs.eyebrow}</p>
+            <h2>{t.docs.title}</h2>
+            <p>{t.docs.text}</p>
+          </div>
+          <a className="button primary" href={docsBase}>
+            {t.docs.action}
+          </a>
         </div>
-        <div className="docs-grid">
+        <div className="docs-preview-grid">
           {docs.map((doc) => (
-            <article className="doc-card" key={doc.id}>
-              <div className="doc-card-head">
-                <div>
-                  <h3>{doc.name}</h3>
-                  <p>{doc.description}</p>
-                </div>
+            <a className="doc-preview-card" href={`${docsBase}${doc.id}/`} key={doc.id}>
+              <div>
                 <span>{doc.version}</span>
+                <h3>{doc.name}</h3>
+                <p>{doc.description}</p>
               </div>
-              <pre className="install-command">{doc.install}</pre>
-              <div className="doc-source">{doc.source}</div>
-              <div className="doc-body">{doc.blocks.map(renderDocBlock)}</div>
-            </article>
+              <code>{doc.install}</code>
+            </a>
           ))}
         </div>
       </section>

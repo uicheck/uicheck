@@ -30,7 +30,7 @@ export const generatedDocsByLocale = {
       "description": "浏览器 DOM 页面客户端",
       "install": "npm install @uicheck/web html2canvas",
       "source": "packages/web",
-      "readmeUrl": "file:///Users/mushan/Documents/project/uicheck/packages/web/README.zh-CN.md",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/web/README.zh-CN.md",
       "blocks": [
         {
           "type": "paragraph",
@@ -129,7 +129,7 @@ export const generatedDocsByLocale = {
       "description": "Taro 小程序页面客户端",
       "install": "npm install @uicheck/taro",
       "source": "packages/taro",
-      "readmeUrl": "file:///Users/mushan/Documents/project/uicheck/packages/taro/README.zh-CN.md",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/taro/README.zh-CN.md",
       "blocks": [
         {
           "type": "paragraph",
@@ -149,7 +149,7 @@ export const generatedDocsByLocale = {
       "description": "通过 WebSocket 连接 uicheck 客户端的 MCP 服务",
       "install": "npm install -g @uicheck/mcp",
       "source": "packages/mcp",
-      "readmeUrl": "file:///Users/mushan/Documents/project/uicheck/packages/mcp/README.zh-CN.md",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/mcp/README.zh-CN.md",
       "blocks": [
         {
           "type": "paragraph",
@@ -246,7 +246,7 @@ export const generatedDocsByLocale = {
       "description": "uicheck 客户端共享协议 runtime 和类型",
       "install": "npm install @uicheck/core",
       "source": "packages/core",
-      "readmeUrl": "file:///Users/mushan/Documents/project/uicheck/packages/core/README.zh-CN.md",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/core/README.zh-CN.md",
       "blocks": [
         {
           "type": "paragraph",
@@ -274,7 +274,7 @@ export const generatedDocsByLocale = {
       "description": "Browser DOM client for uicheck",
       "install": "npm install @uicheck/web html2canvas",
       "source": "packages/web",
-      "readmeUrl": "file:///Users/mushan/Documents/project/uicheck/packages/web/README.md",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/web/README.md",
       "blocks": [
         {
           "type": "paragraph",
@@ -373,7 +373,7 @@ export const generatedDocsByLocale = {
       "description": "Taro Mini Program client for uicheck",
       "install": "npm install @uicheck/taro",
       "source": "packages/taro",
-      "readmeUrl": "file:///Users/mushan/Documents/project/uicheck/packages/taro/README.md",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/taro/README.md",
       "blocks": [
         {
           "type": "paragraph",
@@ -393,7 +393,7 @@ export const generatedDocsByLocale = {
       "description": "MCP server that communicates with uicheck clients over WebSocket",
       "install": "npm install -g @uicheck/mcp",
       "source": "packages/mcp",
-      "readmeUrl": "file:///Users/mushan/Documents/project/uicheck/packages/mcp/README.md",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/mcp/README.md",
       "blocks": [
         {
           "type": "paragraph",
@@ -490,7 +490,7 @@ export const generatedDocsByLocale = {
       "description": "Shared protocol runtime and types for uicheck clients",
       "install": "npm install @uicheck/core",
       "source": "packages/core",
-      "readmeUrl": "file:///Users/mushan/Documents/project/uicheck/packages/core/README.md",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/core/README.md",
       "blocks": [
         {
           "type": "paragraph",

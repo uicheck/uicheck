@@ -8,7 +8,7 @@ AI-readable UI inspection for browser and Taro Mini Program pages.
 
 UI Check connects live pages to AI agents through MCP. It exposes screenshots, element metadata, layout boxes, coordinates, and manual visual annotations so AI can debug UI issues against the real page instead of guessing from code alone.
 
-Website: https://main.uicheck-ai.pages.dev
+Website: https://uicheck.ai
 
 GitHub: https://github.com/uicheck/uicheck
 

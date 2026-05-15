@@ -1,11 +1,13 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { fileURLToPath } from 'node:url'
 
 const siteRoot = new URL('..', import.meta.url)
 const repoRoot = new URL('../../..', import.meta.url)
 const outputUrl = new URL('app/generated-docs.ts', siteRoot)
+const docsAppUrl = new URL('app/docs/', siteRoot)
 const locales = ['zh-CN', 'en']
+const githubBaseUrl = 'https://github.com/uicheck/uicheck/blob/main/'
 
 const packages = [
   {
@@ -169,28 +171,120 @@ function getInstallCommand(packageName) {
   return `npm install ${packageName}`
 }
 
+function frontmatter(value) {
+  return String(value).replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', ' ')
+}
+
+function mdxPage({ title, description, readme, sourceUrl, install }) {
+  return `---
+title: "${frontmatter(title)}"
+description: "${frontmatter(description)}"
+---
+
+> Source: [README](${sourceUrl})
+
+## Install
+
+\`\`\`bash
+${install}
+\`\`\`
+
+${readme.trim()}
+`
+}
+
+async function writeDocsPages(generated, readmesByLocale) {
+  await mkdir(docsAppUrl, { recursive: true })
+  await Promise.all(locales.map((locale) => rm(new URL(`${locale}/`, docsAppUrl), { recursive: true, force: true })))
+
+  await writeFile(
+    new URL('_meta.js', docsAppUrl),
+    `const meta = {
+  'zh-CN': '中文',
+  en: 'English'
+}
+
+export default meta
+`
+  )
+
+  for (const locale of locales) {
+    const localeRoot = new URL(`${locale}/`, docsAppUrl)
+    await mkdir(localeRoot, { recursive: true })
+
+    await writeFile(
+      new URL('_meta.js', localeRoot),
+      `const meta = {
+  index: '${locale === 'zh-CN' ? '开始' : 'Start'}',
+${packages.map((item) => `  ${JSON.stringify(item.id)}: ${JSON.stringify(readmesByLocale[locale][item.id].name)},`).join('\n')}
+}
+
+export default meta
+`
+    )
+
+    await writeFile(
+      new URL('page.mdx', localeRoot),
+      `---
+title: "${locale === 'zh-CN' ? 'UI Check 文档' : 'UI Check Docs'}"
+description: "${locale === 'zh-CN' ? 'AI 可读的 UI 检查工具文档' : 'Documentation for AI-readable UI inspection'}"
+---
+
+# ${locale === 'zh-CN' ? 'UI Check 文档' : 'UI Check Docs'}
+
+${locale === 'zh-CN' ? '选择一个包开始查看安装方式、API 和平台接入说明。' : 'Choose a package to read install notes, APIs, and platform setup.'}
+
+${generated[locale].map((doc) => `- [${doc.name}](./${doc.id}/) - ${doc.description}`).join('\n')}
+`
+    )
+
+    for (const doc of generated[locale]) {
+      const docRoot = new URL(`${doc.id}/`, localeRoot)
+      await mkdir(docRoot, { recursive: true })
+      await writeFile(
+        new URL('page.mdx', docRoot),
+        mdxPage({
+          title: doc.name,
+          description: doc.description,
+          readme: readmesByLocale[locale][doc.id].readme,
+          sourceUrl: doc.readmeUrl,
+          install: doc.install
+        })
+      )
+    }
+  }
+}
+
 async function buildDocs() {
   const generated = Object.fromEntries(locales.map((locale) => [locale, []]))
+  const readmesByLocale = Object.fromEntries(locales.map((locale) => [locale, {}]))
 
   for (const locale of locales) {
     for (const item of packages) {
       const packageJson = await readJson(`${item.path}/package.json`)
       const readmePath = locale === 'en' ? `${item.path}/README.md` : `${item.path}/README.${locale}.md`
       const fallbackReadmePath = `${item.path}/README.md`
-      const readme = (await readTextIfExists(readmePath)) ?? (await readFile(repoUrl(fallbackReadmePath), 'utf8'))
-      generated[locale].push({
+      const localizedReadme = await readTextIfExists(readmePath)
+      const actualReadmePath = localizedReadme ? readmePath : fallbackReadmePath
+      const readme = localizedReadme ?? (await readFile(repoUrl(fallbackReadmePath), 'utf8'))
+      const doc = {
         id: item.id,
         name: packageJson.name,
         version: packageJson.version,
         description: item.descriptions[locale] ?? packageJson.description,
         install: getInstallCommand(packageJson.name),
         source: item.path,
-        readmeUrl: pathToFileURL(fileURLToPath(repoUrl(readmePath))).href,
+        readmeUrl: `${githubBaseUrl}${actualReadmePath}`,
         blocks: parseMarkdown(readme)
+      }
+      readmesByLocale[locale][item.id] = { name: packageJson.name, readme }
+      generated[locale].push({
+        ...doc
       })
     }
   }
 
+  await writeDocsPages(generated, readmesByLocale)
   return generated
 }
 
