@@ -1,0 +1,25 @@
+{
+  "name": "uicheck_flutter",
+  "version": "0.1.4",
+  "description": "Flutter runtime client for uicheck",
+  "private": true,
+  "type": "module",
+  "files": [
+    "lib",
+    "pubspec.yaml",
+    "README.md",
+    "README.zh-CN.md"
+  ],
+  "scripts": {
+    "build": "node scripts/verify.mjs",
+    "typecheck": "node scripts/verify.mjs",
+    "test": "node scripts/verify.mjs",
+    "prepublishOnly": "node scripts/verify.mjs"
+  },
+  "keywords": [
+    "ui-check",
+    "flutter",
+    "mcp"
+  ],
+  "license": "MIT"
+}

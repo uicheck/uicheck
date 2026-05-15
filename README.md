@@ -4,7 +4,7 @@
 
 # UI Check
 
-AI-readable runtime UI inspection for browser, React Native, and Taro Mini Program apps.
+AI-readable runtime UI inspection for browser, React Native, Flutter, and Taro Mini Program apps.
 
 UI Check connects live app runtimes to AI agents through MCP. It exposes screenshots, element metadata, layout boxes, coordinates, and route state so AI can debug UI issues against the real running app instead of guessing from code alone.
 
@@ -20,6 +20,7 @@ GitHub: https://github.com/uicheck/uicheck
 | `@uicheck/web` | Browser DOM runtime client with screenshot and element inspection |
 | `@uicheck/rn` | React Native client using registered refs for element inspection |
 | `@uicheck/taro` | Taro Mini Program client using selector query inspection |
+| `uicheck_flutter` | Flutter client using registered GlobalKeys for widget inspection |
 | `@uicheck/mcp` | Local MCP server exposing UI inspection tools to AI agents |
 
 ## Quick Start
@@ -94,6 +95,35 @@ registerReactNativeUiCheckElement({
   testID: 'submit-button',
   text: 'Submit'
 })
+```
+
+Flutter client:
+
+```sh
+flutter pub add uicheck_flutter
+```
+
+```dart
+import 'package:uicheck_flutter/uicheck_flutter.dart';
+
+final client = installFlutterUiCheck(
+  options: UiCheckFlutterOptions(
+    title: 'Demo',
+    route: '/home',
+    socket: UiCheckSocketOptions(
+      url: 'ws://127.0.0.1:17322/socket',
+    ),
+  ),
+);
+
+registerFlutterUiCheckElement(
+  UiCheckFlutterElementRegistration(
+    key: submitButtonKey,
+    tag: 'ElevatedButton',
+    testID: 'submit-button',
+    text: 'Submit',
+  ),
+);
 ```
 
 ## MCP Tools

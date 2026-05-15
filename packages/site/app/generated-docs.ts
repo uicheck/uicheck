@@ -137,6 +137,115 @@ export const generatedDocsByLocale = {
       ]
     },
     {
+      "id": "flutter",
+      "name": "uicheck_flutter",
+      "version": "0.1.4",
+      "description": "Flutter 应用运行环境客户端",
+      "install": "flutter pub add uicheck_flutter",
+      "source": "packages/flutter",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/flutter/README.zh-CN.md",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Flutter 运行环境客户端。它通过 WebSocket 把正在运行的 Flutter 应用连接到 @uicheck/mcp，让 AI 可以通过 MCP 工具读取截图、已注册组件元数据、布局盒和坐标。"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "使用"
+        },
+        {
+          "type": "paragraph",
+          "text": "添加包："
+        },
+        {
+          "type": "code",
+          "lang": "sh",
+          "code": "flutter pub add uicheck_flutter"
+        },
+        {
+          "type": "paragraph",
+          "text": "单独启动 MCP 服务："
+        },
+        {
+          "type": "code",
+          "lang": "sh",
+          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+        },
+        {
+          "type": "paragraph",
+          "text": "在应用启动附近安装 Flutter 客户端："
+        },
+        {
+          "type": "code",
+          "lang": "dart",
+          "code": "import 'package:flutter/widgets.dart';\nimport 'package:uicheck_flutter/uicheck_flutter.dart';\n\nfinal uicheckClient = installFlutterUiCheck(\n  options: UiCheckFlutterOptions(\n    title: 'Demo',\n    route: '/home',\n    socket: UiCheckSocketOptions(\n      url: 'ws://127.0.0.1:17322/socket',\n      clientId: 'flutter-demo',\n    ),\n    screenshot: (params) => captureRepaintBoundaryAsPng(\n      repaintBoundaryKey: appBoundaryKey,\n      title: 'Demo',\n      url: '/home',\n    ),\n  ),\n);"
+        },
+        {
+          "type": "paragraph",
+          "text": "注册 AI 需要查看的组件："
+        },
+        {
+          "type": "code",
+          "lang": "dart",
+          "code": "final submitButtonKey = GlobalKey();\n\nfinal unregister = registerFlutterUiCheckElement(\n  UiCheckFlutterElementRegistration(\n    key: submitButtonKey,\n    tag: 'ElevatedButton',\n    testID: 'submit-button',\n    text: '提交',\n  ),\n);"
+        },
+        {
+          "type": "paragraph",
+          "text": "使用截图 helper 时，把 app 或页面包在 RepaintBoundary 中："
+        },
+        {
+          "type": "code",
+          "lang": "dart",
+          "code": "final appBoundaryKey = GlobalKey();\n\nRepaintBoundary(\n  key: appBoundaryKey,\n  child: MyApp(),\n);"
+        },
+        {
+          "type": "paragraph",
+          "text": "不再使用时释放客户端和注册回调："
+        },
+        {
+          "type": "code",
+          "lang": "dart",
+          "code": "unregister();\nuicheckClient.dispose();"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "MCP 工具"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "工具",
+            "说明"
+          ],
+          "rows": [
+            [
+              "capture_page",
+              "调用配置的截图回调返回 PNG 截图。"
+            ],
+            [
+              "inspect_elements",
+              "返回已注册组件的元数据、文本、布局盒和可见状态。"
+            ],
+            [
+              "get_element_at_point",
+              "返回视口坐标处最小的已注册组件。"
+            ]
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "说明"
+        },
+        {
+          "type": "paragraph",
+          "text": "Flutter 没有 DOM 查询 API。需要用 GlobalKey 注册 AI 需要检查的组件，客户端会通过 RenderBox.localToGlobal 读取组件位置。"
+        }
+      ]
+    },
+    {
       "id": "mcp",
       "name": "@uicheck/mcp",
       "version": "0.1.4",
@@ -380,6 +489,115 @@ export const generatedDocsByLocale = {
           "type": "code",
           "lang": "ts",
           "code": "installReactNativeUiCheck(reactNative, {\n  screenshot: async () => ({\n    mimeType: 'image/png',\n    base64: await captureAppAsBase64()\n  })\n})"
+        }
+      ]
+    },
+    {
+      "id": "flutter",
+      "name": "uicheck_flutter",
+      "version": "0.1.4",
+      "description": "Flutter runtime client for uicheck",
+      "install": "flutter pub add uicheck_flutter",
+      "source": "packages/flutter",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/flutter/README.md",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Flutter runtime client for UI Check. It connects a running Flutter app to @uicheck/mcp over WebSocket so AI agents can request screenshots, registered widget metadata, layout boxes, and coordinates through MCP tools."
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Usage"
+        },
+        {
+          "type": "paragraph",
+          "text": "Add the package:"
+        },
+        {
+          "type": "code",
+          "lang": "sh",
+          "code": "flutter pub add uicheck_flutter"
+        },
+        {
+          "type": "paragraph",
+          "text": "Start the MCP server separately:"
+        },
+        {
+          "type": "code",
+          "lang": "sh",
+          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+        },
+        {
+          "type": "paragraph",
+          "text": "Install the Flutter client near app startup:"
+        },
+        {
+          "type": "code",
+          "lang": "dart",
+          "code": "import 'package:flutter/widgets.dart';\nimport 'package:uicheck_flutter/uicheck_flutter.dart';\n\nfinal uicheckClient = installFlutterUiCheck(\n  options: UiCheckFlutterOptions(\n    title: 'Demo',\n    route: '/home',\n    socket: UiCheckSocketOptions(\n      url: 'ws://127.0.0.1:17322/socket',\n      clientId: 'flutter-demo',\n    ),\n    screenshot: (params) => captureRepaintBoundaryAsPng(\n      repaintBoundaryKey: appBoundaryKey,\n      title: 'Demo',\n      url: '/home',\n    ),\n  ),\n);"
+        },
+        {
+          "type": "paragraph",
+          "text": "Register widgets that AI should inspect:"
+        },
+        {
+          "type": "code",
+          "lang": "dart",
+          "code": "final submitButtonKey = GlobalKey();\n\nfinal unregister = registerFlutterUiCheckElement(\n  UiCheckFlutterElementRegistration(\n    key: submitButtonKey,\n    tag: 'ElevatedButton',\n    testID: 'submit-button',\n    text: 'Submit',\n  ),\n);"
+        },
+        {
+          "type": "paragraph",
+          "text": "Wrap the app or screen in a RepaintBoundary when using the screenshot helper:"
+        },
+        {
+          "type": "code",
+          "lang": "dart",
+          "code": "final appBoundaryKey = GlobalKey();\n\nRepaintBoundary(\n  key: appBoundaryKey,\n  child: MyApp(),\n);"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dispose the client and unregister callbacks when they are no longer needed:"
+        },
+        {
+          "type": "code",
+          "lang": "dart",
+          "code": "unregister();\nuicheckClient.dispose();"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "MCP Tools"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Tool",
+            "Description"
+          ],
+          "rows": [
+            [
+              "capture_page",
+              "Uses the configured screenshot callback to return a PNG screenshot."
+            ],
+            [
+              "inspect_elements",
+              "Returns registered widget metadata, text, layout boxes, and visibility."
+            ],
+            [
+              "get_element_at_point",
+              "Returns the smallest registered widget at viewport coordinates."
+            ]
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Notes"
+        },
+        {
+          "type": "paragraph",
+          "text": "Flutter does not expose a DOM query API. Register the widgets that AI needs to inspect with a GlobalKey. The client measures each registered widget through RenderBox.localToGlobal."
         }
       ]
     },

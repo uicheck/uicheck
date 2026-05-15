@@ -691,10 +691,16 @@ h3 {
 }
 
 .runtime-nodes span:nth-child(3) {
-  left: 50%;
+  left: 32%;
   bottom: 0;
   transform: translateX(-50%);
   background: rgba(232, 77, 61, 0.34);
+}
+
+.runtime-nodes span:nth-child(4) {
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .clipboard-copy h2,
@@ -1362,5 +1368,10 @@ h3 {
   .runtime-nodes span:nth-child(2) {
     top: auto;
     bottom: 78px;
+  }
+
+  .runtime-nodes span:nth-child(3) {
+    left: 0;
+    transform: none;
   }
 }

@@ -35,6 +35,14 @@ const packages = [
     }
   },
   {
+    id: 'flutter',
+    path: 'packages/flutter',
+    descriptions: {
+      'zh-CN': 'Flutter 应用运行环境客户端',
+      en: 'Flutter runtime client for uicheck'
+    }
+  },
+  {
     id: 'mcp',
     path: 'packages/mcp',
     descriptions: {
@@ -176,6 +184,7 @@ function parseMarkdown(markdown) {
 function getInstallCommand(packageName) {
   if (packageName === '@uicheck/web') return 'npm install @uicheck/web html2canvas'
   if (packageName === '@uicheck/mcp') return 'npm install -g @uicheck/mcp'
+  if (packageName === 'uicheck_flutter') return 'flutter pub add uicheck_flutter'
   return `npm install ${packageName}`
 }
 
