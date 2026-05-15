@@ -120,6 +120,6 @@ pnpm typecheck
 Use one unified tag to publish all public packages and create a combined GitHub Release:
 
 ```sh
-git tag v0.1.3
-git push origin v0.1.3
+git tag v0.1.4
+git push origin v0.1.4
 ```

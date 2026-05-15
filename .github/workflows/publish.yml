@@ -57,6 +57,12 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Publish rn
+        working-directory: packages/rn
+        run: pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish mcp
         working-directory: packages/mcp
         run: pnpm publish --access public --no-git-checks
