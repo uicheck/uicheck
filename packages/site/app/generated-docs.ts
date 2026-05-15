@@ -246,6 +246,129 @@ export const generatedDocsByLocale = {
       ]
     },
     {
+      "id": "apple",
+      "name": "uicheck_apple",
+      "version": "0.1.4",
+      "description": "Apple 原生应用运行环境客户端",
+      "install": "Swift Package: https://github.com/uicheck/uicheck, product UICheckApple",
+      "source": "packages/apple",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/apple/README.zh-CN.md",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Apple 原生运行环境客户端。它通过 WebSocket 把 iOS、macOS、tvOS 或 visionOS 应用连接到 @uicheck/mcp，让 AI 可以通过 MCP 工具读取截图、已注册原生视图元数据、布局盒和坐标。"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "安装"
+        },
+        {
+          "type": "paragraph",
+          "text": "把这个仓库作为 Swift Package 依赖，并选择 UICheckApple product："
+        },
+        {
+          "type": "code",
+          "lang": "txt",
+          "code": "https://github.com/uicheck/uicheck"
+        },
+        {
+          "type": "paragraph",
+          "text": "包路径："
+        },
+        {
+          "type": "code",
+          "lang": "txt",
+          "code": "packages/apple"
+        },
+        {
+          "type": "paragraph",
+          "text": "单独启动 MCP 服务："
+        },
+        {
+          "type": "code",
+          "lang": "sh",
+          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "使用"
+        },
+        {
+          "type": "paragraph",
+          "text": "在应用启动附近安装客户端："
+        },
+        {
+          "type": "code",
+          "lang": "swift",
+          "code": "import UICheckApple\n\nlet client = installAppleUiCheck(\n  options: UiCheckAppleOptions(\n    socket: UiCheckAppleSocketOptions(\n      url: \"ws://127.0.0.1:17322/socket\",\n      clientId: \"ios-demo\"\n    ),\n    title: \"Demo\",\n    route: \"/home\",\n    platform: \"ios\",\n    viewport: {\n      UiCheckAppleViewportInfo(width: 390, height: 844, devicePixelRatio: 3)\n    },\n    screenshot: { params in\n      UiCheckAppleScreenshotResult(\n        title: \"Demo\",\n        width: 390,\n        height: 844,\n        mimeType: \"image/png\",\n        base64: captureAppAsBase64Png()\n      )\n    }\n  )\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "注册 AI 需要查看的视图："
+        },
+        {
+          "type": "code",
+          "lang": "swift",
+          "code": "let unregister = registerAppleUiCheckView(\n  submitButton,\n  tag: \"UIButton\",\n  testID: \"submit-button\",\n  text: \"提交\"\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "接入 SwiftUI 或非 View 抽象时，也可以注册自定义 frame provider："
+        },
+        {
+          "type": "code",
+          "lang": "swift",
+          "code": "let unregister = registerAppleUiCheckElement(\n  UiCheckAppleElementRegistration(\n    tag: \"Button\",\n    testID: \"submit-button\",\n    text: \"提交\",\n    frame: { CGRect(x: 12, y: 24, width: 120, height: 44) }\n  )\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "不再使用时释放："
+        },
+        {
+          "type": "code",
+          "lang": "swift",
+          "code": "unregister()\nclient.close()"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "MCP 工具"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "工具",
+            "说明"
+          ],
+          "rows": [
+            [
+              "capture_page",
+              "调用配置的截图 provider 返回 PNG 截图。"
+            ],
+            [
+              "inspect_elements",
+              "返回已注册原生视图的元数据、文本、布局盒和可见状态。"
+            ],
+            [
+              "get_element_at_point",
+              "返回视口坐标处最小的已注册视图。"
+            ]
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "说明"
+        },
+        {
+          "type": "paragraph",
+          "text": "Apple 原生应用没有 DOM 查询 API。需要注册 AI 需要检查的视图或组件。UIKit 和 AppKit helper 会用窗口坐标测量已注册视图。"
+        }
+      ]
+    },
+    {
       "id": "mcp",
       "name": "@uicheck/mcp",
       "version": "0.1.4",
@@ -598,6 +721,129 @@ export const generatedDocsByLocale = {
         {
           "type": "paragraph",
           "text": "Flutter does not expose a DOM query API. Register the widgets that AI needs to inspect with a GlobalKey. The client measures each registered widget through RenderBox.localToGlobal."
+        }
+      ]
+    },
+    {
+      "id": "apple",
+      "name": "uicheck_apple",
+      "version": "0.1.4",
+      "description": "Apple native runtime client for uicheck",
+      "install": "Swift Package: https://github.com/uicheck/uicheck, product UICheckApple",
+      "source": "packages/apple",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/apple/README.md",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Apple native runtime client for UI Check. It connects iOS, macOS, tvOS, or visionOS apps to @uicheck/mcp over WebSocket so AI agents can request screenshots, registered native view metadata, layout boxes, and coordinates through MCP tools."
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Install"
+        },
+        {
+          "type": "paragraph",
+          "text": "Add this repository as a Swift Package dependency and select the UICheckApple product:"
+        },
+        {
+          "type": "code",
+          "lang": "txt",
+          "code": "https://github.com/uicheck/uicheck"
+        },
+        {
+          "type": "paragraph",
+          "text": "Package path:"
+        },
+        {
+          "type": "code",
+          "lang": "txt",
+          "code": "packages/apple"
+        },
+        {
+          "type": "paragraph",
+          "text": "Start the MCP server separately:"
+        },
+        {
+          "type": "code",
+          "lang": "sh",
+          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Usage"
+        },
+        {
+          "type": "paragraph",
+          "text": "Install the client near app startup:"
+        },
+        {
+          "type": "code",
+          "lang": "swift",
+          "code": "import UICheckApple\n\nlet client = installAppleUiCheck(\n  options: UiCheckAppleOptions(\n    socket: UiCheckAppleSocketOptions(\n      url: \"ws://127.0.0.1:17322/socket\",\n      clientId: \"ios-demo\"\n    ),\n    title: \"Demo\",\n    route: \"/home\",\n    platform: \"ios\",\n    viewport: {\n      UiCheckAppleViewportInfo(width: 390, height: 844, devicePixelRatio: 3)\n    },\n    screenshot: { params in\n      UiCheckAppleScreenshotResult(\n        title: \"Demo\",\n        width: 390,\n        height: 844,\n        mimeType: \"image/png\",\n        base64: captureAppAsBase64Png()\n      )\n    }\n  )\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Register views that AI should inspect:"
+        },
+        {
+          "type": "code",
+          "lang": "swift",
+          "code": "let unregister = registerAppleUiCheckView(\n  submitButton,\n  tag: \"UIButton\",\n  testID: \"submit-button\",\n  text: \"Submit\"\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "You can also register a custom frame provider when integrating with SwiftUI or non-view abstractions:"
+        },
+        {
+          "type": "code",
+          "lang": "swift",
+          "code": "let unregister = registerAppleUiCheckElement(\n  UiCheckAppleElementRegistration(\n    tag: \"Button\",\n    testID: \"submit-button\",\n    text: \"Submit\",\n    frame: { CGRect(x: 12, y: 24, width: 120, height: 44) }\n  )\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dispose when no longer needed:"
+        },
+        {
+          "type": "code",
+          "lang": "swift",
+          "code": "unregister()\nclient.close()"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "MCP Tools"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Tool",
+            "Description"
+          ],
+          "rows": [
+            [
+              "capture_page",
+              "Uses the configured screenshot provider to return a PNG screenshot."
+            ],
+            [
+              "inspect_elements",
+              "Returns registered native view metadata, text, layout boxes, and visibility."
+            ],
+            [
+              "get_element_at_point",
+              "Returns the smallest registered view at viewport coordinates."
+            ]
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Notes"
+        },
+        {
+          "type": "paragraph",
+          "text": "Apple native apps do not expose a DOM query API. Register the views or components that AI needs to inspect. UIKit and AppKit helpers measure registered views in window coordinates."
         }
       ]
     },

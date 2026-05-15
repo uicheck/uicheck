@@ -57,6 +57,7 @@ const dictionaries = {
         '@uicheck/taro 通过 selector query 读取小程序节点',
         '@uicheck/rn 通过注册 ref 暴露组件位置、testID 和 accessibilityLabel',
         'uicheck_flutter 通过 GlobalKey 暴露组件位置和截图',
+        'UICheckApple 通过原生 UIView/NSView 或 frame provider 暴露视图',
         '@uicheck/core 复用 WebSocket 协议和客户端 runtime'
       ]
     },
@@ -123,6 +124,7 @@ const dictionaries = {
         '@uicheck/taro reads Mini Program nodes through selector query',
         '@uicheck/rn exposes component boxes, testID, and accessibilityLabel through registered refs',
         'uicheck_flutter exposes widget boxes and screenshots through GlobalKey',
+        'UICheckApple exposes native UIView/NSView metadata through registered views or frame providers',
         '@uicheck/core shares the WebSocket protocol runtime and types'
       ]
     },
@@ -355,6 +357,7 @@ capture_page({ waitMs: 300 })`}</pre>
               <span>@uicheck/taro</span>
               <span>@uicheck/rn</span>
               <span>uicheck_flutter</span>
+              <span>UICheckApple</span>
             </div>
           </div>
           <div className="clipboard-copy">

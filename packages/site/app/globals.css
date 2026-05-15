@@ -703,6 +703,13 @@ h3 {
   background: rgba(255, 255, 255, 0.16);
 }
 
+.runtime-nodes span:nth-child(5) {
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  background: rgba(157, 216, 255, 0.22);
+}
+
 .clipboard-copy h2,
 .clipboard-copy p,
 .clipboard-copy .eyebrow {
@@ -1373,5 +1380,9 @@ h3 {
   .runtime-nodes span:nth-child(3) {
     left: 0;
     transform: none;
+  }
+
+  .runtime-nodes span:nth-child(5) {
+    top: 0;
   }
 }

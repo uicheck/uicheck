@@ -4,6 +4,7 @@ const meta = {
   "taro": "@uicheck/taro",
   "rn": "@uicheck/rn",
   "flutter": "uicheck_flutter",
+  "apple": "uicheck_apple",
   "mcp": "@uicheck/mcp",
   "core": "@uicheck/core",
 }

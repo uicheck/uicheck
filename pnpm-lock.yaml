@@ -11,6 +11,8 @@ importers:
 
   .: {}
 
+  packages/apple: {}
+
   packages/core:
     devDependencies:
       '@types/node':
