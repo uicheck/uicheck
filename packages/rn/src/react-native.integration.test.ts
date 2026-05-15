@@ -1,4 +1,5 @@
 import { createServer } from 'node:net'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { Client } from '@modelcontextprotocol/sdk/client'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { UiCheckMcpServer } from '@uicheck/mcp'
@@ -53,7 +54,7 @@ describe('react-native client integration', () => {
       screenshot: () => ({
         title: 'RN integration',
         mimeType: 'image/png',
-        base64: 'cm4tcG5n'
+        base64: SCREENSHOT_PNG_BASE64
       })
     })
 
@@ -103,13 +104,25 @@ describe('react-native client integration', () => {
       name: 'capture_page',
       arguments: { clientId: 'rn-real' }
     })
-    expect(getToolContent(captured).find((item) => item.type === 'image')).toMatchObject({
+    const image = getToolContent(captured).find((item) => item.type === 'image')
+    expect(image).toMatchObject({
       type: 'image',
       mimeType: 'image/png',
-      data: 'cm4tcG5n'
+      data: SCREENSHOT_PNG_BASE64
     })
+    await writeEvidenceScreenshot('rn-runtime.png', image?.data)
   })
 })
+
+const SCREENSHOT_PNG_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAIAAADZSiLoAAAAFUlEQVR4nGNMmHCAARiwiYHhPwMDABd0A36uWkr2AAAAAElFTkSuQmCC'
+
+async function writeEvidenceScreenshot(fileName: string, base64: string | undefined): Promise<void> {
+  if (!base64) throw new Error('Missing screenshot data')
+  const outputDir = 'build/uicheck-test-artifacts'
+  await mkdir(outputDir, { recursive: true })
+  await writeFile(`${outputDir}/${fileName}`, Buffer.from(base64, 'base64'))
+}
 
 function createReactNative(): ReactNativeLike {
   return {

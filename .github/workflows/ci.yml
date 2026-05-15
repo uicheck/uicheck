@@ -56,6 +56,16 @@ jobs:
           pnpm --filter @uicheck/rn run build
           pnpm --filter @uicheck/site run build
 
+      - name: Upload JavaScript runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: javascript-runtime-test-evidence
+          path: |
+            packages/web/build/uicheck-test-artifacts/**
+            packages/taro/build/uicheck-test-artifacts/**
+            packages/rn/build/uicheck-test-artifacts/**
+
   android:
     name: Android native
     runs-on: ubuntu-latest
