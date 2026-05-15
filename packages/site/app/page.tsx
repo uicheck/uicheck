@@ -19,44 +19,44 @@ const dictionaries = {
     },
     languageLabel: '语言',
     hero: {
-      eyebrow: '@uicheck/mcp + @uicheck/web',
-      title: '让 AI 看懂真实浏览器页面',
-      lead: 'UI Check 把页面截图、DOM 元素、布局盒、间距和坐标暴露给 AI。AI 可以通过 MCP 查询页面，也可以接收人工标注后的图片证据，再回到代码里修复 UI。',
+      eyebrow: '@uicheck/mcp for AI agents',
+      title: '给 AI 用的真实 UI 检查工具',
+      lead: 'UI Check 让 AI 通过 MCP 连接正在运行的应用，直接读取截图、元素树、布局盒、坐标和页面状态。浏览器、Taro 小程序、React Native 都可以接入同一个本地 MCP 服务。',
       primary: '开始接入',
-      secondary: '查看工具',
-      previewLabel: 'UI Check 产品预览'
+      secondary: 'AI 如何调用',
+      previewLabel: 'AI 通过 MCP 检查 UI 的流程预览'
     },
     workflow: {
-      eyebrow: 'Workflow',
-      title: '两条输入，一次修复',
-      text: '结构化布局信息适合机器判断，带标注截图适合视觉确认。两者一起给 AI，UI 修复会少很多盲猜。',
+      eyebrow: 'AI Workflow',
+      title: 'AI 先接 MCP，再观察真实运行环境',
+      text: 'uicheck 的重点不是给用户一个页面插件，而是给 AI 一个稳定的观察通道。应用侧客户端负责把真实 UI 暴露给本机 MCP，AI 客户端只需要接入 MCP endpoint。',
       steps: [
-        ['1', '页面接入 @uicheck/web', '注入悬浮球和 WebSocket 客户端，连接本机 @uicheck/mcp。'],
-        ['2', 'AI 调用 MCP 工具', '查询页面截图、元素布局、可见文本、坐标和样式信息。'],
-        ['3', '人工可补充标注', '手动选择元素后生成带编号和连线的图片到剪切板。'],
-        ['4', '把证据交给 AI 修复', 'AI 同时拿到结构化 DOM 和视觉截图，减少猜测。']
+        ['1', '启动 @uicheck/mcp', '在本地启动 MCP 服务，向 AI 客户端暴露 http://127.0.0.1:17322/mcp。'],
+        ['2', '应用接入运行环境客户端', 'Web、Taro、React Native 通过 WebSocket 连接同一个 MCP 服务。'],
+        ['3', 'AI 调用 MCP 工具', 'AI 读取已连接客户端列表、页面截图、元素布局、文本和坐标。'],
+        ['4', '基于真实证据修复 UI', 'AI 拿到运行时观察结果后，再回到代码里定位和修改问题。']
       ]
     },
     tools: {
       eyebrow: 'MCP Tools',
-      title: 'AI 可以直接调用的页面观察能力',
-      text: '@uicheck/mcp 是本地 MCP 服务，浏览器页面通过 WebSocket 接入后，AI 就能向页面发请求。',
+      title: 'AI 可以直接调用的 UI 观察能力',
+      text: '@uicheck/mcp 是本地 MCP 服务。把它配置到 Cursor、Claude Desktop、Codex 等支持 MCP 的 AI 工具后，AI 就能向已连接的应用请求 UI 证据。',
       items: [
-        ['list_clients', '查看已连接的浏览器页面、标题、URL、视口和在线状态。'],
-        ['capture_page', '让页面返回 PNG 截图，AI 可以直接看当前 UI。'],
-        ['inspect_elements', '读取选择器、文本、布局盒、间距、颜色等结构化信息。'],
-        ['get_element_at_point', '按坐标定位元素，并返回祖先链，适合修复错位和遮挡。']
+        ['list_clients', '查看已连接的运行环境、标题、URL/路由、视口和在线状态。'],
+        ['capture_page', '请求当前应用返回 PNG 截图，让 AI 看到真实 UI。'],
+        ['inspect_elements', '读取选择器或已注册组件的文本、布局盒、可见状态和元数据。'],
+        ['get_element_at_point', '按坐标定位元素，适合排查错位、遮挡和触控区域问题。']
       ]
     },
-    markup: {
-      eyebrow: 'Manual Markup',
-      title: '人工选择元素，生成标注图到剪切板',
-      text: '当 AI 需要更明确的视觉上下文时，开发者可以用悬浮球进入标注模式，选择页面元素并复制带编号、边框、布局信息的图片。',
+    runtimes: {
+      eyebrow: 'Runtimes',
+      title: '同一个 MCP 服务，连接不同运行环境',
+      text: '不同平台只负责把自己的 UI 能力转成 uicheck 协议。AI 不需要知道页面来自浏览器、Taro 小程序还是 React Native，它只调用同一组 MCP tools。',
       useCases: [
-        '定位按钮、弹窗、表格、表单等元素的真实位置',
-        '排查间距、遮挡、溢出、响应式错位',
-        '把页面视觉证据直接喂给 AI，让它改代码更准',
-        '在本地开发页面中快速标注问题区域'
+        '@uicheck/web 读取浏览器 DOM、截图和坐标',
+        '@uicheck/taro 通过 selector query 读取小程序节点',
+        '@uicheck/rn 通过注册 ref 暴露组件位置、testID 和 accessibilityLabel',
+        '@uicheck/core 复用 WebSocket 协议和客户端 runtime'
       ]
     },
     docs: {
@@ -67,10 +67,10 @@ const dictionaries = {
     },
     install: {
       eyebrow: 'Install',
-      title: '本地服务 + 页面脚本',
-      text: '一个端口跑 MCP，一个 WebSocket 连接页面。页面可以通过 npm 包接入，也可以用本地 CDN 脚本接入。',
+      title: 'AI 客户端接 MCP，应用接 WebSocket',
+      text: '先启动本地 MCP 服务，把 MCP endpoint 配给 AI；再在对应运行环境安装客户端，让应用连接 socket endpoint。',
       mcpTitle: '启动 @uicheck/mcp',
-      webTitle: '页面接入 @uicheck/web'
+      webTitle: 'Web 运行环境接入'
     }
   },
   en: {
@@ -84,44 +84,44 @@ const dictionaries = {
     },
     languageLabel: 'Language',
     hero: {
-      eyebrow: '@uicheck/mcp + @uicheck/web',
-      title: 'Help AI understand real browser pages',
-      lead: 'UI Check exposes screenshots, DOM elements, layout boxes, spacing, and coordinates to AI. Agents can query the live page through MCP or use manually annotated visual evidence before fixing UI code.',
+      eyebrow: '@uicheck/mcp for AI agents',
+      title: 'Runtime UI inspection built for AI',
+      lead: 'UI Check lets AI agents connect to running apps through MCP and read screenshots, element trees, layout boxes, coordinates, and page state. Browser, Taro Mini Program, and React Native clients all connect to the same local MCP server.',
       primary: 'Get started',
-      secondary: 'View tools',
-      previewLabel: 'UI Check product preview'
+      secondary: 'How AI calls it',
+      previewLabel: 'AI inspecting UI through MCP preview'
     },
     workflow: {
-      eyebrow: 'Workflow',
-      title: 'Two evidence streams, one UI fix',
-      text: 'Structured layout data is machine-friendly, while annotated screenshots make visual issues obvious. Together they reduce guesswork in AI-assisted UI fixes.',
+      eyebrow: 'AI Workflow',
+      title: 'Connect AI to MCP, then inspect the real runtime',
+      text: 'uicheck is not centered on an end-user page widget. It gives AI a stable observation channel. Runtime clients expose the real UI to local MCP, and AI clients connect to the MCP endpoint.',
       steps: [
-        ['1', 'Install @uicheck/web', 'Inject the floating checker and WebSocket client, then connect it to local @uicheck/mcp.'],
-        ['2', 'Let AI call MCP tools', 'Query screenshots, element layout, visible text, coordinates, and style details.'],
-        ['3', 'Add manual markup when useful', 'Select elements manually and copy a numbered annotation image to the clipboard.'],
-        ['4', 'Send evidence back to code', 'Give AI both structured DOM data and visual proof so fixes are grounded in the real UI.']
+        ['1', 'Start @uicheck/mcp', 'Run the local MCP server and expose http://127.0.0.1:17322/mcp to your AI client.'],
+        ['2', 'Install a runtime client', 'Web, Taro, and React Native clients connect to the same MCP server over WebSocket.'],
+        ['3', 'Let AI call MCP tools', 'AI reads connected clients, screenshots, element layout, text, and coordinates.'],
+        ['4', 'Fix UI from real evidence', 'The agent uses runtime observations before changing source code.']
       ]
     },
     tools: {
       eyebrow: 'MCP Tools',
-      title: 'Page inspection tools AI can call directly',
-      text: '@uicheck/mcp runs locally. Once a client connects over WebSocket, AI can request observations from the page.',
+      title: 'UI inspection tools AI can call directly',
+      text: '@uicheck/mcp runs locally. Configure it in Cursor, Claude Desktop, Codex, or any MCP-capable AI tool so the agent can request observations from connected apps.',
       items: [
-        ['list_clients', 'List connected pages with title, URL, viewport, and online status.'],
-        ['capture_page', 'Ask the page for a PNG screenshot so AI can inspect the current UI.'],
-        ['inspect_elements', 'Read selectors, text, layout boxes, spacing, colors, and other structured details.'],
-        ['get_element_at_point', 'Locate the element at viewport coordinates and return its ancestor chain.']
+        ['list_clients', 'List connected runtimes with title, URL or route, viewport, and online status.'],
+        ['capture_page', 'Ask the app for a PNG screenshot so AI can inspect the current UI.'],
+        ['inspect_elements', 'Read selectors or registered components with text, layout boxes, visibility, and metadata.'],
+        ['get_element_at_point', 'Locate the element at viewport coordinates for overlap, offset, and touch-target issues.']
       ]
     },
-    markup: {
-      eyebrow: 'Manual Markup',
-      title: 'Select elements and copy annotated screenshots',
-      text: 'When AI needs clearer visual context, developers can open markup mode from the floating checker, select page elements, and copy a numbered layout image.',
+    runtimes: {
+      eyebrow: 'Runtimes',
+      title: 'One MCP server for multiple runtimes',
+      text: 'Each platform adapts its own UI model into the uicheck protocol. AI does not need to know whether the screen comes from a browser, a Taro Mini Program, or React Native; it calls the same MCP tools.',
       useCases: [
-        'Find the real position of buttons, modals, tables, and forms',
-        'Debug spacing, overlap, overflow, and responsive layout issues',
-        'Feed visual evidence directly to AI so code changes are more precise',
-        'Quickly annotate problem areas in local development pages'
+        '@uicheck/web reads browser DOM, screenshots, and coordinates',
+        '@uicheck/taro reads Mini Program nodes through selector query',
+        '@uicheck/rn exposes component boxes, testID, and accessibilityLabel through registered refs',
+        '@uicheck/core shares the WebSocket protocol runtime and types'
       ]
     },
     docs: {
@@ -132,10 +132,10 @@ const dictionaries = {
     },
     install: {
       eyebrow: 'Install',
-      title: 'Local service + page client',
-      text: 'Run MCP on one port and connect the page over WebSocket. Use the npm package or the local CDN script.',
+      title: 'AI connects to MCP, apps connect over WebSocket',
+      text: 'Start the local MCP server, configure the MCP endpoint in your AI client, then install the runtime client that matches your app.',
       mcpTitle: 'Start @uicheck/mcp',
-      webTitle: 'Install @uicheck/web'
+      webTitle: 'Connect a Web runtime'
     }
   }
 } satisfies Record<Locale, Record<string, unknown>>
@@ -182,7 +182,6 @@ import html2canvas from 'html2canvas'
 import { installUiCheck } from '@uicheck/web'
 
 installUiCheck(html2canvas, {
-  position: 'bottom-left',
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
@@ -280,17 +279,24 @@ installUiCheck(html2canvas, {
                   </div>
                 </div>
               </div>
-              <div className="floatball">⌕</div>
-              <div className="annotation one">#1 margin 24 / padding 18</div>
-              <div className="annotation two">#2 selector .metric-card:nth-of-type(2)</div>
+              <div className="runtime-pill browser-pill">@uicheck/web</div>
+              <div className="runtime-pill socket-pill">WebSocket client</div>
             </div>
 
             <div className="agent-panel">
               <div>
                 <span className="status-dot" />
-                <span>AI Agent</span>
+                <span>AI Agent via MCP</span>
               </div>
-              <pre>{`inspect_elements({
+              <pre>{`{
+  "mcpServers": {
+    "uicheck": {
+      "url": "http://127.0.0.1:17322/mcp"
+    }
+  }
+}
+
+inspect_elements({
   selector: ".mock-grid",
   limit: 20
 })
@@ -336,20 +342,24 @@ capture_page({ waitMs: 300 })`}</pre>
 
       <section className="section visual-band">
         <div className="clipboard-preview">
-          <div className="canvas-shot">
-            <div className="shot-top" />
-            <div className="shot-body">
-              <span className="box a">1</span>
-              <span className="box b">2</span>
-              <span className="box c">3</span>
+          <div className="runtime-diagram" aria-hidden="true">
+            <div className="runtime-hub">
+              <span>@uicheck/mcp</span>
+              <strong>MCP endpoint</strong>
+              <code>127.0.0.1:17322/mcp</code>
+            </div>
+            <div className="runtime-nodes">
+              <span>@uicheck/web</span>
+              <span>@uicheck/taro</span>
+              <span>@uicheck/rn</span>
             </div>
           </div>
           <div className="clipboard-copy">
-            <p className="eyebrow">{t.markup.eyebrow}</p>
-            <h2>{t.markup.title}</h2>
-            <p>{t.markup.text}</p>
+            <p className="eyebrow">{t.runtimes.eyebrow}</p>
+            <h2>{t.runtimes.title}</h2>
+            <p>{t.runtimes.text}</p>
             <ul>
-              {t.markup.useCases.map((item) => (
+              {t.runtimes.useCases.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>

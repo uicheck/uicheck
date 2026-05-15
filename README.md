@@ -4,9 +4,9 @@
 
 # UI Check
 
-AI-readable UI inspection for browser, React Native, and Taro Mini Program pages.
+AI-readable runtime UI inspection for browser, React Native, and Taro Mini Program apps.
 
-UI Check connects live pages to AI agents through MCP. It exposes screenshots, element metadata, layout boxes, coordinates, and manual visual annotations so AI can debug UI issues against the real page instead of guessing from code alone.
+UI Check connects live app runtimes to AI agents through MCP. It exposes screenshots, element metadata, layout boxes, coordinates, and route state so AI can debug UI issues against the real running app instead of guessing from code alone.
 
 Website: https://uicheck.ai
 
@@ -17,7 +17,7 @@ GitHub: https://github.com/uicheck/uicheck
 | Package | Description |
 | --- | --- |
 | `@uicheck/core` | Shared WebSocket protocol runtime and types |
-| `@uicheck/web` | Browser DOM client with floating checker, screenshot, element inspection, and CDN bundle |
+| `@uicheck/web` | Browser DOM runtime client with screenshot and element inspection |
 | `@uicheck/rn` | React Native client using registered refs for element inspection |
 | `@uicheck/taro` | Taro Mini Program client using selector query inspection |
 | `@uicheck/mcp` | Local MCP server exposing UI inspection tools to AI agents |
@@ -42,7 +42,6 @@ import html2canvas from 'html2canvas'
 import { installUiCheck } from '@uicheck/web'
 
 installUiCheck(html2canvas, {
-  position: 'bottom-left',
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
@@ -101,10 +100,10 @@ registerReactNativeUiCheckElement({
 
 | Tool | Description |
 | --- | --- |
-| `list_clients` | Lists connected uicheck clients |
-| `capture_page` | Requests a PNG screenshot from a connected page |
-| `inspect_elements` | Returns selectors, text, layout boxes, spacing, and metadata |
-| `get_element_at_point` | Returns the element and ancestors at viewport coordinates |
+| `list_clients` | Lists connected uicheck runtime clients |
+| `capture_page` | Requests a PNG screenshot from a connected runtime |
+| `inspect_elements` | Returns selectors or registered components, text, layout boxes, and metadata |
+| `get_element_at_point` | Returns the element at viewport coordinates |
 
 ## Development
 

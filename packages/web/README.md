@@ -1,6 +1,6 @@
 # @uicheck/web
 
-Browser-side floating UI checker. It can connect to `@uicheck/mcp` over WebSocket so MCP tools can request screenshots and DOM element info from the live page.
+Browser runtime client for UI Check. It connects a live DOM page to `@uicheck/mcp` over WebSocket so AI agents can request screenshots, element metadata, layout boxes, and coordinates through MCP tools.
 
 ## Usage
 
@@ -9,32 +9,16 @@ import html2canvas from 'html2canvas'
 import { installUiCheck } from '@uicheck/web'
 
 installUiCheck(html2canvas, {
-  position: 'bottom-left',
-  offset: [20, 20],
-  size: 36,
-  color: '#ef4444',
-  draggable: true,
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
 })
 ```
 
-## CDN
-
-```html
-<script src="http://127.0.0.1:17321/uicheck.js?socketUrl=ws://127.0.0.1:17322/socket"></script>
-```
-
 ## Options
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `position` | top-left or top-right or bottom-left or bottom-right | `bottom-left` | Floatball position |
-| `offset` | `[number, number]` | `[20, 20]` | Offset from edge in px |
-| `size` | `number` | `36` | Floatball diameter |
-| `color` | `string` | `#ef4444` | Floatball background |
-| `draggable` | `boolean` | `true` | Enable drag to move |
 | `socket.url` | `string` | - | `@uicheck/mcp` WebSocket URL |
 | `socket.clientId` | `string` | - | Optional stable client id |
 | `socket.reconnectMs` | `number` | `1000` | Reconnect interval |

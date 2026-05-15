@@ -34,7 +34,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "浏览器侧 UI 检查客户端。它会向页面注入悬浮球，也可以通过 WebSocket 连接 @uicheck/mcp，让 MCP 工具读取当前页面截图和 DOM 元素信息。"
+          "text": "浏览器运行环境客户端。它通过 WebSocket 把真实 DOM 页面连接到 @uicheck/mcp，让 AI 可以通过 MCP 工具读取截图、元素元数据、布局盒和坐标。"
         },
         {
           "type": "heading",
@@ -44,17 +44,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "import html2canvas from 'html2canvas'\nimport { installUiCheck } from '@uicheck/web'\n\ninstallUiCheck(html2canvas, {\n  position: 'bottom-left',\n  offset: [20, 20],\n  size: 36,\n  color: '#ef4444',\n  draggable: true,\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "CDN"
-        },
-        {
-          "type": "code",
-          "lang": "html",
-          "code": "<script src=\"http://127.0.0.1:17321/uicheck.js?socketUrl=ws://127.0.0.1:17322/socket\"></script>"
+          "code": "import html2canvas from 'html2canvas'\nimport { installUiCheck } from '@uicheck/web'\n\ninstallUiCheck(html2canvas, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         },
         {
           "type": "heading",
@@ -70,36 +60,6 @@ export const generatedDocsByLocale = {
             "说明"
           ],
           "rows": [
-            [
-              "position",
-              "top-left or top-right or bottom-left or bottom-right",
-              "bottom-left",
-              "悬浮球位置"
-            ],
-            [
-              "offset",
-              "[number, number]",
-              "[20, 20]",
-              "距离边缘的偏移量，单位 px"
-            ],
-            [
-              "size",
-              "number",
-              "36",
-              "悬浮球直径"
-            ],
-            [
-              "color",
-              "string",
-              "#ef4444",
-              "悬浮球背景色"
-            ],
-            [
-              "draggable",
-              "boolean",
-              "true",
-              "是否允许拖拽悬浮球"
-            ],
             [
               "socket.url",
               "string",
@@ -187,7 +147,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "本地 MCP 服务，用于通过 WebSocket 连接 uicheck 客户端。页面连接后，AI 可以调用 MCP 工具向页面请求截图和元素信息。"
+          "text": "本地 MCP 服务，用于通过 WebSocket 连接 uicheck 运行环境客户端。浏览器、Taro 小程序或 React Native 应用连接后，AI 可以调用 MCP 工具请求截图和元素信息。"
         },
         {
           "type": "heading",
@@ -211,25 +171,34 @@ export const generatedDocsByLocale = {
         {
           "type": "heading",
           "level": 2,
-          "text": "@uicheck/web"
+          "text": "AI 客户端配置"
         },
         {
           "type": "paragraph",
-          "text": "给页面脚本配置 socket 地址："
+          "text": "把 MCP endpoint 配到任意支持 MCP 的 AI 客户端："
+        },
+        {
+          "type": "code",
+          "lang": "json",
+          "code": "{\n  \"mcpServers\": {\n    \"uicheck\": {\n      \"url\": \"http://127.0.0.1:17322/mcp\"\n    }\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "运行环境客户端"
+        },
+        {
+          "type": "paragraph",
+          "text": "应用运行环境连接 socket 地址。浏览器页面使用 @uicheck/web："
         },
         {
           "type": "code",
           "lang": "ts",
-          "code": "installUiCheck(html2canvas, {\n  position: 'bottom-left',\n  offset: [20, 20],\n  size: 36,\n  color: '#ef4444',\n  draggable: true,\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+          "code": "installUiCheck(html2canvas, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         },
         {
           "type": "paragraph",
-          "text": "也支持 CDN 查询参数："
-        },
-        {
-          "type": "code",
-          "lang": "html",
-          "code": "<script src=\"http://127.0.0.1:17321/uicheck.js?socketUrl=ws://127.0.0.1:17322/socket\"></script>"
+          "text": "Taro 小程序使用 @uicheck/taro，React Native 使用 @uicheck/rn。"
         },
         {
           "type": "heading",
@@ -245,19 +214,19 @@ export const generatedDocsByLocale = {
           "rows": [
             [
               "list_clients",
-              "查看已连接的 uicheck 客户端。"
+              "查看已连接的 uicheck 运行环境客户端。"
             ],
             [
               "capture_page",
-              "请求已连接页面返回 PNG 截图。"
+              "请求已连接运行环境返回 PNG 截图。"
             ],
             [
               "inspect_elements",
-              "返回可见选择器、文本、布局盒和间距信息。"
+              "返回可见选择器或已注册组件、文本、布局盒和元数据。"
             ],
             [
               "get_element_at_point",
-              "返回视口坐标处的元素和祖先链。"
+              "返回视口坐标处的元素。"
             ]
           ]
         },
@@ -312,7 +281,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Browser-side floating UI checker. It can connect to @uicheck/mcp over WebSocket so MCP tools can request screenshots and DOM element info from the live page."
+          "text": "Browser runtime client for UI Check. It connects a live DOM page to @uicheck/mcp over WebSocket so AI agents can request screenshots, element metadata, layout boxes, and coordinates through MCP tools."
         },
         {
           "type": "heading",
@@ -322,17 +291,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "import html2canvas from 'html2canvas'\nimport { installUiCheck } from '@uicheck/web'\n\ninstallUiCheck(html2canvas, {\n  position: 'bottom-left',\n  offset: [20, 20],\n  size: 36,\n  color: '#ef4444',\n  draggable: true,\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "CDN"
-        },
-        {
-          "type": "code",
-          "lang": "html",
-          "code": "<script src=\"http://127.0.0.1:17321/uicheck.js?socketUrl=ws://127.0.0.1:17322/socket\"></script>"
+          "code": "import html2canvas from 'html2canvas'\nimport { installUiCheck } from '@uicheck/web'\n\ninstallUiCheck(html2canvas, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         },
         {
           "type": "heading",
@@ -348,36 +307,6 @@ export const generatedDocsByLocale = {
             "Description"
           ],
           "rows": [
-            [
-              "position",
-              "top-left or top-right or bottom-left or bottom-right",
-              "bottom-left",
-              "Floatball position"
-            ],
-            [
-              "offset",
-              "[number, number]",
-              "[20, 20]",
-              "Offset from edge in px"
-            ],
-            [
-              "size",
-              "number",
-              "36",
-              "Floatball diameter"
-            ],
-            [
-              "color",
-              "string",
-              "#ef4444",
-              "Floatball background"
-            ],
-            [
-              "draggable",
-              "boolean",
-              "true",
-              "Enable drag to move"
-            ],
             [
               "socket.url",
               "string",
@@ -465,7 +394,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Local MCP server for uicheck clients. The page connects to this server through WebSocket, and AI agents call MCP tools to ask that page for screenshots and element info."
+          "text": "Local MCP server for uicheck clients. Runtime clients connect to this server through WebSocket, and AI agents call MCP tools to request screenshots and element info from browser, Taro, or React Native apps."
         },
         {
           "type": "heading",
@@ -489,25 +418,34 @@ export const generatedDocsByLocale = {
         {
           "type": "heading",
           "level": 2,
-          "text": "@uicheck/web"
+          "text": "AI Client Setup"
         },
         {
           "type": "paragraph",
-          "text": "Configure the page script with the socket URL:"
+          "text": "Add the MCP endpoint to any MCP-capable AI client:"
+        },
+        {
+          "type": "code",
+          "lang": "json",
+          "code": "{\n  \"mcpServers\": {\n    \"uicheck\": {\n      \"url\": \"http://127.0.0.1:17322/mcp\"\n    }\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Runtime Clients"
+        },
+        {
+          "type": "paragraph",
+          "text": "Connect the app runtime to the socket URL. Browser pages use @uicheck/web:"
         },
         {
           "type": "code",
           "lang": "ts",
-          "code": "installUiCheck(html2canvas, {\n  position: 'bottom-left',\n  offset: [20, 20],\n  size: 36,\n  color: '#ef4444',\n  draggable: true,\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+          "code": "installUiCheck(html2canvas, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         },
         {
           "type": "paragraph",
-          "text": "CDN query params are also supported:"
-        },
-        {
-          "type": "code",
-          "lang": "html",
-          "code": "<script src=\"http://127.0.0.1:17321/uicheck.js?socketUrl=ws://127.0.0.1:17322/socket\"></script>"
+          "text": "Use @uicheck/taro for Taro Mini Program pages and @uicheck/rn for React Native screens."
         },
         {
           "type": "heading",
@@ -523,19 +461,19 @@ export const generatedDocsByLocale = {
           "rows": [
             [
               "list_clients",
-              "Lists connected uicheck clients."
+              "Lists connected uicheck runtime clients."
             ],
             [
               "capture_page",
-              "Asks a connected page to return a PNG screenshot."
+              "Asks a connected runtime to return a PNG screenshot."
             ],
             [
               "inspect_elements",
-              "Returns visible selectors, text, layout boxes, and spacing info."
+              "Returns visible selectors or registered components, text, layout boxes, and metadata."
             ],
             [
               "get_element_at_point",
-              "Returns the element and ancestors at viewport coordinates."
+              "Returns the element at viewport coordinates."
             ]
           ]
         },

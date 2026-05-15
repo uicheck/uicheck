@@ -1,6 +1,6 @@
 # @uicheck/mcp
 
-本地 MCP 服务，用于通过 WebSocket 连接 uicheck 客户端。页面连接后，AI 可以调用 MCP 工具向页面请求截图和元素信息。
+本地 MCP 服务，用于通过 WebSocket 连接 uicheck 运行环境客户端。浏览器、Taro 小程序或 React Native 应用连接后，AI 可以调用 MCP 工具请求截图和元素信息。
 
 ## 启动
 
@@ -16,37 +16,42 @@ MCP:    http://127.0.0.1:17322/mcp
 Socket: ws://127.0.0.1:17322/socket
 ```
 
-## @uicheck/web
+## AI 客户端配置
 
-给页面脚本配置 socket 地址：
+把 MCP endpoint 配到任意支持 MCP 的 AI 客户端：
+
+```json
+{
+  "mcpServers": {
+    "uicheck": {
+      "url": "http://127.0.0.1:17322/mcp"
+    }
+  }
+}
+```
+
+## 运行环境客户端
+
+应用运行环境连接 socket 地址。浏览器页面使用 `@uicheck/web`：
 
 ```ts
 installUiCheck(html2canvas, {
-  position: 'bottom-left',
-  offset: [20, 20],
-  size: 36,
-  color: '#ef4444',
-  draggable: true,
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
 })
 ```
 
-也支持 CDN 查询参数：
-
-```html
-<script src="http://127.0.0.1:17321/uicheck.js?socketUrl=ws://127.0.0.1:17322/socket"></script>
-```
+Taro 小程序使用 `@uicheck/taro`，React Native 使用 `@uicheck/rn`。
 
 ## MCP 工具
 
 | 工具 | 说明 |
 | --- | --- |
-| `list_clients` | 查看已连接的 uicheck 客户端。 |
-| `capture_page` | 请求已连接页面返回 PNG 截图。 |
-| `inspect_elements` | 返回可见选择器、文本、布局盒和间距信息。 |
-| `get_element_at_point` | 返回视口坐标处的元素和祖先链。 |
+| `list_clients` | 查看已连接的 uicheck 运行环境客户端。 |
+| `capture_page` | 请求已连接运行环境返回 PNG 截图。 |
+| `inspect_elements` | 返回可见选择器或已注册组件、文本、布局盒和元数据。 |
+| `get_element_at_point` | 返回视口坐标处的元素。 |
 
 ## CLI
 

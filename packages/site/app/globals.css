@@ -408,42 +408,31 @@ h1 {
   width: 54%;
 }
 
-.floatball {
+.runtime-pill {
   position: absolute;
-  left: 18px;
-  bottom: 18px;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
   color: #fff;
-  background: var(--accent);
-  box-shadow: 0 10px 28px rgba(232, 77, 61, 0.35);
-  font-size: 24px;
+  background: #172033;
+  box-shadow: 0 12px 30px rgba(16, 24, 40, 0.22);
+  font-size: 12px;
   font-weight: 900;
 }
 
-.annotation {
-  position: absolute;
+.browser-pill {
+  left: 18px;
+  bottom: 18px;
+  background: var(--blue);
+}
+
+.socket-pill {
   right: 18px;
-  max-width: 238px;
-  padding: 10px 12px;
-  border: 1px solid #1f2937;
-  border-radius: 7px;
-  color: #101828;
-  background: #fff8d8;
-  font-size: 12px;
-  font-weight: 800;
-  box-shadow: 0 10px 22px rgba(24, 36, 58, 0.12);
-}
-
-.annotation.one {
-  top: 118px;
-}
-
-.annotation.two {
-  bottom: 92px;
+  bottom: 18px;
+  background: var(--green);
 }
 
 .agent-panel {
@@ -598,61 +587,114 @@ h3 {
   align-items: center;
 }
 
-.canvas-shot {
+.runtime-diagram {
+  position: relative;
+  display: grid;
+  min-height: 420px;
+  place-items: center;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 8px;
-  background: #eef3f8;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    #102622;
+  background-size: 48px 48px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
 }
 
-.shot-top {
-  height: 54px;
-  background: #fff;
-  border-bottom: 1px solid #dae2ec;
-}
-
-.shot-body {
-  position: relative;
-  min-height: 380px;
-  background:
-    linear-gradient(90deg, #eaf0f7 0 26%, transparent 26%),
-    linear-gradient(#ffffff, #ffffff);
-}
-
-.box {
+.runtime-diagram::before,
+.runtime-diagram::after {
   position: absolute;
+  content: "";
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.runtime-diagram::before {
+  left: 18%;
+  right: 18%;
+  top: 50%;
+  height: 1px;
+}
+
+.runtime-diagram::after {
+  left: 50%;
+  top: 22%;
+  bottom: 18%;
+  width: 1px;
+}
+
+.runtime-hub {
+  position: relative;
+  z-index: 1;
   display: grid;
+  gap: 8px;
   place-items: center;
-  border: 3px solid var(--accent);
+  width: min(300px, 78%);
+  min-height: 160px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 8px;
   color: #fff;
-  background: rgba(232, 77, 61, 0.9);
+  background: #172033;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  text-align: center;
+}
+
+.runtime-hub span {
+  color: #9dd8ff;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
   font-weight: 900;
 }
 
-.box.a {
-  left: 34%;
-  top: 56px;
-  width: 180px;
-  height: 92px;
+.runtime-hub strong {
+  font-size: 28px;
 }
 
-.box.b {
-  left: 62%;
-  top: 56px;
-  width: 180px;
-  height: 92px;
-  border-color: #0f9f6e;
-  background: rgba(15, 159, 110, 0.9);
+.runtime-hub code {
+  color: #d8e3f2;
+  font-size: 12px;
 }
 
-.box.c {
-  left: 34%;
-  right: 8%;
-  bottom: 52px;
-  height: 120px;
-  border-color: #246bfe;
-  background: rgba(36, 107, 254, 0.9);
+.runtime-nodes {
+  position: absolute;
+  inset: 28px;
+}
+
+.runtime-nodes span {
+  position: absolute;
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 8px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  font-weight: 900;
+  backdrop-filter: blur(8px);
+}
+
+.runtime-nodes span:nth-child(1) {
+  left: 0;
+  top: 42%;
+  background: rgba(36, 107, 254, 0.36);
+}
+
+.runtime-nodes span:nth-child(2) {
+  right: 0;
+  top: 42%;
+  background: rgba(15, 159, 110, 0.34);
+}
+
+.runtime-nodes span:nth-child(3) {
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  background: rgba(232, 77, 61, 0.34);
 }
 
 .clipboard-copy h2,
@@ -1289,10 +1331,6 @@ h3 {
     min-height: 570px;
   }
 
-  .annotation {
-    display: none;
-  }
-
   .agent-panel {
     left: 0;
     right: 0;
@@ -1308,21 +1346,21 @@ h3 {
     padding-block: 64px;
   }
 
-  .shot-body {
-    min-height: 320px;
+  .runtime-diagram {
+    min-height: 360px;
   }
 
-  .box.a,
-  .box.b {
-    left: 34%;
-    width: 52%;
+  .runtime-nodes {
+    inset: 18px;
   }
 
-  .box.b {
-    top: 168px;
+  .runtime-nodes span {
+    font-size: 11px;
   }
 
-  .box.c {
-    display: none;
+  .runtime-nodes span:nth-child(1),
+  .runtime-nodes span:nth-child(2) {
+    top: auto;
+    bottom: 78px;
   }
 }
