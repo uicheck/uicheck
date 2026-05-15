@@ -1,0 +1,40 @@
+# @uicheck/web
+
+浏览器侧 UI 检查客户端。它会向页面注入悬浮球，也可以通过 WebSocket 连接 `@uicheck/mcp`，让 MCP 工具读取当前页面截图和 DOM 元素信息。
+
+## 使用
+
+```ts
+import html2canvas from 'html2canvas'
+import { installUiCheck } from '@uicheck/web'
+
+installUiCheck(html2canvas, {
+  position: 'bottom-left',
+  offset: [20, 20],
+  size: 36,
+  color: '#ef4444',
+  draggable: true,
+  socket: {
+    url: 'ws://127.0.0.1:17322/socket'
+  }
+})
+```
+
+## CDN
+
+```html
+<script src="http://127.0.0.1:17321/uicheck.js?socketUrl=ws://127.0.0.1:17322/socket"></script>
+```
+
+## 选项
+
+| 选项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `position` | top-left or top-right or bottom-left or bottom-right | `bottom-left` | 悬浮球位置 |
+| `offset` | `[number, number]` | `[20, 20]` | 距离边缘的偏移量，单位 px |
+| `size` | `number` | `36` | 悬浮球直径 |
+| `color` | `string` | `#ef4444` | 悬浮球背景色 |
+| `draggable` | `boolean` | `true` | 是否允许拖拽悬浮球 |
+| `socket.url` | `string` | - | `@uicheck/mcp` WebSocket 地址 |
+| `socket.clientId` | `string` | - | 可选的稳定客户端 ID |
+| `socket.reconnectMs` | `number` | `1000` | 断线重连间隔 |

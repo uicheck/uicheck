@@ -1,0 +1,14 @@
+# @uicheck/taro
+
+Taro 小程序侧 UI 检查客户端。它通过小程序 selector query 读取页面元素，并连接 `@uicheck/mcp` 给 AI 提供结构化 UI 信息。
+
+```ts
+import Taro from '@tarojs/taro'
+import { installTaroUiCheck } from '@uicheck/taro'
+
+installTaroUiCheck(Taro, {
+  socket: {
+    url: 'ws://127.0.0.1:17322/socket'
+  }
+})
+```

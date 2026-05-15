@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "generate:docs": "node scripts/generate-docs.mjs",
+    "predev": "pnpm run generate:docs",
+    "prebuild": "pnpm run generate:docs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
