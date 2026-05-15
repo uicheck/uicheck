@@ -40,7 +40,8 @@ jobs:
         run: pnpm --filter @uicheck/mcp run build
 
       - name: Publish to npm
-        run: pnpm --filter @uicheck/mcp publish --access public
+        working-directory: packages/mcp
+        run: pnpm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
