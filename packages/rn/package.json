@@ -31,7 +31,9 @@
     "@uicheck/core": "workspace:*"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^22.0.0",
+    "@uicheck/mcp": "workspace:*",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",
     "vitest": "^4.1.6"

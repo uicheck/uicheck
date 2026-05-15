@@ -45,11 +45,15 @@
     "html2canvas": "^1.4.1"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
+    "@uicheck/mcp": "workspace:*",
     "esbuild": "^0.27.0",
     "jsdom": "^29.1.1",
     "tsup": "^8.4.0",
     "typescript": "^5.8.0",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.6",
+    "ws": "^8.20.1"
   }
 }
