@@ -6,7 +6,7 @@ const tools = [
 ]
 
 const steps = [
-  ['1', '页面接入 @uicheck/core', '注入悬浮球和 WebSocket 客户端，连接本机 @uicheck/mcp。'],
+  ['1', '页面接入 @uicheck/web', '注入悬浮球和 WebSocket 客户端，连接本机 @uicheck/mcp。'],
   ['2', 'AI 调用 MCP 工具', '查询页面截图、元素布局、可见文本、坐标和样式信息。'],
   ['3', '人工可补充标注', '手动选择元素后生成带编号和连线的图片到剪切板。'],
   ['4', '把证据交给 AI 修复', 'AI 同时拿到结构化 DOM 和视觉截图，减少猜测。']
@@ -37,7 +37,7 @@ export default function Home() {
 
         <div className="hero-inner" id="top">
           <div className="hero-copy">
-            <p className="eyebrow">@uicheck/mcp + @uicheck/core</p>
+            <p className="eyebrow">@uicheck/mcp + @uicheck/web</p>
             <h1>让 AI 看懂真实浏览器页面</h1>
             <p className="lead">
               UI Check 把页面截图、DOM 元素、布局盒、间距和坐标暴露给 AI。AI 可以通过 MCP 查询页面，也可以接收人工标注后的图片证据，再回到代码里修复 UI。
@@ -191,11 +191,11 @@ uicheck-mcp
 # Socket ws://127.0.0.1:17322/socket`}</pre>
           </div>
           <div className="code-block">
-            <div className="code-title">页面接入 @uicheck/core</div>
-            <pre>{`npm install @uicheck/core html2canvas
+            <div className="code-title">页面接入 @uicheck/web</div>
+            <pre>{`npm install @uicheck/web html2canvas
 
 import html2canvas from 'html2canvas'
-import { installUiCheck } from '@uicheck/core/client'
+import { installUiCheck } from '@uicheck/web'
 
 installUiCheck(html2canvas, {
   position: 'bottom-left',

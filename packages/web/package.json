@@ -1,0 +1,55 @@
+{
+  "name": "@uicheck/web",
+  "version": "0.1.1",
+  "description": "Browser DOM client for uicheck",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client.js",
+      "types": "./dist/client.d.ts"
+    },
+    "./cdn": {
+      "import": "./dist/cdn.js",
+      "types": "./dist/cdn.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "node scripts/cdn-dev.mjs",
+    "dev:cdn": "node scripts/cdn-dev.mjs",
+    "build": "pnpm run build:lib && pnpm run build:cdn",
+    "build:lib": "tsup",
+    "build:cdn": "node scripts/cdn-dev.mjs --once",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "ui-check",
+    "browser",
+    "dom",
+    "floatball"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@uicheck/core": "workspace:*",
+    "html2canvas": "^1.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.27.0",
+    "jsdom": "^29.1.1",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.6"
+  }
+}

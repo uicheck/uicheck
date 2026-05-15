@@ -132,7 +132,7 @@ export class UiCheckMcpServer {
     })
 
     const clientArgs = {
-      clientId: z.string().optional().describe('Target @uicheck/core socket client id. Defaults to the first connected client.'),
+      clientId: z.string().optional().describe('Target uicheck socket client id. Defaults to the first connected client.'),
       timeoutMs: z.number().int().min(500).max(120_000).optional().describe('Request timeout. Defaults to the server timeout.')
     }
 
@@ -140,7 +140,7 @@ export class UiCheckMcpServer {
       'list_clients',
       {
         title: 'List UI Check Clients',
-        description: 'List browser pages currently connected through @uicheck/core WebSocket.',
+        description: 'List clients currently connected through the uicheck WebSocket.',
         inputSchema: {},
         annotations: {
           readOnlyHint: true,
@@ -161,7 +161,7 @@ export class UiCheckMcpServer {
       'capture_page',
       {
         title: 'Capture Connected Page Screenshot',
-        description: 'Ask the connected @uicheck/core page to return a PNG screenshot.',
+        description: 'Ask the connected uicheck client to return a PNG screenshot.',
         inputSchema: {
           ...clientArgs,
           waitMs: z.number().int().min(0).max(30_000).optional().describe('Extra wait time before capture.'),
@@ -210,7 +210,7 @@ export class UiCheckMcpServer {
       'inspect_elements',
       {
         title: 'Inspect Connected Page Elements',
-        description: 'Ask the connected @uicheck/core page to return DOM selectors, text, layout boxes, and spacing info.',
+        description: 'Ask the connected uicheck client to return selectors, text, layout boxes, and spacing info.',
         inputSchema: {
           ...clientArgs,
           selector: z.string().optional().describe('Optional root selector to inspect under.'),
@@ -248,7 +248,7 @@ export class UiCheckMcpServer {
       'get_element_at_point',
       {
         title: 'Get Connected Page Element At Point',
-        description: 'Ask the connected @uicheck/core page to return the element and ancestors at viewport coordinates.',
+        description: 'Ask the connected uicheck client to return the element and ancestors at viewport coordinates.',
         inputSchema: {
           ...clientArgs,
           x: z.number().int().min(0).describe('Viewport x coordinate.'),

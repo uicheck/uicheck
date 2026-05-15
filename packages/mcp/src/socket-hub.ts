@@ -56,7 +56,7 @@ export class UiCheckSocketHub {
   request(method: string, params: Record<string, unknown>, clientId?: string, timeoutMs = this.options.requestTimeoutMs): Promise<unknown> {
     const client = this.pickClient(clientId)
     if (!client) {
-      throw new Error(clientId ? `uicheck client not connected: ${clientId}` : 'No @uicheck/core client is connected')
+      throw new Error(clientId ? `uicheck client not connected: ${clientId}` : 'No uicheck client is connected')
     }
 
     const id = randomUUID()

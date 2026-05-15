@@ -1,5 +1,5 @@
 import html2canvas from 'html2canvas'
-import { installUiCheck } from './client'
+import { installUiCheck } from './web'
 import { parseUiCheckOptionsFromUrl } from './options'
 
 function parseOptions() {

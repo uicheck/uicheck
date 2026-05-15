@@ -1,3 +1,6 @@
+import { connectUiCheckRuntime } from '@uicheck/core'
+import type { UiCheckSocketTransport } from '@uicheck/core/protocol'
+import type { UiCheckClientSnapshot, UiCheckScreenshotResult, UiCheckToolAdapter } from '@uicheck/core'
 import type { ResolvedUiCheckOptions } from './types'
 
 interface LayoutInfo {
@@ -85,22 +88,6 @@ interface Html2CanvasOptions {
 }
 
 type Html2Canvas = (element: HTMLElement, options: Html2CanvasOptions) => Promise<HTMLCanvasElement>
-
-interface SocketRequestMessage {
-  type: 'request'
-  id: string
-  method: string
-  params?: Record<string, unknown>
-}
-
-interface SocketResponseMessage {
-  type: 'response'
-  id: string
-  result?: unknown
-  error?: string
-}
-
-let socketCleanup: (() => void) | undefined
 
 const MIN_ZOOM = 0.2
 const MAX_ZOOM = 2.5
@@ -450,7 +437,7 @@ function withTimeout<T>(factory: () => Promise<T>, timeoutMs: number, label: str
   })
 }
 
-function getViewportInfo(): Record<string, number> {
+function getViewportInfo(): UiCheckClientSnapshot['viewport'] {
   return {
     width: window.innerWidth,
     height: window.innerHeight,
@@ -605,7 +592,7 @@ async function captureSerializablePage(
   html2canvas: Html2Canvas,
   params: Record<string, unknown> = {},
   elementsToHide: HTMLElement[] = []
-): Promise<Record<string, unknown>> {
+): Promise<UiCheckScreenshotResult> {
   const waitMs = typeof params.waitMs === 'number' ? params.waitMs : 0
   const timeoutMs = typeof params.timeoutMs === 'number' ? Math.max(500, params.timeoutMs) : 10_000
   const forceHtml2Canvas = params.forceHtml2Canvas === true
@@ -659,90 +646,47 @@ async function captureSerializablePage(
   }
 }
 
-function connectUiCheckSocket(html2canvas: Html2Canvas, config: ResolvedUiCheckOptions, elementsToHide: HTMLElement[]): void {
-  if (!config.socket || config.socket.enabled === false || !config.socket.url || typeof WebSocket === 'undefined') return
-  const socketConfig = config.socket
-  const socketUrl = config.socket.url
-
-  socketCleanup?.()
-  let socket: WebSocket | undefined
-  let closed = false
-  let reconnectTimer: number | undefined
-
-  const buildInfo = () => ({
-    type: 'hello',
-    url: location.href,
-    title: document.title,
-    userAgent: navigator.userAgent,
-    viewport: getViewportInfo()
-  })
-
-  const send = (message: unknown) => {
-    if (socket?.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify(message))
-    }
-  }
-
-  const connect = () => {
-    if (closed) return
-    const url = new URL(socketUrl, location.href)
-    if (socketConfig.clientId) url.searchParams.set('clientId', socketConfig.clientId)
-    socket = new WebSocket(url)
-    socket.addEventListener('open', () => send(buildInfo()))
-    socket.addEventListener('message', (event) => {
-      void handleSocketMessage(html2canvas, event.data, send, elementsToHide)
-    })
-    socket.addEventListener('close', () => {
-      if (closed) return
-      reconnectTimer = window.setTimeout(connect, socketConfig.reconnectMs ?? 1000)
-    })
-  }
-
-  window.addEventListener('focus', () => send({ ...buildInfo(), type: 'update' }))
-  window.addEventListener('resize', () => send({ ...buildInfo(), type: 'update' }))
-  connect()
-
-  socketCleanup = () => {
-    closed = true
-    if (reconnectTimer !== undefined) window.clearTimeout(reconnectTimer)
-    socket?.close()
+function createWebSocketTransport(url: string): UiCheckSocketTransport {
+  const socket = new WebSocket(url)
+  return {
+    send: (message) => {
+      if (socket.readyState === WebSocket.OPEN) socket.send(message)
+    },
+    close: () => socket.close(),
+    onOpen: (listener) => socket.addEventListener('open', listener),
+    onMessage: (listener) => socket.addEventListener('message', (event) => listener(event.data)),
+    onClose: (listener) => socket.addEventListener('close', listener)
   }
 }
 
-async function handleSocketMessage(
-  html2canvas: Html2Canvas,
-  raw: unknown,
-  send: (message: SocketResponseMessage) => void,
-  elementsToHide: HTMLElement[]
-): Promise<void> {
-  let message: SocketRequestMessage
-  try {
-    message = JSON.parse(String(raw)) as SocketRequestMessage
-  } catch {
-    return
+export function createWebUiCheckAdapter(html2canvas: Html2Canvas, elementsToHide: HTMLElement[] = []): UiCheckToolAdapter {
+  return {
+    getClientInfo: () => ({
+      url: location.href,
+      title: document.title,
+      userAgent: navigator.userAgent,
+      viewport: getViewportInfo()
+    }),
+    capturePage: (params) => captureSerializablePage(html2canvas, params, elementsToHide),
+    inspectElements: inspectSerializableElements,
+    getElementAtPoint: getSerializableElementAtPoint
   }
-  if (message.type !== 'request' || typeof message.id !== 'string') return
+}
 
-  try {
-    const params = message.params ?? {}
-    const result =
-      message.method === 'capture_page'
-        ? await captureSerializablePage(html2canvas, params, elementsToHide)
-        : message.method === 'inspect_elements'
-          ? inspectSerializableElements(params)
-          : message.method === 'get_element_at_point'
-            ? getSerializableElementAtPoint(params)
-            : undefined
-
-    if (result === undefined) throw new Error(`Unknown uicheck method: ${message.method}`)
-    send({ type: 'response', id: message.id, result })
-  } catch (error) {
-    send({
-      type: 'response',
-      id: message.id,
-      error: error instanceof Error ? error.message : String(error)
-    })
-  }
+function connectUiCheckWebRuntime(html2canvas: Html2Canvas, config: ResolvedUiCheckOptions, elementsToHide: HTMLElement[]): void {
+  if (typeof WebSocket === 'undefined') return
+  connectUiCheckRuntime({
+    socket: config.socket,
+    adapter: createWebUiCheckAdapter(html2canvas, elementsToHide),
+    createTransport: createWebSocketTransport,
+    hooks: {
+      setTimeout: (handler, timeout) => window.setTimeout(handler, timeout),
+      clearTimeout: (timer) => window.clearTimeout(timer as number),
+      onFocus: (listener) => window.addEventListener('focus', listener),
+      onResize: (listener) => window.addEventListener('resize', listener),
+      resolveSocketUrl: (url) => String(new URL(url, location.href))
+    }
+  })
 }
 
 function getRectArea(rect: RectLike): number {
@@ -1255,5 +1199,5 @@ export function installUiCheck(html2canvas: Html2Canvas, config: ResolvedUiCheck
     if (event.key === 'Escape') close()
   })
 
-  connectUiCheckSocket(html2canvas, config, [ball, modalRoot])
+  connectUiCheckWebRuntime(html2canvas, config, [ball, modalRoot])
 }

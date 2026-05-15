@@ -56,7 +56,7 @@ Options:
   --host <host>                  Listen host. Default: 127.0.0.1
   --port <port>                  Listen port. Default: 17322
   --mcp-endpoint <path>          MCP endpoint. Default: /mcp
-  --socket-endpoint <path>       @uicheck/core WebSocket endpoint. Default: /socket
+  --socket-endpoint <path>       uicheck client WebSocket endpoint. Default: /socket
   --timeout <ms>                 Browser client request timeout. Default: 30000
 `)
 }

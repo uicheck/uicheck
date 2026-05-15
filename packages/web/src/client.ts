@@ -1,0 +1,1 @@
+export { installUiCheck } from './web'

@@ -1,6 +1,6 @@
 # @uicheck/mcp
 
-Local MCP server for `@uicheck/core`. The browser page connects to this server through WebSocket, and AI agents call MCP tools to ask that page for screenshots and DOM element info.
+Local MCP server for uicheck clients. The page connects to this server through WebSocket, and AI agents call MCP tools to ask that page for screenshots and element info.
 
 ## Start
 
@@ -16,7 +16,7 @@ MCP:    http://127.0.0.1:17322/mcp
 Socket: ws://127.0.0.1:17322/socket
 ```
 
-## @uicheck/core
+## @uicheck/web
 
 Configure the page script with the socket URL:
 
@@ -43,9 +43,9 @@ CDN query params are also supported:
 
 | Tool | Description |
 | --- | --- |
-| `list_clients` | Lists connected `@uicheck/core` browser pages. |
+| `list_clients` | Lists connected uicheck clients. |
 | `capture_page` | Asks a connected page to return a PNG screenshot. |
-| `inspect_elements` | Returns visible DOM selectors, text, layout boxes, and spacing info. |
+| `inspect_elements` | Returns visible selectors, text, layout boxes, and spacing info. |
 | `get_element_at_point` | Returns the element and ancestors at viewport coordinates. |
 
 ## CLI

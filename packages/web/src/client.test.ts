@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { installUiCheck } from './client'
+import { installUiCheck } from './web'
 import type { ResolvedUiCheckOptions } from './types'
 
 const config: ResolvedUiCheckOptions = {
