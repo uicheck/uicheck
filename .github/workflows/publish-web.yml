@@ -30,8 +30,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build core
-        run: pnpm --filter @uicheck/core run build
+      - name: Build workspace dependencies
+        run: pnpm run prepare:workspace
 
       - name: Typecheck
         run: pnpm --filter @uicheck/web run typecheck

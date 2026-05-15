@@ -9,8 +9,9 @@
     "dev:mcp": "pnpm --filter @uicheck/mcp run start",
     "dev:site": "pnpm --filter @uicheck/site run dev",
     "lint": "pnpm --filter @uicheck/site run lint",
-    "test": "pnpm -r run test",
-    "typecheck": "pnpm --filter @uicheck/core run build && pnpm -r run typecheck"
+    "prepare:workspace": "pnpm --filter @uicheck/core run build && pnpm --filter @uicheck/mcp run build",
+    "test": "pnpm run prepare:workspace && pnpm -r run test",
+    "typecheck": "pnpm run prepare:workspace && pnpm -r run typecheck"
   },
   "pnpm": {
     "overrides": {
