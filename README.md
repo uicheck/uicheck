@@ -4,7 +4,7 @@
 
 # UI Check
 
-AI-readable UI inspection for browser and Taro Mini Program pages.
+AI-readable UI inspection for browser, React Native, and Taro Mini Program pages.
 
 UI Check connects live pages to AI agents through MCP. It exposes screenshots, element metadata, layout boxes, coordinates, and manual visual annotations so AI can debug UI issues against the real page instead of guessing from code alone.
 
@@ -18,6 +18,7 @@ GitHub: https://github.com/uicheck/uicheck
 | --- | --- |
 | `@uicheck/core` | Shared WebSocket protocol runtime and types |
 | `@uicheck/web` | Browser DOM client with floating checker, screenshot, element inspection, and CDN bundle |
+| `@uicheck/rn` | React Native client using registered refs for element inspection |
 | `@uicheck/taro` | Taro Mini Program client using selector query inspection |
 | `@uicheck/mcp` | Local MCP server exposing UI inspection tools to AI agents |
 
@@ -62,6 +63,37 @@ installTaroUiCheck(Taro, {
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
+})
+```
+
+React Native client:
+
+```sh
+npm install @uicheck/rn
+```
+
+```ts
+import { AppState, Dimensions, Platform } from 'react-native'
+import {
+  installReactNativeUiCheck,
+  registerReactNativeUiCheckElement
+} from '@uicheck/rn'
+
+installReactNativeUiCheck(
+  { AppState, Dimensions, Platform, WebSocket },
+  {
+    route: 'Home',
+    socket: {
+      url: 'ws://127.0.0.1:17322/socket'
+    }
+  }
+)
+
+registerReactNativeUiCheckElement({
+  ref: submitButtonRef,
+  tag: 'Pressable',
+  testID: 'submit-button',
+  text: 'Submit'
 })
 ```
 

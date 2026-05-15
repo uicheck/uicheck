@@ -27,6 +27,14 @@ const packages = [
     }
   },
   {
+    id: 'rn',
+    path: 'packages/rn',
+    descriptions: {
+      'zh-CN': 'React Native 页面客户端',
+      en: 'React Native client for uicheck'
+    }
+  },
+  {
     id: 'mcp',
     path: 'packages/mcp',
     descriptions: {

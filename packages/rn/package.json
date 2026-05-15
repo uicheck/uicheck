@@ -1,0 +1,39 @@
+{
+  "name": "@uicheck/rn",
+  "version": "0.1.3",
+  "description": "React Native client for uicheck",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "ui-check",
+    "react-native",
+    "rn"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@uicheck/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.6"
+  }
+}

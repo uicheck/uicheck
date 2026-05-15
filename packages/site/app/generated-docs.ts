@@ -143,6 +143,40 @@ export const generatedDocsByLocale = {
       ]
     },
     {
+      "id": "rn",
+      "name": "@uicheck/rn",
+      "version": "0.1.3",
+      "description": "React Native 页面客户端",
+      "install": "npm install @uicheck/rn",
+      "source": "packages/rn",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/rn/README.zh-CN.md",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "React Native 侧 UI 检查客户端。RN 没有 DOM 查询能力，因此需要把希望 AI 看到的组件 ref 注册给 uicheck；注册后 @uicheck/mcp 可以读取元素坐标、文本、testID 和 accessibilityLabel。"
+        },
+        {
+          "type": "code",
+          "lang": "ts",
+          "code": "import { AppState, Dimensions, Platform } from 'react-native'\nimport {\n  installReactNativeUiCheck,\n  registerReactNativeUiCheckElement\n} from '@uicheck/rn'\n\ninstallReactNativeUiCheck(\n  { AppState, Dimensions, Platform, WebSocket },\n  {\n    route: 'Home',\n    socket: {\n      url: 'ws://127.0.0.1:17322/socket'\n    }\n  }\n)\n\nconst unregister = registerReactNativeUiCheckElement({\n  ref: submitButtonRef,\n  tag: 'Pressable',\n  testID: 'submit-button',\n  text: '提交'\n})"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "截图"
+        },
+        {
+          "type": "paragraph",
+          "text": "RN 截图依赖宿主应用能力。需要使用 capture_page 时传入 screenshot 方法并返回 PNG base64。"
+        },
+        {
+          "type": "code",
+          "lang": "ts",
+          "code": "installReactNativeUiCheck(reactNative, {\n  screenshot: async () => ({\n    mimeType: 'image/png',\n    base64: await captureAppAsBase64()\n  })\n})"
+        }
+      ]
+    },
+    {
       "id": "mcp",
       "name": "@uicheck/mcp",
       "version": "0.1.3",
@@ -383,6 +417,40 @@ export const generatedDocsByLocale = {
           "type": "code",
           "lang": "ts",
           "code": "import Taro from '@tarojs/taro'\nimport { installTaroUiCheck } from '@uicheck/taro'\n\ninstallTaroUiCheck(Taro, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+        }
+      ]
+    },
+    {
+      "id": "rn",
+      "name": "@uicheck/rn",
+      "version": "0.1.3",
+      "description": "React Native client for uicheck",
+      "install": "npm install @uicheck/rn",
+      "source": "packages/rn",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/rn/README.md",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "React Native client for uicheck. React Native does not expose DOM-style queries, so the app registers refs for components that AI should inspect. Once registered, @uicheck/mcp can read element boxes, text, testID, and accessibilityLabel."
+        },
+        {
+          "type": "code",
+          "lang": "ts",
+          "code": "import { AppState, Dimensions, Platform } from 'react-native'\nimport {\n  installReactNativeUiCheck,\n  registerReactNativeUiCheckElement\n} from '@uicheck/rn'\n\ninstallReactNativeUiCheck(\n  { AppState, Dimensions, Platform, WebSocket },\n  {\n    route: 'Home',\n    socket: {\n      url: 'ws://127.0.0.1:17322/socket'\n    }\n  }\n)\n\nconst unregister = registerReactNativeUiCheckElement({\n  ref: submitButtonRef,\n  tag: 'Pressable',\n  testID: 'submit-button',\n  text: 'Submit'\n})"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Screenshot"
+        },
+        {
+          "type": "paragraph",
+          "text": "React Native screenshots depend on the host app. To support capture_page, pass a screenshot function that returns PNG base64."
+        },
+        {
+          "type": "code",
+          "lang": "ts",
+          "code": "installReactNativeUiCheck(reactNative, {\n  screenshot: async () => ({\n    mimeType: 'image/png',\n    base64: await captureAppAsBase64()\n  })\n})"
         }
       ]
     },

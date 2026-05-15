@@ -1,0 +1,54 @@
+---
+title: "@uicheck/rn"
+description: "React Native client for uicheck"
+---
+
+# @uicheck/rn
+
+> Source: [README](https://github.com/uicheck/uicheck/blob/main/packages/rn/README.md)
+
+## Install
+
+```bash
+npm install @uicheck/rn
+```
+
+React Native client for uicheck. React Native does not expose DOM-style queries, so the app registers refs for components that AI should inspect. Once registered, `@uicheck/mcp` can read element boxes, text, `testID`, and `accessibilityLabel`.
+
+```ts
+import { AppState, Dimensions, Platform } from 'react-native'
+import {
+  installReactNativeUiCheck,
+  registerReactNativeUiCheckElement
+} from '@uicheck/rn'
+
+installReactNativeUiCheck(
+  { AppState, Dimensions, Platform, WebSocket },
+  {
+    route: 'Home',
+    socket: {
+      url: 'ws://127.0.0.1:17322/socket'
+    }
+  }
+)
+
+const unregister = registerReactNativeUiCheckElement({
+  ref: submitButtonRef,
+  tag: 'Pressable',
+  testID: 'submit-button',
+  text: 'Submit'
+})
+```
+
+## Screenshot
+
+React Native screenshots depend on the host app. To support `capture_page`, pass a `screenshot` function that returns PNG base64.
+
+```ts
+installReactNativeUiCheck(reactNative, {
+  screenshot: async () => ({
+    mimeType: 'image/png',
+    base64: await captureAppAsBase64()
+  })
+})
+```
