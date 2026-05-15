@@ -246,6 +246,129 @@ export const generatedDocsByLocale = {
       ]
     },
     {
+      "id": "android",
+      "name": "uicheck_android",
+      "version": "0.1.4",
+      "description": "Android 原生应用运行环境客户端",
+      "install": "Android library: https://github.com/uicheck/uicheck, path packages/android",
+      "source": "packages/android",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/android/README.zh-CN.md",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "UI Check 的 Android 原生运行环境客户端。它通过 WebSocket 连接 @uicheck/mcp，让 AI Agent 可以通过 MCP 工具读取截图、已注册原生 View 信息、布局盒子和坐标。"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "安装"
+        },
+        {
+          "type": "paragraph",
+          "text": "把这个仓库作为 Android library 依赖加入项目："
+        },
+        {
+          "type": "code",
+          "lang": "txt",
+          "code": "https://github.com/uicheck/uicheck"
+        },
+        {
+          "type": "paragraph",
+          "text": "包路径："
+        },
+        {
+          "type": "code",
+          "lang": "txt",
+          "code": "packages/android"
+        },
+        {
+          "type": "paragraph",
+          "text": "单独启动 MCP 服务："
+        },
+        {
+          "type": "code",
+          "lang": "sh",
+          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "使用"
+        },
+        {
+          "type": "paragraph",
+          "text": "在应用启动附近安装客户端："
+        },
+        {
+          "type": "code",
+          "lang": "kotlin",
+          "code": "import ai.uicheck.android.UiCheckAndroidOptions\nimport ai.uicheck.android.UiCheckAndroidSocketOptions\nimport ai.uicheck.android.UiCheckAndroidViewportInfo\nimport ai.uicheck.android.createAndroidViewScreenshotProvider\nimport ai.uicheck.android.installAndroidUiCheck\n\nval client = installAndroidUiCheck(\n  UiCheckAndroidOptions(\n    socket = UiCheckAndroidSocketOptions(\n      url = \"ws://127.0.0.1:17322/socket\",\n      clientId = \"android-demo\"\n    ),\n    title = \"Demo\",\n    route = \"/home\",\n    platform = \"android\",\n    viewport = {\n      UiCheckAndroidViewportInfo(width = 393, height = 873, devicePixelRatio = 2.75)\n    },\n    screenshot = createAndroidViewScreenshotProvider(rootView)\n  )\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "注册希望 AI 检查的 View："
+        },
+        {
+          "type": "code",
+          "lang": "kotlin",
+          "code": "import ai.uicheck.android.registerAndroidUiCheckView\n\nval unregister = registerAndroidUiCheckView(\n  submitButton,\n  tag = \"Button\",\n  testID = \"submit-button\",\n  text = \"Submit\"\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "如果是 Compose 或非 View 抽象，也可以注册自定义 frame provider："
+        },
+        {
+          "type": "code",
+          "lang": "kotlin",
+          "code": "import ai.uicheck.android.UiCheckAndroidElementRegistration\nimport ai.uicheck.android.UiCheckAndroidRect\nimport ai.uicheck.android.registerAndroidUiCheckElement\n\nval unregister = registerAndroidUiCheckElement(\n  UiCheckAndroidElementRegistration(\n    tag = \"Button\",\n    testID = \"submit-button\",\n    text = \"Submit\",\n    frame = { UiCheckAndroidRect(12.0, 24.0, 120.0, 48.0) }\n  )\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "不用时释放："
+        },
+        {
+          "type": "code",
+          "lang": "kotlin",
+          "code": "unregister()\nclient.close()"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "MCP 工具"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "工具",
+            "说明"
+          ],
+          "rows": [
+            [
+              "capture_page",
+              "使用配置的截图 provider 返回 PNG 截图。"
+            ],
+            [
+              "inspect_elements",
+              "返回已注册原生 View 的元数据、文本、布局盒子和可见状态。"
+            ],
+            [
+              "get_element_at_point",
+              "返回视口坐标下最小的已注册 View。"
+            ]
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "说明"
+        },
+        {
+          "type": "paragraph",
+          "text": "Android 原生应用没有 DOM 查询 API。需要注册 AI 要检查的 View 或组件。registerAndroidUiCheckView 会用屏幕坐标测量原生 View。"
+        }
+      ]
+    },
+    {
       "id": "apple",
       "name": "uicheck_apple",
       "version": "0.1.4",
@@ -721,6 +844,129 @@ export const generatedDocsByLocale = {
         {
           "type": "paragraph",
           "text": "Flutter does not expose a DOM query API. Register the widgets that AI needs to inspect with a GlobalKey. The client measures each registered widget through RenderBox.localToGlobal."
+        }
+      ]
+    },
+    {
+      "id": "android",
+      "name": "uicheck_android",
+      "version": "0.1.4",
+      "description": "Android native runtime client for uicheck",
+      "install": "Android library: https://github.com/uicheck/uicheck, path packages/android",
+      "source": "packages/android",
+      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/android/README.md",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Android native runtime client for UI Check. It connects native Android apps to @uicheck/mcp over WebSocket so AI agents can request screenshots, registered view metadata, layout boxes, and coordinates through MCP tools."
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Install"
+        },
+        {
+          "type": "paragraph",
+          "text": "Add this repository as an Android library dependency:"
+        },
+        {
+          "type": "code",
+          "lang": "txt",
+          "code": "https://github.com/uicheck/uicheck"
+        },
+        {
+          "type": "paragraph",
+          "text": "Package path:"
+        },
+        {
+          "type": "code",
+          "lang": "txt",
+          "code": "packages/android"
+        },
+        {
+          "type": "paragraph",
+          "text": "Start the MCP server separately:"
+        },
+        {
+          "type": "code",
+          "lang": "sh",
+          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Usage"
+        },
+        {
+          "type": "paragraph",
+          "text": "Install the client near app startup:"
+        },
+        {
+          "type": "code",
+          "lang": "kotlin",
+          "code": "import ai.uicheck.android.UiCheckAndroidOptions\nimport ai.uicheck.android.UiCheckAndroidSocketOptions\nimport ai.uicheck.android.UiCheckAndroidViewportInfo\nimport ai.uicheck.android.createAndroidViewScreenshotProvider\nimport ai.uicheck.android.installAndroidUiCheck\n\nval client = installAndroidUiCheck(\n  UiCheckAndroidOptions(\n    socket = UiCheckAndroidSocketOptions(\n      url = \"ws://127.0.0.1:17322/socket\",\n      clientId = \"android-demo\"\n    ),\n    title = \"Demo\",\n    route = \"/home\",\n    platform = \"android\",\n    viewport = {\n      UiCheckAndroidViewportInfo(width = 393, height = 873, devicePixelRatio = 2.75)\n    },\n    screenshot = createAndroidViewScreenshotProvider(rootView)\n  )\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Register views that AI should inspect:"
+        },
+        {
+          "type": "code",
+          "lang": "kotlin",
+          "code": "import ai.uicheck.android.registerAndroidUiCheckView\n\nval unregister = registerAndroidUiCheckView(\n  submitButton,\n  tag = \"Button\",\n  testID = \"submit-button\",\n  text = \"Submit\"\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "You can also register a custom frame provider for Compose or non-view abstractions:"
+        },
+        {
+          "type": "code",
+          "lang": "kotlin",
+          "code": "import ai.uicheck.android.UiCheckAndroidElementRegistration\nimport ai.uicheck.android.UiCheckAndroidRect\nimport ai.uicheck.android.registerAndroidUiCheckElement\n\nval unregister = registerAndroidUiCheckElement(\n  UiCheckAndroidElementRegistration(\n    tag = \"Button\",\n    testID = \"submit-button\",\n    text = \"Submit\",\n    frame = { UiCheckAndroidRect(12.0, 24.0, 120.0, 48.0) }\n  )\n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dispose when no longer needed:"
+        },
+        {
+          "type": "code",
+          "lang": "kotlin",
+          "code": "unregister()\nclient.close()"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "MCP Tools"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Tool",
+            "Description"
+          ],
+          "rows": [
+            [
+              "capture_page",
+              "Uses the configured screenshot provider to return a PNG screenshot."
+            ],
+            [
+              "inspect_elements",
+              "Returns registered native view metadata, text, layout boxes, and visibility."
+            ],
+            [
+              "get_element_at_point",
+              "Returns the smallest registered view at viewport coordinates."
+            ]
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Notes"
+        },
+        {
+          "type": "paragraph",
+          "text": "Android native apps do not expose a DOM query API. Register the views or components that AI needs to inspect. registerAndroidUiCheckView measures native views in screen coordinates."
         }
       ]
     },

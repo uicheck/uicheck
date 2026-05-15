@@ -12,5 +12,7 @@ pnpm-debug.log*
 .DS_Store
 .dart_tool
 .build
+.gradle
 build
+local.properties
 pubspec.lock

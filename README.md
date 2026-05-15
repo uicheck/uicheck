@@ -4,7 +4,7 @@
 
 # UI Check
 
-AI-readable runtime UI inspection for browser, React Native, Flutter, Apple native, and Taro Mini Program apps.
+AI-readable runtime UI inspection for browser, React Native, Flutter, Android native, Apple native, and Taro Mini Program apps.
 
 UI Check connects live app runtimes to AI agents through MCP. It exposes screenshots, element metadata, layout boxes, coordinates, and route state so AI can debug UI issues against the real running app instead of guessing from code alone.
 
@@ -21,6 +21,7 @@ GitHub: https://github.com/uicheck/uicheck
 | `@uicheck/rn` | React Native client using registered refs for element inspection |
 | `@uicheck/taro` | Taro Mini Program client using selector query inspection |
 | `uicheck_flutter` | Flutter client using registered GlobalKeys for widget inspection |
+| `uicheck_android` | Android native Kotlin client using registered views for element inspection |
 | `uicheck_apple` | Apple native Swift client using registered views for element inspection |
 | `@uicheck/mcp` | Local MCP server exposing UI inspection tools to AI agents |
 
@@ -125,6 +126,38 @@ registerFlutterUiCheckElement(
     text: 'Submit',
   ),
 );
+```
+
+Android native client:
+
+```txt
+Android library: https://github.com/uicheck/uicheck
+Path: packages/android
+```
+
+```kotlin
+import ai.uicheck.android.UiCheckAndroidOptions
+import ai.uicheck.android.UiCheckAndroidSocketOptions
+import ai.uicheck.android.installAndroidUiCheck
+import ai.uicheck.android.registerAndroidUiCheckView
+
+val client = installAndroidUiCheck(
+  UiCheckAndroidOptions(
+    socket = UiCheckAndroidSocketOptions(
+      url = "ws://127.0.0.1:17322/socket"
+    ),
+    title = "Demo",
+    route = "/home",
+    platform = "android"
+  )
+)
+
+registerAndroidUiCheckView(
+  submitButton,
+  tag = "Button",
+  testID = "submit-button",
+  text = "Submit"
+)
 ```
 
 Apple native client:

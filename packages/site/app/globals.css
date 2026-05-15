@@ -704,9 +704,15 @@ h3 {
 }
 
 .runtime-nodes span:nth-child(5) {
-  left: 50%;
+  left: 38%;
   top: 0;
   transform: translateX(-50%);
+  background: rgba(161, 232, 131, 0.22);
+}
+
+.runtime-nodes span:nth-child(6) {
+  right: 12%;
+  top: 0;
   background: rgba(157, 216, 255, 0.22);
 }
 
@@ -1382,7 +1388,12 @@ h3 {
     transform: none;
   }
 
-  .runtime-nodes span:nth-child(5) {
+  .runtime-nodes span:nth-child(5),
+  .runtime-nodes span:nth-child(6) {
     top: 0;
+  }
+
+  .runtime-nodes span:nth-child(6) {
+    right: 0;
   }
 }

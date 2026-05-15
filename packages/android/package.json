@@ -1,0 +1,28 @@
+{
+  "name": "uicheck_android",
+  "version": "0.1.4",
+  "description": "Android native client for uicheck",
+  "private": true,
+  "type": "module",
+  "files": [
+    "build.gradle.kts",
+    "settings.gradle.kts",
+    "consumer-rules.pro",
+    "src",
+    "README.md",
+    "README.zh-CN.md"
+  ],
+  "scripts": {
+    "build": "node scripts/verify.mjs build",
+    "typecheck": "node scripts/verify.mjs build",
+    "test": "node scripts/verify.mjs testDebugUnitTest",
+    "prepublishOnly": "node scripts/verify.mjs build"
+  },
+  "keywords": [
+    "ui-check",
+    "android",
+    "native",
+    "mcp"
+  ],
+  "license": "MIT"
+}

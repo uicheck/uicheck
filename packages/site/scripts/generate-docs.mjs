@@ -43,6 +43,14 @@ const packages = [
     }
   },
   {
+    id: 'android',
+    path: 'packages/android',
+    descriptions: {
+      'zh-CN': 'Android 原生应用运行环境客户端',
+      en: 'Android native runtime client for uicheck'
+    }
+  },
+  {
     id: 'apple',
     path: 'packages/apple',
     descriptions: {
@@ -193,6 +201,7 @@ function getInstallCommand(packageName) {
   if (packageName === '@uicheck/web') return 'npm install @uicheck/web html2canvas'
   if (packageName === '@uicheck/mcp') return 'npm install -g @uicheck/mcp'
   if (packageName === 'uicheck_flutter') return 'flutter pub add uicheck_flutter'
+  if (packageName === 'uicheck_android') return 'Android library: https://github.com/uicheck/uicheck, path packages/android'
   if (packageName === 'uicheck_apple') return 'Swift Package: https://github.com/uicheck/uicheck, product UICheckApple'
   return `npm install ${packageName}`
 }

@@ -11,6 +11,8 @@ importers:
 
   .: {}
 
+  packages/android: {}
+
   packages/apple: {}
 
   packages/core:
