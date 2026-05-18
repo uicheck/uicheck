@@ -1,5 +1,6 @@
 import { createReadStream } from 'node:fs'
 import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { mkdir, readdir, stat, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { createServer as createNetServer } from 'node:net'
@@ -436,26 +437,29 @@ async function waitForWeChatIdePortFile(timeoutMs) {
 async function enableWeChatDevToolsServicePort() {
   const supportDir =
     process.env.WECHAT_DEVTOOLS_SUPPORT_DIR ?? resolve(homedir(), 'Library/Application Support/微信开发者工具')
+  const profileDirs = [resolve(supportDir, createHash('md5').update(dirname(cliPath)).digest('hex'), 'Default')]
   let entries = []
   try {
     entries = await readdir(supportDir, { withFileTypes: true })
   } catch {
-    return
+    // The first CI launch has no profile yet. Pre-create the profile DevTools
+    // derives from its install path so automation starts its local IDE server.
   }
 
-  await Promise.all(
-    entries
-      .filter((entry) => entry.isDirectory())
-      .map(async (entry) => {
-        const profileDir = resolve(supportDir, entry.name, 'Default')
-        try {
-          await mkdir(profileDir, { recursive: true })
-          await writeFile(resolve(profileDir, '.ide-status'), 'On')
-        } catch {
-          // Best effort: newer DevTools can also be started with --port.
-        }
-      })
-  )
+  for (const entry of entries) {
+    if (entry.isDirectory()) profileDirs.push(resolve(supportDir, entry.name, 'Default'))
+  }
+
+  await Promise.all(profileDirs.map(enableWeChatProfileServicePort))
+}
+
+async function enableWeChatProfileServicePort(profileDir) {
+  try {
+    await mkdir(profileDir, { recursive: true })
+    await writeFile(resolve(profileDir, '.ide-status'), 'On')
+  } catch {
+    // Best effort: newer DevTools can also be started with --port.
+  }
 }
 
 async function findWeChatProfileFiles(fileName) {
