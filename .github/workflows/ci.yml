@@ -98,7 +98,7 @@ jobs:
             /Applications/wechatwebdevtools.app/Contents/MacOS/cli --version || true
             exit 0
           fi
-          brew install --cask wechatwebdevtools --no-quarantine --verbose
+          brew install --cask wechatwebdevtools --verbose
 
       - name: Enable WeChat Developer Tools CLI service
         run: |
