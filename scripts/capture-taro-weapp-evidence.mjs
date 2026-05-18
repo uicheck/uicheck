@@ -404,6 +404,9 @@ async function enableWeChatDevToolsServicePort() {
         try {
           await mkdir(profileDir, { recursive: true })
           await writeFile(resolve(profileDir, '.ide-status'), 'On')
+          if (process.env.WECHAT_DEVTOOLS_HTTP_PORT) {
+            await writeFile(resolve(profileDir, '.ide'), process.env.WECHAT_DEVTOOLS_HTTP_PORT)
+          }
         } catch {
           // Best effort: newer DevTools can also be started with --port.
         }
