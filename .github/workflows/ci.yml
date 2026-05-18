@@ -89,7 +89,15 @@ jobs:
           cache: pnpm
 
       - name: Install WeChat Developer Tools
-        run: brew install --cask wechatwebdevtools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+        run: |
+          if [ -x /Applications/wechatwebdevtools.app/Contents/MacOS/cli ]; then
+            /Applications/wechatwebdevtools.app/Contents/MacOS/cli --version || true
+            exit 0
+          fi
+          timeout 600 brew install --cask wechatwebdevtools --no-quarantine --verbose
 
       - name: Enable WeChat Developer Tools CLI service
         run: |
