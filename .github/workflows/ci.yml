@@ -88,17 +88,47 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      - name: Cache WeChat Developer Tools
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/uicheck/wechatwebdevtools-2.01.2510290-darwin-arm64.dmg
+          key: wechatwebdevtools-2.01.2510290-darwin-arm64
+
       - name: Install WeChat Developer Tools
-        timeout-minutes: 10
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
-          HOMEBREW_NO_INSTALL_CLEANUP: 1
+        timeout-minutes: 30
         run: |
+          set -euo pipefail
           if [ -x /Applications/wechatwebdevtools.app/Contents/MacOS/cli ]; then
             /Applications/wechatwebdevtools.app/Contents/MacOS/cli --version || true
             exit 0
           fi
-          brew install --cask wechatwebdevtools --verbose
+          version="2.01.2510290"
+          arch="$(uname -m)"
+          if [ "$arch" = "arm64" ]; then
+            devtools_arch="arm64"
+            expected_sha="555d6a36fc128ab1eb3b5e9bc72ad8a1a5825e962e285180e51803d8d4dde9b5"
+          else
+            devtools_arch="x64"
+            expected_sha="344e15fcdd442b0d6a7add9802380cedd42f1bd4303f1f0c1291caade3583cb2"
+          fi
+          cache_dir="$HOME/Library/Caches/uicheck"
+          dmg="$cache_dir/wechatwebdevtools-${version}-darwin-${devtools_arch}.dmg"
+          mkdir -p "$cache_dir"
+          if [ ! -f "$dmg" ]; then
+            curl --fail --location --retry 3 --retry-delay 5 --connect-timeout 30 --progress-bar \
+              "https://dldir1.qq.com/WechatWebDev/release/be1ec64cf6184b0fa64091919793f068/wechat_devtools_${version}_darwin_${devtools_arch}.dmg" \
+              --output "$dmg"
+          fi
+          echo "${expected_sha}  ${dmg}" | shasum -a 256 --check
+          mount_dir="$RUNNER_TEMP/wechatwebdevtools"
+          rm -rf "$mount_dir"
+          mkdir -p "$mount_dir"
+          hdiutil attach "$dmg" -nobrowse -quiet -mountpoint "$mount_dir"
+          rm -rf /Applications/wechatwebdevtools.app
+          ditto "$mount_dir/wechatwebdevtools.app" /Applications/wechatwebdevtools.app
+          hdiutil detach "$mount_dir" -quiet
+          xattr -dr com.apple.quarantine /Applications/wechatwebdevtools.app || true
+          /Applications/wechatwebdevtools.app/Contents/MacOS/cli --version || true
 
       - name: Reset WeChat Developer Tools
         run: |
