@@ -221,44 +221,44 @@ async function getWeappClientInfo(miniProgram) {
 async function inspectWeappElements(miniProgram, params) {
   const selector = typeof params.selector === 'string' ? params.selector : '.uicheck-node'
   const limit = typeof params.limit === 'number' ? params.limit : 80
-  const page = await miniProgram.currentPage()
+  const page = await withTimeout(miniProgram.currentPage(), 10_000, 'read current Taro weapp page')
   const info = await getWeappClientInfo(miniProgram)
-  const nodes = (await page.$$(selector)).slice(0, limit)
-  const elements = (
-    await Promise.all(
-      nodes.map(async (node, index) => {
-        const [id, className, tag, text, testId, offset, size] = await Promise.all([
-          node.attribute('id').catch(() => ''),
-          node.attribute('class').catch(() => ''),
-          node.attribute('data-uicheck-tag').catch(() => ''),
-          node.attribute('data-text').catch(() => node.text().catch(() => '')),
-          node.attribute('data-testid').catch(() => ''),
-          node.offset().catch(() => ({ left: 0, top: 0 })),
-          node.size().catch(() => ({ width: 0, height: 0 }))
-        ])
-        const width = Math.round(Number(size.width ?? 0))
-        const height = Math.round(Number(size.height ?? 0))
-        const elementId = id || testId || `node-${index + 1}`
-        return {
-          id: elementId,
-          selector: id ? `#${id}` : testId ? `[data-testid="${testId}"]` : selector,
-          tag: tag || node.tagName || 'node',
-          text,
-          classes: String(className || '').split(/\s+/).filter(Boolean),
-          testId,
-          visible: width > 0 && height > 0,
-          box: {
-            x: Math.round(Number(offset.left ?? 0)),
-            y: Math.round(Number(offset.top ?? 0)),
-            width,
-            height,
-            top: Math.round(Number(offset.top ?? 0)),
-            left: Math.round(Number(offset.left ?? 0))
-          }
-        }
-      })
+  const nodes = (await withTimeout(page.$$(selector), 10_000, `query Taro weapp elements: ${selector}`)).slice(0, limit)
+  const elements = []
+  for (const [index, node] of nodes.entries()) {
+    const id = await withTimeout(node.attribute('id').catch(() => ''), 3_000, 'read Taro weapp element id')
+    const className = await withTimeout(node.attribute('class').catch(() => ''), 3_000, 'read Taro weapp element class')
+    const tag = await withTimeout(node.attribute('data-uicheck-tag').catch(() => ''), 3_000, 'read Taro weapp element tag')
+    const text = await withTimeout(
+      node.attribute('data-text').catch(() => node.text().catch(() => '')),
+      3_000,
+      'read Taro weapp element text'
     )
-  ).filter((element) => params.includeHidden === true || element.visible)
+    const testId = await withTimeout(node.attribute('data-testid').catch(() => ''), 3_000, 'read Taro weapp element test id')
+    const offset = await withTimeout(node.offset().catch(() => ({ left: 0, top: 0 })), 3_000, 'read Taro weapp element offset')
+    const size = await withTimeout(node.size().catch(() => ({ width: 0, height: 0 })), 3_000, 'read Taro weapp element size')
+    const width = Math.round(Number(size.width ?? 0))
+    const height = Math.round(Number(size.height ?? 0))
+    const elementId = id || testId || `node-${index + 1}`
+    const element = {
+      id: elementId,
+      selector: id ? `#${id}` : testId ? `[data-testid="${testId}"]` : selector,
+      tag: tag || node.tagName || 'node',
+      text,
+      classes: String(className || '').split(/\s+/).filter(Boolean),
+      testId,
+      visible: width > 0 && height > 0,
+      box: {
+        x: Math.round(Number(offset.left ?? 0)),
+        y: Math.round(Number(offset.top ?? 0)),
+        width,
+        height,
+        top: Math.round(Number(offset.top ?? 0)),
+        left: Math.round(Number(offset.left ?? 0))
+      }
+    }
+    if (params.includeHidden === true || element.visible) elements.push(element)
+  }
   return {
     platform: 'taro-weapp',
     url: info.url ?? page?.path,
@@ -272,7 +272,7 @@ async function inspectWeappElements(miniProgram, params) {
 async function captureWeappPage(miniProgram) {
   const tempPath = resolve(root, 'packages/taro/build/uicheck-test-artifacts/taro-weapp-devtools.png')
   await mkdir(dirname(tempPath), { recursive: true })
-  await miniProgram.screenshot({ path: tempPath })
+  await withTimeout(miniProgram.screenshot({ path: tempPath }), 20_000, 'capture Taro weapp screenshot')
   const buffer = await import('node:fs/promises').then((fs) => fs.readFile(tempPath))
   const size = readPngSize(buffer)
   const info = await getWeappClientInfo(miniProgram)
@@ -284,6 +284,16 @@ async function captureWeappPage(miniProgram) {
     mimeType: 'image/png',
     base64: buffer.toString('base64')
   }
+}
+
+function withTimeout(promise, timeoutMs, label) {
+  let timer
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`Timed out: ${label}`)), timeoutMs)
+    })
+  ]).finally(() => clearTimeout(timer))
 }
 
 function readPngSize(buffer) {
@@ -404,9 +414,6 @@ async function enableWeChatDevToolsServicePort() {
         try {
           await mkdir(profileDir, { recursive: true })
           await writeFile(resolve(profileDir, '.ide-status'), 'On')
-          if (process.env.WECHAT_DEVTOOLS_HTTP_PORT) {
-            await writeFile(resolve(profileDir, '.ide'), process.env.WECHAT_DEVTOOLS_HTTP_PORT)
-          }
         } catch {
           // Best effort: newer DevTools can also be started with --port.
         }
