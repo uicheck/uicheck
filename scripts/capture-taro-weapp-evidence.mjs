@@ -1,4 +1,5 @@
 import { createReadStream } from 'node:fs'
+import { spawn } from 'node:child_process'
 import { mkdir, readdir, stat, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { createServer as createNetServer } from 'node:net'
@@ -30,20 +31,16 @@ let miniProgram
 let mcpClient
 let browser
 let bridgeSocket
+let devtoolsProcess
 
 try {
   await server.listen()
   await enableWeChatDevToolsServicePort()
-  miniProgram = await automator.launch({
-    cliPath,
-    projectPath,
-    port: await getFreePort(),
-    trustProject: true,
-    timeout: 120_000
-  })
+  ;({ miniProgram, process: devtoolsProcess } = await launchWeappAutomation())
 
   const route = '/pages/index/index'
   await miniProgram.reLaunch(route)
+  await new Promise((resolveWait) => setTimeout(resolveWait, 5_000))
   bridgeSocket = await connectWeappBridge(server.socketUrl, clientId, miniProgram)
   await waitForMcpClient(server, clientId)
 
@@ -149,6 +146,7 @@ try {
   await mcpClient?.close().catch(() => undefined)
   bridgeSocket?.close()
   await miniProgram?.close().catch(() => undefined)
+  devtoolsProcess?.kill()
   await server.close().catch(() => undefined)
   await staticServer.close()
 }
@@ -351,6 +349,41 @@ async function getFreePort() {
   await new Promise((resolveClose) => server.close(resolveClose))
   if (!address || typeof address === 'string') throw new Error('Unable to allocate port')
   return address.port
+}
+
+async function launchWeappAutomation() {
+  const autoPort = await getFreePort()
+  const args = ['auto']
+  const ideHttpPort = process.env.WECHAT_DEVTOOLS_HTTP_PORT
+  if (ideHttpPort) args.push('--port', ideHttpPort)
+  if (process.env.CI) args.push('--disable-gpu')
+  args.push('--project', projectPath, '--auto-port', String(autoPort), '--trust-project')
+
+  let exitError
+  const child = spawn(cliPath, args, { stdio: process.env.CI ? 'inherit' : 'ignore' })
+  child.on('error', (error) => {
+    exitError = error
+  })
+  child.on('exit', (code, signal) => {
+    if (code !== 0 && code !== null) exitError = new Error(`WeChat DevTools auto exited with code ${code}`)
+    if (signal) exitError = new Error(`WeChat DevTools auto exited with signal ${signal}`)
+  })
+
+  const endpoint = `ws://127.0.0.1:${autoPort}`
+  const deadline = Date.now() + 120_000
+  while (Date.now() < deadline) {
+    if (exitError) throw exitError
+    try {
+      const connected = await automator.connect({ wsEndpoint: endpoint })
+      await new Promise((resolveWait) => setTimeout(resolveWait, 5_000))
+      return { miniProgram: connected, process: child }
+    } catch {
+      await new Promise((resolveWait) => setTimeout(resolveWait, 1000))
+    }
+  }
+
+  child.kill()
+  throw new Error(`Timed out connecting to WeChat DevTools automation at ${endpoint}`)
 }
 
 async function enableWeChatDevToolsServicePort() {
