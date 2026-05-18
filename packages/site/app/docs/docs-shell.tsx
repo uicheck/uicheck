@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { ReactNode } from 'react'
 import { generatedDocsByLocale, type GeneratedLocale } from '../generated-docs'
 
 const githubUrl = 'https://github.com/uicheck/uicheck'
@@ -22,7 +21,7 @@ function getLocaleHref(pathname: string, nextLocale: GeneratedLocale) {
   return docId ? `/docs/${nextLocale}/${docId}/` : `/docs/${nextLocale}/`
 }
 
-export function DocsShell({ children }: { children: ReactNode }) {
+export function DocsShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname()
   const locale = getLocale(pathname)
   const docs = generatedDocsByLocale[locale]
