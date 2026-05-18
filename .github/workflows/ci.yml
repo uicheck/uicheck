@@ -93,7 +93,8 @@ jobs:
 
       - name: Enable WeChat Developer Tools CLI service
         run: |
-          printf 'y\n' | /Applications/wechatwebdevtools.app/Contents/MacOS/cli islogin || true
+          /Applications/wechatwebdevtools.app/Contents/MacOS/cli quit || true
+          printf 'y\n' | /Applications/wechatwebdevtools.app/Contents/MacOS/cli islogin --port 17991 --disable-gpu || true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

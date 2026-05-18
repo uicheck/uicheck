@@ -1,8 +1,9 @@
 import { createReadStream } from 'node:fs'
-import { mkdir, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, stat, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { createServer as createNetServer } from 'node:net'
 import { createRequire } from 'node:module'
+import { homedir } from 'node:os'
 import { dirname, resolve } from 'node:path'
 import automator from 'miniprogram-automator'
 import { WebSocket } from 'ws'
@@ -32,6 +33,7 @@ let bridgeSocket
 
 try {
   await server.listen()
+  await enableWeChatDevToolsServicePort()
   miniProgram = await automator.launch({
     cliPath,
     projectPath,
@@ -349,6 +351,31 @@ async function getFreePort() {
   await new Promise((resolveClose) => server.close(resolveClose))
   if (!address || typeof address === 'string') throw new Error('Unable to allocate port')
   return address.port
+}
+
+async function enableWeChatDevToolsServicePort() {
+  const supportDir =
+    process.env.WECHAT_DEVTOOLS_SUPPORT_DIR ?? resolve(homedir(), 'Library/Application Support/微信开发者工具')
+  let entries = []
+  try {
+    entries = await readdir(supportDir, { withFileTypes: true })
+  } catch {
+    return
+  }
+
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        const profileDir = resolve(supportDir, entry.name, 'Default')
+        try {
+          await mkdir(profileDir, { recursive: true })
+          await writeFile(resolve(profileDir, '.ide-status'), 'On')
+        } catch {
+          // Best effort: newer DevTools can also be started with --port.
+        }
+      })
+  )
 }
 
 async function waitForMcpClient(server, expectedClientId) {
