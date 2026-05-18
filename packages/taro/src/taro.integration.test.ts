@@ -1,5 +1,4 @@
 import { createServer } from 'node:net'
-import { mkdir, writeFile } from 'node:fs/promises'
 import { Client } from '@modelcontextprotocol/sdk/client'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { UiCheckMcpServer } from '@uicheck/mcp'
@@ -41,7 +40,7 @@ describe('taro client integration', () => {
       screenshot: () => ({
         title: 'Taro integration',
         mimeType: 'image/png',
-        base64: SCREENSHOT_PNG_BASE64
+        base64: 'dGFyby1wbmc='
       })
     })
 
@@ -74,25 +73,13 @@ describe('taro client integration', () => {
       name: 'capture_page',
       arguments: { clientId: 'taro-real' }
     })
-    const image = getToolContent(captured).find((item) => item.type === 'image')
-    expect(image).toMatchObject({
+    expect(getToolContent(captured).find((item) => item.type === 'image')).toMatchObject({
       type: 'image',
       mimeType: 'image/png',
-      data: SCREENSHOT_PNG_BASE64
+      data: 'dGFyby1wbmc='
     })
-    await writeEvidenceScreenshot('taro-runtime.png', image?.data)
   })
 })
-
-const SCREENSHOT_PNG_BASE64 =
-  'iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAIAAADZSiLoAAAAFUlEQVR4nGNMmHCAARiwiYHhPwMDABd0A36uWkr2AAAAAElFTkSuQmCC'
-
-async function writeEvidenceScreenshot(fileName: string, base64: string | undefined): Promise<void> {
-  if (!base64) throw new Error('Missing screenshot data')
-  const outputDir = 'build/uicheck-test-artifacts'
-  await mkdir(outputDir, { recursive: true })
-  await writeFile(`${outputDir}/${fileName}`, Buffer.from(base64, 'base64'))
-}
 
 function createTaro(nodes: TaroSelectorQueryNode[]): TaroLike {
   return {

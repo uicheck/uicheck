@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install browser runtime
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Build workspace dependencies
         run: pnpm run prepare:workspace
 
@@ -56,6 +59,9 @@ jobs:
           pnpm --filter @uicheck/rn run build
           pnpm --filter @uicheck/site run build
 
+      - name: Generate rendered runtime evidence
+        run: pnpm run test:evidence:browser
+
       - name: Upload JavaScript runtime evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -63,8 +69,48 @@ jobs:
           name: javascript-runtime-test-evidence
           path: |
             packages/web/build/uicheck-test-artifacts/**
-            packages/taro/build/uicheck-test-artifacts/**
             packages/rn/build/uicheck-test-artifacts/**
+
+  taro-weapp:
+    name: Taro WeApp runtime evidence
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install WeChat Developer Tools
+        run: brew install --cask wechatwebdevtools
+
+      - name: Enable WeChat Developer Tools CLI service
+        run: |
+          printf 'y\n' | /Applications/wechatwebdevtools.app/Contents/MacOS/cli islogin || true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browser runtime
+        run: pnpm exec playwright install chromium
+
+      - name: Generate real Taro WeApp runtime evidence
+        run: pnpm run test:evidence:taro-weapp
+
+      - name: Upload Taro WeApp runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: taro-weapp-runtime-test-evidence
+          path: |
+            packages/taro/build/uicheck-test-artifacts/**
 
   android:
     name: Android native

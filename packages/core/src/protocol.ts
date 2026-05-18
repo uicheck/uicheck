@@ -91,7 +91,7 @@ export async function handleRuntimeMessage(
 ): Promise<void> {
   let message: SocketRequestMessage
   try {
-    message = JSON.parse(String(raw)) as SocketRequestMessage
+    message = JSON.parse(await normalizeSocketMessage(raw)) as SocketRequestMessage
   } catch {
     return
   }
@@ -108,6 +108,28 @@ export async function handleRuntimeMessage(
       error: error instanceof Error ? error.message : String(error)
     })
   }
+}
+
+async function normalizeSocketMessage(raw: unknown): Promise<string> {
+  if (typeof raw === 'string') return raw
+  if (raw instanceof ArrayBuffer) return decodeArrayBuffer(raw)
+  if (ArrayBuffer.isView(raw)) return decodeBytes(new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength))
+  if (raw && typeof raw === 'object' && typeof (raw as { text?: unknown }).text === 'function') {
+    return String(await (raw as { text: () => Promise<unknown> }).text())
+  }
+  if (raw && typeof raw === 'object' && Object.prototype.toString.call(raw) === '[object ArrayBuffer]') {
+    return decodeArrayBuffer(raw as ArrayBuffer)
+  }
+  return String(raw)
+}
+
+function decodeArrayBuffer(buffer: ArrayBuffer): string {
+  return decodeBytes(new Uint8Array(buffer))
+}
+
+function decodeBytes(bytes: Uint8Array): string {
+  if (typeof TextDecoder !== 'undefined') return new TextDecoder().decode(bytes)
+  return String.fromCharCode(...bytes)
 }
 
 function callAdapter(adapter: UiCheckToolAdapter, method: string, params: Record<string, unknown>): Promise<unknown> | unknown {

@@ -1,4 +1,7 @@
 node_modules
+.idea
+.bundle
+.swc
 dist
 .next
 out

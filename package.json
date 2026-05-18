@@ -11,11 +11,20 @@
     "lint": "pnpm --filter @uicheck/site run lint",
     "prepare:workspace": "pnpm --filter @uicheck/core run build && pnpm --filter @uicheck/mcp run build",
     "test": "pnpm run prepare:workspace && pnpm -r run test",
+    "test:evidence": "pnpm run test:evidence:browser && pnpm run test:evidence:taro-weapp",
+    "test:evidence:browser": "pnpm run prepare:workspace && pnpm --filter @uicheck/web run build && pnpm --filter @uicheck/rn run build && node scripts/generate-runtime-evidence.mjs",
+    "test:evidence:taro-weapp": "pnpm run prepare:workspace && pnpm --filter @uicheck/taro run build && pnpm --filter taro-demo run build:weapp && node scripts/capture-taro-weapp-evidence.mjs",
     "typecheck": "pnpm run prepare:workspace && pnpm -r run typecheck"
   },
   "pnpm": {
     "overrides": {
       "postcss": "^8.5.10"
     }
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "miniprogram-automator": "^0.12.1",
+    "playwright": "^1.60.0",
+    "ws": "^8.20.1"
   }
 }

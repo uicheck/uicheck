@@ -1,0 +1,15 @@
+{
+  "appid": "touristappid",
+  "projectname": "uicheck-taro-demo",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "postcss": true,
+    "minified": false,
+    "compileHotReLoad": false
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.9.0",
+  "srcMiniprogramRoot": "dist/weapp/",
+  "miniprogramRoot": "dist/weapp/"
+}

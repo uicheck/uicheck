@@ -1,3 +1,5 @@
 export { installUiCheck, createWebUiCheckAdapter } from './web'
 export { DEFAULT_OPTIONS, parseUiCheckOptionsFromUrl } from './options'
+export { renderUiCheckEvidence } from './evidence'
 export type { ResolvedUiCheckOptions, UiCheckOptions } from './types'
+export type { UiCheckEvidenceElement, UiCheckEvidenceOptions, UiCheckEvidenceScreenshot } from './evidence'

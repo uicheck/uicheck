@@ -3,6 +3,7 @@ import type { UiCheckSocketTransport } from '@uicheck/core/protocol'
 import type { UiCheckClientSnapshot, UiCheckScreenshotResult, UiCheckSocketOptions, UiCheckToolAdapter } from '@uicheck/core'
 
 export interface ReactNativeWebSocketLike {
+  readyState?: number
   send(message: string): void
   close(): void
   addEventListener?(event: 'open' | 'message' | 'close' | 'error', listener: (event?: unknown) => void): void
@@ -48,6 +49,23 @@ export interface ReactNativeLike {
   }
   findNodeHandle?(ref: unknown): number | null
   WebSocket?: ReactNativeWebSocketConstructor
+  React?: ReactNativeReactLike
+  jsxRuntime?: ReactNativeJsxRuntimeLike
+}
+
+export interface ReactNativeReactLike {
+  createElement(type: unknown, props?: Record<string, unknown> | null, ...children: unknown[]): unknown
+}
+
+export interface ReactNativeJsxRuntimeLike {
+  jsx?(type: unknown, props?: Record<string, unknown> | null, key?: unknown): unknown
+  jsxs?(type: unknown, props?: Record<string, unknown> | null, key?: unknown): unknown
+  jsxDEV?(type: unknown, props?: Record<string, unknown> | null, key?: unknown, ...rest: unknown[]): unknown
+}
+
+export interface ReactNativeUiCheckAutoRegisterOptions {
+  enabled?: boolean
+  includeProps?: Array<'testID' | 'accessibilityLabel' | 'nativeID'>
 }
 
 export type ReactNativeRef =
@@ -75,6 +93,9 @@ export interface ReactNativeUiCheckOptions {
   route?: string
   platform?: string
   WebSocket?: ReactNativeWebSocketConstructor
+  React?: ReactNativeReactLike
+  jsxRuntime?: ReactNativeJsxRuntimeLike
+  autoRegister?: boolean | ReactNativeUiCheckAutoRegisterOptions
   screenshot?(params?: Record<string, unknown>): Promise<UiCheckScreenshotResult> | UiCheckScreenshotResult
 }
 
@@ -104,6 +125,8 @@ interface ReactNativeElementInfo {
 
 let nextUid = 1
 const registry = new Set<RegisteredElement>()
+const autoRegisteredReact = new WeakSet<ReactNativeReactLike>()
+const autoRegisteredJsxRuntime = new WeakSet<ReactNativeJsxRuntimeLike>()
 
 export function registerReactNativeUiCheckElement(registration: ReactNativeElementRegistration): () => void {
   const item: RegisteredElement = {
@@ -163,6 +186,147 @@ function matchesSelector(item: RegisteredElement, selector: string): boolean {
 
 function toClasses(className: string | undefined): string[] {
   return className?.split(/\s+/).filter(Boolean) ?? []
+}
+
+function getAutoRegisterOptions(options: ReactNativeUiCheckOptions): ReactNativeUiCheckAutoRegisterOptions | undefined {
+  if (options.autoRegister === true) return { enabled: true }
+  if (typeof options.autoRegister === 'object') return { enabled: options.autoRegister.enabled !== false, includeProps: options.autoRegister.includeProps }
+  return undefined
+}
+
+function installAutoRegister(React: ReactNativeReactLike | undefined, options: ReactNativeUiCheckAutoRegisterOptions | undefined): void {
+  if (!React || !options?.enabled || autoRegisteredReact.has(React)) return
+
+  const originalCreateElement = React.createElement.bind(React)
+  React.createElement = (type: unknown, props?: Record<string, unknown> | null, ...children: unknown[]) => {
+    const registration = getAutoRegistration(type, props, options)
+    if (!registration) return originalCreateElement(type, props, ...children)
+
+    return originalCreateElement(type, createAutoRegisteredProps(props, registration), ...children)
+  }
+  autoRegisteredReact.add(React)
+}
+
+function installJsxRuntimeAutoRegister(
+  jsxRuntime: ReactNativeJsxRuntimeLike | undefined,
+  options: ReactNativeUiCheckAutoRegisterOptions | undefined
+): void {
+  if (!jsxRuntime || !options?.enabled || autoRegisteredJsxRuntime.has(jsxRuntime)) return
+
+  const originalJsx = jsxRuntime.jsx?.bind(jsxRuntime)
+  const originalJsxs = jsxRuntime.jsxs?.bind(jsxRuntime)
+  const originalJsxDEV = jsxRuntime.jsxDEV?.bind(jsxRuntime)
+
+  if (originalJsx) {
+    jsxRuntime.jsx = (type: unknown, props?: Record<string, unknown> | null, key?: unknown) =>
+      originalJsx(type, createMaybeAutoRegisteredProps(type, props, options), key)
+  }
+  if (originalJsxs) {
+    jsxRuntime.jsxs = (type: unknown, props?: Record<string, unknown> | null, key?: unknown) =>
+      originalJsxs(type, createMaybeAutoRegisteredProps(type, props, options), key)
+  }
+  if (originalJsxDEV) {
+    jsxRuntime.jsxDEV = (type: unknown, props?: Record<string, unknown> | null, key?: unknown, ...rest: unknown[]) =>
+      originalJsxDEV(type, createMaybeAutoRegisteredProps(type, props, options), key, ...rest)
+  }
+
+  autoRegisteredJsxRuntime.add(jsxRuntime)
+}
+
+function createMaybeAutoRegisteredProps(
+  type: unknown,
+  props: Record<string, unknown> | null | undefined,
+  options: ReactNativeUiCheckAutoRegisterOptions
+): Record<string, unknown> | null | undefined {
+  const registration = getAutoRegistration(type, props, options)
+  return registration ? createAutoRegisteredProps(props, registration) : props
+}
+
+function getAutoRegistration(
+  type: unknown,
+  props: Record<string, unknown> | null | undefined,
+  options: ReactNativeUiCheckAutoRegisterOptions
+): Omit<ReactNativeElementRegistration, 'ref'> | undefined {
+  if (!props) return undefined
+  const includeProps = options.includeProps ?? ['testID', 'accessibilityLabel', 'nativeID']
+  const testID = includeProps.includes('testID') && typeof props.testID === 'string' ? props.testID : undefined
+  const accessibilityLabel =
+    includeProps.includes('accessibilityLabel') && typeof props.accessibilityLabel === 'string' ? props.accessibilityLabel : undefined
+  const nativeID = includeProps.includes('nativeID') && typeof props.nativeID === 'string' ? props.nativeID : undefined
+  const id = nativeID ?? testID
+
+  if (!id && !accessibilityLabel) return undefined
+
+  return {
+    id,
+    tag: getComponentName(type),
+    selector: testID ? `[testID="${testID}"]` : nativeID ? `#${nativeID}` : `[accessibilityLabel="${accessibilityLabel}"]`,
+    testID,
+    accessibilityLabel,
+    text: getAutoText(props),
+    dataset: nativeID ? { nativeID } : undefined
+  }
+}
+
+function createAutoRegisteredProps(
+  props: Record<string, unknown> | null | undefined,
+  registration: Omit<ReactNativeElementRegistration, 'ref'>
+): Record<string, unknown> {
+  const originalRef = props?.ref
+  const refState: { current?: unknown } = {}
+  let cleanup: (() => void) | undefined
+
+  return {
+    ...props,
+    ref: (value: unknown) => {
+      cleanup?.()
+      cleanup = undefined
+      refState.current = value
+      assignRef(originalRef, value)
+
+      if (value) {
+        cleanup = registerReactNativeUiCheckElement({
+          ...registration,
+          ref: refState
+        })
+      }
+    }
+  }
+}
+
+function assignRef(ref: unknown, value: unknown): void {
+  if (!ref) return
+  if (typeof ref === 'function') {
+    ref(value)
+    return
+  }
+  if (typeof ref === 'object' && 'current' in ref) {
+    ;(ref as { current?: unknown }).current = value
+  }
+}
+
+function getAutoText(props: Record<string, unknown>): string | undefined {
+  if (typeof props.uicheckText === 'string') return props.uicheckText
+  if (typeof props.accessibilityLabel === 'string') return props.accessibilityLabel
+  if (typeof props.children === 'string') return props.children
+  if (Array.isArray(props.children)) {
+    const text = props.children.filter((child): child is string => typeof child === 'string').join('')
+    return text || undefined
+  }
+  return undefined
+}
+
+function getComponentName(type: unknown): string {
+  if (typeof type === 'string') return type
+  if (typeof type === 'function') {
+    const named = type as { displayName?: string; name?: string }
+    return named.displayName ?? named.name ?? 'Component'
+  }
+  if (type && typeof type === 'object') {
+    const named = type as { displayName?: string; name?: string }
+    return named.displayName ?? named.name ?? 'Component'
+  }
+  return 'Component'
 }
 
 function measureWithRef(refValue: unknown): Promise<ReactNativeElementInfo['box'] | undefined> {
@@ -300,16 +464,61 @@ function captureReactNativePage(options: ReactNativeUiCheckOptions, params: Reco
 
 function createReactNativeSocketTransport(SocketCtor: ReactNativeWebSocketConstructor, url: string): UiCheckSocketTransport {
   const socket = new SocketCtor(url)
+  const pendingMessages: string[] = []
+  let isOpen = socket.readyState === 1
+  let isClosed = false
+
+  const flush = () => {
+    isOpen = true
+    while (pendingMessages.length > 0 && !isClosed) {
+      sendSocketMessage(socket, pendingMessages.shift() as string)
+    }
+  }
+
+  const queueMessage = (message: string) => {
+    if (isClosed) return
+    if (isOpen || socket.readyState === 1) {
+      isOpen = true
+      sendSocketMessage(socket, message)
+      return
+    }
+    pendingMessages.push(message)
+    if (pendingMessages.length > 50) pendingMessages.shift()
+  }
+
   return {
-    send: (message) => socket.send(message),
-    close: () => socket.close(),
-    onOpen: (listener) => addSocketListener(socket, 'open', listener),
+    send: queueMessage,
+    close: () => {
+      isClosed = true
+      pendingMessages.length = 0
+      socket.close()
+    },
+    onOpen: (listener) =>
+      addSocketListener(socket, 'open', () => {
+        flush()
+        listener()
+      }),
     onMessage: (listener) =>
       addSocketListener(socket, 'message', (event) => {
         if (event && typeof event === 'object' && 'data' in event) listener((event as { data?: unknown }).data)
         else listener(event)
       }),
-    onClose: (listener) => addSocketListener(socket, 'close', listener)
+    onClose: (listener) =>
+      addSocketListener(socket, 'close', (event) => {
+        isClosed = true
+        pendingMessages.length = 0
+        listener()
+      })
+  }
+}
+
+function sendSocketMessage(socket: ReactNativeWebSocketLike, message: string): void {
+  try {
+    socket.send(message)
+  } catch {
+    // React Native throws INVALID_STATE_ERR when AppState/Dimensions events race
+    // ahead of the WebSocket open event. The runtime will send fresh snapshots
+    // after reconnect, so this should not crash the host app.
   }
 }
 
@@ -344,6 +553,10 @@ export function createReactNativeUiCheckAdapter(reactNative: ReactNativeLike, op
 export function installReactNativeUiCheck(reactNative: ReactNativeLike, options: ReactNativeUiCheckOptions = {}): void {
   const SocketCtor = options.WebSocket ?? reactNative.WebSocket ?? (globalThis.WebSocket as unknown as ReactNativeWebSocketConstructor | undefined)
   if (!SocketCtor) throw new Error('installReactNativeUiCheck requires WebSocket from React Native or options.WebSocket')
+
+  const autoRegisterOptions = getAutoRegisterOptions(options)
+  installAutoRegister(options.React ?? reactNative.React, autoRegisterOptions)
+  installJsxRuntimeAutoRegister(options.jsxRuntime ?? reactNative.jsxRuntime, autoRegisterOptions)
 
   connectUiCheckRuntime({
     socket: options.socket,

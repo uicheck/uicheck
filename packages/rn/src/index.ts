@@ -3,6 +3,8 @@ export {
   installReactNativeUiCheck,
   registerReactNativeUiCheckElement
 } from './react-native'
+export { renderUiCheckEvidence } from './evidence'
+export type { UiCheckEvidenceElement, UiCheckEvidenceOptions, UiCheckEvidenceScreenshot } from './evidence'
 export type {
   ReactNativeElementRegistration,
   ReactNativeLike,

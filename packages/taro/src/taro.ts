@@ -39,7 +39,7 @@ export interface TaroSelectorQuery {
   in?(page: unknown): TaroSelectorQuery
   selectAll(selector: string): TaroSelectorQueryNodeHandle
   selectViewport(): TaroSelectorViewportHandle
-  exec(callback?: () => void): void
+  exec(callback?: (result?: unknown[]) => void): void
 }
 
 export interface TaroFileSystemManager {
@@ -198,7 +198,15 @@ function queryElements(
     query.selectViewport().scrollOffset((result) => {
       scroll = result ?? {}
     })
-    query.exec(() => resolve({ nodes, scroll }))
+    query.exec((result) => {
+      if (Array.isArray(result)) {
+        const execNodes = result[0]
+        const execScroll = result[1]
+        if (Array.isArray(execNodes)) nodes = execNodes
+        if (execScroll && typeof execScroll === 'object') scroll = execScroll as { scrollLeft?: number; scrollTop?: number }
+      }
+      resolve({ nodes, scroll })
+    })
   })
 }
 
@@ -305,11 +313,19 @@ function createTaroSocketTransport(taro: TaroLike, url: string): UiCheckSocketTr
     onOpen: (listener) => socket.onOpen(listener),
     onMessage: (listener) =>
       socket.onMessage((message) => {
-        if (message && typeof message === 'object' && 'data' in message) listener((message as { data?: unknown }).data)
+        if (message && typeof message === 'object' && 'data' in message) listener(normalizeSocketMessageData((message as { data?: unknown }).data))
         else listener(message)
       }),
     onClose: (listener) => socket.onClose(listener)
   }
+}
+
+function normalizeSocketMessageData(data: unknown): unknown {
+  if (data instanceof ArrayBuffer) {
+    if (typeof TextDecoder !== 'undefined') return new TextDecoder().decode(data)
+    return String.fromCharCode(...new Uint8Array(data))
+  }
+  return data
 }
 
 export function createTaroUiCheckAdapter(taro: TaroLike, options: TaroUiCheckOptions = {}): UiCheckToolAdapter {

@@ -18,6 +18,10 @@
     "./cdn": {
       "import": "./dist/cdn.js",
       "types": "./dist/cdn.d.ts"
+    },
+    "./evidence": {
+      "import": "./dist/evidence.js",
+      "types": "./dist/evidence.d.ts"
     }
   },
   "files": [

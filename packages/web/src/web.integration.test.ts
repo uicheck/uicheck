@@ -1,5 +1,4 @@
 import { createServer } from 'node:net'
-import { mkdir, writeFile } from 'node:fs/promises'
 import { Client } from '@modelcontextprotocol/sdk/client'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { UiCheckMcpServer } from '@uicheck/mcp'
@@ -77,9 +76,8 @@ describe('web client integration', () => {
     })
     const image = getToolContent(captured).find((item) => item.type === 'image')
     const metadata = getJsonToolPayload(captured)
-    expect(image).toMatchObject({ type: 'image', mimeType: 'image/png', data: SCREENSHOT_PNG_BASE64 })
+    expect(image).toMatchObject({ type: 'image', mimeType: 'image/png', data: 'ZmFrZS1wbmc=' })
     expect(metadata).toMatchObject({ title: 'Web integration', width: 320, height: 180 })
-    await writeEvidenceScreenshot('web-runtime.png', image?.data)
   })
 })
 
@@ -95,18 +93,8 @@ function fakeHtml2Canvas(): Promise<HTMLCanvasElement> {
   return Promise.resolve({
     width: 320,
     height: 180,
-    toDataURL: () => `data:image/png;base64,${SCREENSHOT_PNG_BASE64}`
+    toDataURL: () => 'data:image/png;base64,ZmFrZS1wbmc='
   } as HTMLCanvasElement)
-}
-
-const SCREENSHOT_PNG_BASE64 =
-  'iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAIAAADZSiLoAAAAFUlEQVR4nGNMmHCAARiwiYHhPwMDABd0A36uWkr2AAAAAElFTkSuQmCC'
-
-async function writeEvidenceScreenshot(fileName: string, base64: string | undefined): Promise<void> {
-  if (!base64) throw new Error('Missing screenshot data')
-  const outputDir = 'build/uicheck-test-artifacts'
-  await mkdir(outputDir, { recursive: true })
-  await writeFile(`${outputDir}/${fileName}`, Buffer.from(base64, 'base64'))
 }
 
 function setRect(element: Element | null, rect: { x: number; y: number; width: number; height: number }) {

@@ -1,0 +1,109 @@
+.taro-demo-page {
+  min-height: 100vh;
+  padding: 28px 20px 92px;
+  color: #111827;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+.hero {
+  padding: 20px;
+  color: #fff;
+  background: #14532d;
+  border-radius: 18px;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #bbf7d0;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.title {
+  display: block;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.subtitle {
+  display: block;
+  margin-top: 10px;
+  color: #dcfce7;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.stat-card,
+.summary-card {
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #d9e7df;
+  border-radius: 14px;
+}
+
+.stat-label,
+.summary-label {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.stat-value {
+  display: block;
+  margin-top: 8px;
+  color: #14532d;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.summary-card {
+  margin-top: 12px;
+}
+
+.summary-text {
+  display: block;
+  margin-top: 8px;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.progress {
+  height: 8px;
+  margin-top: 12px;
+  overflow: hidden;
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
+.progress-bar {
+  display: block;
+  width: 72%;
+  height: 100%;
+  background: #22c55e;
+}
+
+.submit-button {
+  position: fixed;
+  right: 20px;
+  bottom: 26px;
+  left: 20px;
+  height: 52px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 52px;
+  background: #0284c7;
+  border-radius: 14px;
+}
