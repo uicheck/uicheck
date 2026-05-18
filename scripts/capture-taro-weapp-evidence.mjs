@@ -36,6 +36,7 @@ let devtoolsProcess
 try {
   await server.listen()
   await enableWeChatDevToolsServicePort()
+  await warmUpWeChatDevTools()
   ;({ miniProgram, process: devtoolsProcess } = await launchWeappAutomation())
 
   const route = '/pages/index/index'
@@ -396,6 +397,44 @@ async function launchWeappAutomation() {
   throw new Error(`Timed out connecting to WeChat DevTools automation at ${endpoint}`)
 }
 
+async function warmUpWeChatDevTools() {
+  if (!process.env.CI || !process.env.WECHAT_DEVTOOLS_HTTP_PORT) return
+  const args = ['open', '--project', projectPath, '--port', process.env.WECHAT_DEVTOOLS_HTTP_PORT, '--disable-gpu']
+  await runWeChatDevToolsCommand(args, 60_000, false)
+  await waitForWeChatIdePortFile(60_000).catch(() => undefined)
+}
+
+function runWeChatDevToolsCommand(args, timeoutMs, rejectOnFailure = true) {
+  return new Promise((resolveCommand, rejectCommand) => {
+    const child = spawn(cliPath, args, { stdio: process.env.CI ? 'inherit' : 'ignore' })
+    const timer = setTimeout(() => {
+      child.kill()
+      if (rejectOnFailure) rejectCommand(new Error(`Timed out running WeChat DevTools CLI: ${args.join(' ')}`))
+      else resolveCommand()
+    }, timeoutMs)
+    child.on('error', (error) => {
+      clearTimeout(timer)
+      if (rejectOnFailure) rejectCommand(error)
+      else resolveCommand()
+    })
+    child.on('exit', (code) => {
+      clearTimeout(timer)
+      if (rejectOnFailure && code !== 0) rejectCommand(new Error(`WeChat DevTools CLI exited with code ${code}: ${args.join(' ')}`))
+      else resolveCommand()
+    })
+  })
+}
+
+async function waitForWeChatIdePortFile(timeoutMs) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const files = await findWeChatProfileFiles('.ide')
+    if (files.length > 0) return files
+    await new Promise((resolveWait) => setTimeout(resolveWait, 1000))
+  }
+  throw new Error('Timed out waiting for WeChat DevTools .ide port file')
+}
+
 async function enableWeChatDevToolsServicePort() {
   const supportDir =
     process.env.WECHAT_DEVTOOLS_SUPPORT_DIR ?? resolve(homedir(), 'Library/Application Support/微信开发者工具')
@@ -419,6 +458,30 @@ async function enableWeChatDevToolsServicePort() {
         }
       })
   )
+}
+
+async function findWeChatProfileFiles(fileName) {
+  const supportDir =
+    process.env.WECHAT_DEVTOOLS_SUPPORT_DIR ?? resolve(homedir(), 'Library/Application Support/微信开发者工具')
+  let entries = []
+  try {
+    entries = await readdir(supportDir, { withFileTypes: true })
+  } catch {
+    return []
+  }
+
+  const files = []
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    const filePath = resolve(supportDir, entry.name, 'Default', fileName)
+    try {
+      const info = await stat(filePath)
+      if (info.isFile()) files.push(filePath)
+    } catch {
+      // Ignore profiles that have not created this file yet.
+    }
+  }
+  return files
 }
 
 async function waitForMcpClient(server, expectedClientId) {
