@@ -365,8 +365,6 @@ async function getFreePort() {
 async function launchWeappAutomation() {
   const autoPort = await getFreePort()
   const args = ['auto']
-  const ideHttpPort = process.env.WECHAT_DEVTOOLS_HTTP_PORT
-  if (ideHttpPort) args.push('--port', ideHttpPort)
   if (process.env.CI) args.push('--disable-gpu')
   args.push('--project', projectPath, '--auto-port', String(autoPort), '--trust-project')
 

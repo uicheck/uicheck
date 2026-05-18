@@ -141,8 +141,6 @@ jobs:
         run: pnpm exec playwright install chromium
 
       - name: Generate real Taro WeApp runtime evidence
-        env:
-          WECHAT_DEVTOOLS_HTTP_PORT: 17991
         run: pnpm run test:evidence:taro-weapp
 
       - name: Upload Taro WeApp runtime evidence
