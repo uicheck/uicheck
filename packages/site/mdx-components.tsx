@@ -2,10 +2,10 @@ import type { MDXComponents } from 'mdx/types'
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
-    a: (props) => <a {...props} />,
-    code: (props) => <code {...props} />,
-    pre: (props) => <pre {...props} />,
-    table: (props) => <table {...props} />,
+    a: ({ ref: _ref, ...props }) => <a {...props} />,
+    code: ({ ref: _ref, ...props }) => <code {...props} />,
+    pre: ({ ref: _ref, ...props }) => <pre {...props} />,
+    table: ({ ref: _ref, ...props }) => <table {...props} />,
     ...components
   }
 }
