@@ -59,11 +59,11 @@ Use `@uicheck/taro` for Taro Mini Program pages, `@uicheck/rn` for React Native 
 
 ## MCP Tools
 
-| Tool | Description |
-| --- | --- |
-| `list_clients` | Lists connected uicheck runtime clients. |
-| `capture_page` | Asks a connected runtime to return a PNG screenshot. |
-| `inspect_elements` | Returns tree-shaped nodes, text, layout boxes, and metadata. |
+| Tool | Description | Parameters | Returns |
+| --- | --- | --- | --- |
+| `list_clients` | Lists connected uicheck runtime clients. | None | JSON text array. Each item includes `id`, `connectedAt`, `lastSeenAt`, plus optional `userAgent` and `viewport`. |
+| `capture_page` | Asks a connected runtime to return a PNG screenshot. | `clientId` optional target client id; `timeoutMs` MCP wait timeout; `waitMs` extra wait before capture; `captureTimeoutMs` runtime screenshot timeout; `forceHtml2Canvas` forces the Web client to use html2canvas. | MCP image content with `image/png`; plus JSON text `{ width, height }`. |
+| `inspect_elements` | Returns tree-shaped nodes, text, layout boxes, and metadata. | `clientId` optional target client id; `timeoutMs` MCP wait timeout; `limit` maximum nodes, default 80; `includeHidden` includes hidden or zero-size nodes. | JSON text. Includes `count` and tree-shaped `tree`; nodes include runtime-provided text, visibility, layout boxes, test IDs, accessibility labels, classes, and children. |
 
 ## CLI
 

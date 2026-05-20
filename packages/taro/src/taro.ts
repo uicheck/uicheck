@@ -49,7 +49,7 @@ export interface TaroLike {
 }
 
 export interface TaroUiCheckOptions {
-  taro: TaroLike
+  taro?: TaroLike
   socket?: UiCheckSocketOptions
   screenshot?(params?: Record<string, unknown>): Promise<UiCheckScreenshotResult> | UiCheckScreenshotResult
 }
@@ -254,8 +254,15 @@ function normalizeSocketMessageData(data: unknown): unknown {
   return data
 }
 
+function resolveTaro(taro?: TaroLike): TaroLike {
+  if (taro) return taro
+  const globalTaro = (globalThis as { Taro?: TaroLike }).Taro
+  if (globalTaro) return globalTaro
+  throw new Error('initUiCheck requires a Taro runtime. Pass { taro } when globalThis.Taro is unavailable.')
+}
+
 export function createTaroUiCheckAdapter(options: TaroUiCheckOptions): UiCheckToolAdapter {
-  const { taro } = options
+  const taro = resolveTaro(options.taro)
   return {
     getClientInfo: () => ({
       viewport: getViewportInfo(taro)
@@ -266,7 +273,7 @@ export function createTaroUiCheckAdapter(options: TaroUiCheckOptions): UiCheckTo
 }
 
 export function initUiCheck(options: TaroUiCheckOptions): void {
-  const { taro } = options
+  const taro = resolveTaro(options.taro)
   connectUiCheckRuntime({
     socket: options.socket,
     adapter: createTaroUiCheckAdapter(options),

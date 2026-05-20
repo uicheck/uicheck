@@ -65,9 +65,11 @@ Dispose the client when it is no longer needed:
 uicheckClient.dispose();
 ```
 
-## MCP Tools
+## Options
 
-| Tool | Description |
-| --- | --- |
-| `capture_page` | Uses the configured screenshot callback to return a PNG screenshot. |
-| `inspect_elements` | Returns render tree metadata, text, layout boxes, and visibility. |
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `socket.url` | `String` | - | `@uicheck/mcp` WebSocket URL |
+| `socket.clientId` | `String` | - | Optional stable client id |
+| `socket.reconnectMs` | `int` | `1000` | Reconnect interval |
+| `screenshot` | `UiCheckScreenshotProvider` | - | Optional screenshot function that returns PNG base64 |

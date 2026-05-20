@@ -16,13 +16,20 @@ npm install @uicheck/taro
 Taro Mini Program client for uicheck.
 
 ```ts
-import Taro from '@tarojs/taro'
 import { initUiCheck } from '@uicheck/taro'
 
 initUiCheck({
-  taro: Taro,
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
 })
 ```
+
+## Options
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `socket.url` | `string` | - | `@uicheck/mcp` WebSocket URL |
+| `socket.clientId` | `string` | - | Optional stable client id |
+| `socket.reconnectMs` | `number` | `1000` | Reconnect interval |
+| `screenshot` | `function` | - | Optional screenshot function that returns PNG base64 |

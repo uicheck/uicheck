@@ -67,4 +67,38 @@ describe('createTaroUiCheckAdapter', () => {
     })
   })
 
+  it('uses the global Taro runtime when options omit taro', async () => {
+    const taro = createTaro([
+      {
+        id: 'global-submit',
+        dataset: { uicheckTag: 'button', text: 'Global submit' },
+        left: 1,
+        top: 2,
+        width: 30,
+        height: 16
+      }
+    ])
+    const previousTaro = (globalThis as { Taro?: TaroLike }).Taro
+    ;(globalThis as { Taro?: TaroLike }).Taro = taro
+
+    try {
+      const adapter = createTaroUiCheckAdapter({})
+      const result = await adapter.inspectElements({ limit: 10 })
+
+      expect(result).toMatchObject({
+        platform: 'taro',
+        count: 1,
+        tree: [
+          {
+            tag: 'button',
+            text: 'Global submit'
+          }
+        ]
+      })
+    } finally {
+      if (previousTaro) (globalThis as { Taro?: TaroLike }).Taro = previousTaro
+      else delete (globalThis as { Taro?: TaroLike }).Taro
+    }
+  })
+
 })

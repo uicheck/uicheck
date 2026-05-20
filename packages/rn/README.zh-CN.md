@@ -24,3 +24,12 @@ initUiCheck({
   })
 })
 ```
+
+## 选项
+
+| 选项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `socket.url` | `string` | - | `@uicheck/mcp` WebSocket 地址 |
+| `socket.clientId` | `string` | - | 可选的稳定客户端 ID |
+| `socket.reconnectMs` | `number` | `1000` | 断线重连间隔 |
+| `screenshot` | `function` | - | 可选截图函数，返回 PNG base64 |

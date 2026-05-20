@@ -1,6 +1,6 @@
 {
   "name": "uicheck_flutter",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Flutter runtime client for uicheck",
   "private": true,
   "type": "module",

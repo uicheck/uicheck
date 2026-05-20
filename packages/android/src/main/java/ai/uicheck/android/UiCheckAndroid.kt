@@ -1,5 +1,6 @@
 package ai.uicheck.android
 
+import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.Base64
@@ -64,6 +65,7 @@ data class UiCheckAndroidScreenshotResult(
 
 data class UiCheckAndroidOptions(
   val socket: UiCheckAndroidSocketOptions? = null,
+  val activity: Activity? = null,
   val rootView: (() -> View?)? = null,
   val screenshot: ((Map<String, Any?>) -> UiCheckAndroidScreenshotResult)? = null
 )
@@ -134,13 +136,13 @@ class UiCheckAndroidClient(
 
   fun clientInfo(): Map<String, Any?> = compactMap(
     "userAgent" to "android-native",
-    "viewport" to viewportInfo(options.rootView?.invoke()).toMap()
+    "viewport" to viewportInfo(resolveRootView()).toMap()
   )
 
   fun inspectElements(params: Map<String, Any?> = emptyMap()): Map<String, Any?> {
     val includeHidden = params["includeHidden"] == true
     val limit = clampLimit(params["limit"])
-    val root = options.rootView?.invoke()
+    val root = resolveRootView()
     val elements = collectElements(root)
       .asSequence()
       .filter { includeHidden || it.visible }
@@ -157,8 +159,9 @@ class UiCheckAndroidClient(
   }
 
   fun capturePage(params: Map<String, Any?> = emptyMap()): UiCheckAndroidScreenshotResult {
-    val screenshot = options.screenshot ?: throw UiCheckAndroidException("capture_page requires an Android screenshot provider")
-    return screenshot(params)
+    options.screenshot?.let { return it(params) }
+    val root = resolveRootView() ?: throw UiCheckAndroidException("capture_page requires an Android activity or screenshot provider")
+    return captureAndroidView(root)
   }
 
   fun handleRequestForTesting(raw: String): String? = handleRequest(raw)
@@ -186,6 +189,8 @@ class UiCheckAndroidClient(
     webSocket?.send(stringify(clientInfo() + mapOf("type" to type)))
   }
 
+  private fun resolveRootView(): View? = options.rootView?.invoke() ?: options.activity?.window?.decorView?.rootView
+
   private fun scheduleReconnect() {
     if (closed) return
     val socket = options.socket ?: return
@@ -209,25 +214,31 @@ fun initUiCheck(options: UiCheckAndroidOptions = UiCheckAndroidOptions()): UiChe
 }
 
 fun createAndroidViewScreenshotProvider(root: View): (Map<String, Any?>) -> UiCheckAndroidScreenshotResult {
-  return {
-    val bitmap = Bitmap.createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    root.measure(
-      View.MeasureSpec.makeMeasureSpec(root.width, View.MeasureSpec.EXACTLY),
-      View.MeasureSpec.makeMeasureSpec(root.height, View.MeasureSpec.EXACTLY)
-    )
-    root.layout(root.left, root.top, root.left + root.width, root.top + root.height)
-    root.invalidate()
-    root.draw(canvas)
-    val output = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
-    UiCheckAndroidScreenshotResult(
-      width = root.width,
-      height = root.height,
-      mimeType = "image/png",
-      base64 = Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP)
-    )
-  }
+  return { captureAndroidView(root) }
+}
+
+fun createAndroidActivityScreenshotProvider(activity: Activity): (Map<String, Any?>) -> UiCheckAndroidScreenshotResult {
+  return { captureAndroidView(activity.window.decorView.rootView) }
+}
+
+private fun captureAndroidView(root: View): UiCheckAndroidScreenshotResult {
+  val bitmap = Bitmap.createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
+  val canvas = Canvas(bitmap)
+  root.measure(
+    View.MeasureSpec.makeMeasureSpec(root.width, View.MeasureSpec.EXACTLY),
+    View.MeasureSpec.makeMeasureSpec(root.height, View.MeasureSpec.EXACTLY)
+  )
+  root.layout(root.left, root.top, root.left + root.width, root.top + root.height)
+  root.invalidate()
+  root.draw(canvas)
+  val output = ByteArrayOutputStream()
+  bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
+  return UiCheckAndroidScreenshotResult(
+    width = root.width,
+    height = root.height,
+    mimeType = "image/png",
+    base64 = Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP)
+  )
 }
 
 private fun collectElements(root: View?): List<UiCheckAndroidElementInfo> {

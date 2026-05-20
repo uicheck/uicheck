@@ -47,7 +47,7 @@ publishing {
     create<MavenPublication>("release") {
       groupId = "ai.uicheck"
       artifactId = "uicheck-android"
-      version = "0.1.4"
+      version = "0.1.5"
 
       afterEvaluate {
         from(components["release"])

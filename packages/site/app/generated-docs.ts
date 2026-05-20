@@ -26,7 +26,7 @@ export const generatedDocsByLocale = {
     {
       "id": "web",
       "name": "@uicheck/web",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "浏览器 DOM 页面客户端",
       "install": "npm install @uicheck/web",
       "source": "packages/web",
@@ -85,7 +85,7 @@ export const generatedDocsByLocale = {
     {
       "id": "taro",
       "name": "@uicheck/taro",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "Taro 小程序页面客户端",
       "install": "npm install @uicheck/taro",
       "source": "packages/taro",
@@ -98,14 +98,54 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "import Taro from '@tarojs/taro'\nimport { initUiCheck } from '@uicheck/taro'\n\ninitUiCheck({\n  taro: Taro,\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+          "code": "import { initUiCheck } from '@uicheck/taro'\n\ninitUiCheck({\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "选项"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "选项",
+            "类型",
+            "默认值",
+            "说明"
+          ],
+          "rows": [
+            [
+              "socket.url",
+              "string",
+              "-",
+              "@uicheck/mcp WebSocket 地址"
+            ],
+            [
+              "socket.clientId",
+              "string",
+              "-",
+              "可选的稳定客户端 ID"
+            ],
+            [
+              "socket.reconnectMs",
+              "number",
+              "1000",
+              "断线重连间隔"
+            ],
+            [
+              "screenshot",
+              "function",
+              "-",
+              "可选截图函数，返回 PNG base64"
+            ]
+          ]
         }
       ]
     },
     {
       "id": "rn",
       "name": "@uicheck/rn",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "React Native 页面客户端",
       "install": "npm install @uicheck/rn",
       "source": "packages/rn",
@@ -133,13 +173,53 @@ export const generatedDocsByLocale = {
           "type": "code",
           "lang": "ts",
           "code": "initUiCheck({\n  screenshot: async () => ({\n    mimeType: 'image/png',\n    base64: await captureAppAsBase64()\n  })\n})"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "选项"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "选项",
+            "类型",
+            "默认值",
+            "说明"
+          ],
+          "rows": [
+            [
+              "socket.url",
+              "string",
+              "-",
+              "@uicheck/mcp WebSocket 地址"
+            ],
+            [
+              "socket.clientId",
+              "string",
+              "-",
+              "可选的稳定客户端 ID"
+            ],
+            [
+              "socket.reconnectMs",
+              "number",
+              "1000",
+              "断线重连间隔"
+            ],
+            [
+              "screenshot",
+              "function",
+              "-",
+              "可选截图函数，返回 PNG base64"
+            ]
+          ]
         }
       ]
     },
     {
       "id": "flutter",
       "name": "uicheck_flutter",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "Flutter 应用运行环境客户端",
       "install": "flutter pub add uicheck_flutter",
       "source": "packages/flutter",
@@ -202,22 +282,40 @@ export const generatedDocsByLocale = {
         {
           "type": "heading",
           "level": 2,
-          "text": "MCP 工具"
+          "text": "选项"
         },
         {
           "type": "table",
           "headers": [
-            "工具",
+            "选项",
+            "类型",
+            "默认值",
             "说明"
           ],
           "rows": [
             [
-              "capture_page",
-              "使用配置的截图回调返回 PNG 截图。"
+              "socket.url",
+              "String",
+              "-",
+              "@uicheck/mcp WebSocket 地址"
             ],
             [
-              "inspect_elements",
-              "返回 render tree 元数据、文本、布局盒和可见性。"
+              "socket.clientId",
+              "String",
+              "-",
+              "可选的稳定客户端 ID"
+            ],
+            [
+              "socket.reconnectMs",
+              "int",
+              "1000",
+              "断线重连间隔"
+            ],
+            [
+              "screenshot",
+              "UiCheckScreenshotProvider",
+              "-",
+              "可选截图函数，返回 PNG base64"
             ]
           ]
         }
@@ -226,7 +324,7 @@ export const generatedDocsByLocale = {
     {
       "id": "android",
       "name": "uicheck_android",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "Android 原生应用运行环境客户端",
       "install": "Android library: https://github.com/uicheck/uicheck, path packages/android",
       "source": "packages/android",
@@ -280,7 +378,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "kotlin",
-          "code": "import ai.uicheck.android.UiCheckAndroidOptions\nimport ai.uicheck.android.UiCheckAndroidSocketOptions\nimport ai.uicheck.android.createAndroidViewScreenshotProvider\nimport ai.uicheck.android.initUiCheck\n\nval client = initUiCheck(\n  UiCheckAndroidOptions(\n    socket = UiCheckAndroidSocketOptions(\n      url = \"ws://127.0.0.1:17322/socket\",\n      clientId = \"android-demo\"\n    ),\n    rootView = { rootView },\n    screenshot = createAndroidViewScreenshotProvider(rootView)\n  )\n)"
+          "code": "import ai.uicheck.android.UiCheckAndroidOptions\nimport ai.uicheck.android.UiCheckAndroidSocketOptions\nimport ai.uicheck.android.initUiCheck\n\nval client = initUiCheck(\n  UiCheckAndroidOptions(\n    socket = UiCheckAndroidSocketOptions(\n      url = \"ws://127.0.0.1:17322/socket\",\n      clientId = \"android-demo\"\n    ),\n    activity = this\n  )\n)"
         },
         {
           "type": "paragraph",
@@ -294,22 +392,46 @@ export const generatedDocsByLocale = {
         {
           "type": "heading",
           "level": 2,
-          "text": "MCP 工具"
+          "text": "选项"
         },
         {
           "type": "table",
           "headers": [
-            "工具",
+            "选项",
+            "类型",
+            "默认值",
             "说明"
           ],
           "rows": [
             [
-              "capture_page",
-              "使用配置的截图 provider 返回 PNG 截图。"
+              "socket.url",
+              "String",
+              "-",
+              "@uicheck/mcp WebSocket 地址"
             ],
             [
-              "inspect_elements",
-              "返回 view tree 元数据、文本、布局盒和可见性。"
+              "socket.clientId",
+              "String",
+              "-",
+              "可选的稳定客户端 ID"
+            ],
+            [
+              "socket.reconnectMs",
+              "Long",
+              "1000",
+              "断线重连间隔"
+            ],
+            [
+              "activity",
+              "Activity",
+              "-",
+              "当前 Activity，用来自动读取根 View 和截图"
+            ],
+            [
+              "screenshot",
+              "function",
+              "-",
+              "可选截图 provider，返回 PNG base64"
             ]
           ]
         }
@@ -318,7 +440,7 @@ export const generatedDocsByLocale = {
     {
       "id": "apple",
       "name": "uicheck_apple",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "Apple 原生应用运行环境客户端",
       "install": "Swift Package: https://github.com/uicheck/uicheck, product UICheckApple",
       "source": "packages/apple",
@@ -386,22 +508,40 @@ export const generatedDocsByLocale = {
         {
           "type": "heading",
           "level": 2,
-          "text": "MCP 工具"
+          "text": "选项"
         },
         {
           "type": "table",
           "headers": [
-            "工具",
+            "选项",
+            "类型",
+            "默认值",
             "说明"
           ],
           "rows": [
             [
-              "capture_page",
-              "使用配置的截图 provider 返回 PNG 截图。"
+              "socket.url",
+              "String",
+              "-",
+              "@uicheck/mcp WebSocket 地址"
             ],
             [
-              "inspect_elements",
-              "返回 UIKit/AppKit view tree 元数据、文本、布局盒和可见性。"
+              "socket.clientId",
+              "String",
+              "-",
+              "可选的稳定客户端 ID"
+            ],
+            [
+              "socket.reconnectMs",
+              "Int",
+              "1000",
+              "断线重连间隔"
+            ],
+            [
+              "screenshot",
+              "function",
+              "-",
+              "可选截图函数，返回 PNG base64"
             ]
           ]
         }
@@ -410,7 +550,7 @@ export const generatedDocsByLocale = {
     {
       "id": "mcp",
       "name": "@uicheck/mcp",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "通过 WebSocket 连接 uicheck 客户端的 MCP 服务",
       "install": "npm install -g @uicheck/mcp",
       "source": "packages/mcp",
@@ -480,20 +620,28 @@ export const generatedDocsByLocale = {
           "type": "table",
           "headers": [
             "工具",
-            "说明"
+            "说明",
+            "参数",
+            "返回"
           ],
           "rows": [
             [
               "list_clients",
-              "查看已连接的 uicheck 运行环境客户端。"
+              "查看已连接的 uicheck 运行环境客户端。",
+              "无",
+              "JSON 文本数组。每项包含 id、connectedAt、lastSeenAt，以及可选的 userAgent、viewport。"
             ],
             [
               "capture_page",
-              "请求已连接运行环境返回 PNG 截图。"
+              "请求已连接运行环境返回 PNG 截图。",
+              "clientId 可选目标客户端 ID；timeoutMs MCP 等待超时；waitMs 截图前等待时间；captureTimeoutMs 运行环境截图超时；forceHtml2Canvas 强制 Web 端使用 html2canvas。",
+              "MCP image 内容，mimeType 为 image/png；附带 JSON 文本 { width, height }。"
             ],
             [
               "inspect_elements",
-              "返回树状节点、文本、布局盒和元数据。"
+              "返回树状节点、文本、布局盒和元数据。",
+              "clientId 可选目标客户端 ID；timeoutMs MCP 等待超时；limit 最大节点数，默认 80；includeHidden 是否包含隐藏或零尺寸节点。",
+              "JSON 文本。包含 count 和树状 tree，节点包含文本、可见性、布局盒、测试 ID、无障碍标签、类名和子节点等运行环境可提供的信息。"
             ]
           ]
         },
@@ -514,7 +662,7 @@ export const generatedDocsByLocale = {
     {
       "id": "web",
       "name": "@uicheck/web",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "Browser DOM client for uicheck",
       "install": "npm install @uicheck/web",
       "source": "packages/web",
@@ -573,7 +721,7 @@ export const generatedDocsByLocale = {
     {
       "id": "taro",
       "name": "@uicheck/taro",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "Taro Mini Program client for uicheck",
       "install": "npm install @uicheck/taro",
       "source": "packages/taro",
@@ -586,14 +734,54 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "import Taro from '@tarojs/taro'\nimport { initUiCheck } from '@uicheck/taro'\n\ninitUiCheck({\n  taro: Taro,\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+          "code": "import { initUiCheck } from '@uicheck/taro'\n\ninitUiCheck({\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Options"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Option",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "socket.url",
+              "string",
+              "-",
+              "@uicheck/mcp WebSocket URL"
+            ],
+            [
+              "socket.clientId",
+              "string",
+              "-",
+              "Optional stable client id"
+            ],
+            [
+              "socket.reconnectMs",
+              "number",
+              "1000",
+              "Reconnect interval"
+            ],
+            [
+              "screenshot",
+              "function",
+              "-",
+              "Optional screenshot function that returns PNG base64"
+            ]
+          ]
         }
       ]
     },
     {
       "id": "rn",
       "name": "@uicheck/rn",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "React Native client for uicheck",
       "install": "npm install @uicheck/rn",
       "source": "packages/rn",
@@ -621,13 +809,53 @@ export const generatedDocsByLocale = {
           "type": "code",
           "lang": "ts",
           "code": "initUiCheck({\n  screenshot: async () => ({\n    mimeType: 'image/png',\n    base64: await captureAppAsBase64()\n  })\n})"
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Options"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Option",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "socket.url",
+              "string",
+              "-",
+              "@uicheck/mcp WebSocket URL"
+            ],
+            [
+              "socket.clientId",
+              "string",
+              "-",
+              "Optional stable client id"
+            ],
+            [
+              "socket.reconnectMs",
+              "number",
+              "1000",
+              "Reconnect interval"
+            ],
+            [
+              "screenshot",
+              "function",
+              "-",
+              "Optional screenshot function that returns PNG base64"
+            ]
+          ]
         }
       ]
     },
     {
       "id": "flutter",
       "name": "uicheck_flutter",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "Flutter runtime client for uicheck",
       "install": "flutter pub add uicheck_flutter",
       "source": "packages/flutter",
@@ -690,22 +918,40 @@ export const generatedDocsByLocale = {
         {
           "type": "heading",
           "level": 2,
-          "text": "MCP Tools"
+          "text": "Options"
         },
         {
           "type": "table",
           "headers": [
-            "Tool",
+            "Option",
+            "Type",
+            "Default",
             "Description"
           ],
           "rows": [
             [
-              "capture_page",
-              "Uses the configured screenshot callback to return a PNG screenshot."
+              "socket.url",
+              "String",
+              "-",
+              "@uicheck/mcp WebSocket URL"
             ],
             [
-              "inspect_elements",
-              "Returns render tree metadata, text, layout boxes, and visibility."
+              "socket.clientId",
+              "String",
+              "-",
+              "Optional stable client id"
+            ],
+            [
+              "socket.reconnectMs",
+              "int",
+              "1000",
+              "Reconnect interval"
+            ],
+            [
+              "screenshot",
+              "UiCheckScreenshotProvider",
+              "-",
+              "Optional screenshot function that returns PNG base64"
             ]
           ]
         }
@@ -714,7 +960,7 @@ export const generatedDocsByLocale = {
     {
       "id": "android",
       "name": "uicheck_android",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "Android native runtime client for uicheck",
       "install": "Android library: https://github.com/uicheck/uicheck, path packages/android",
       "source": "packages/android",
@@ -768,7 +1014,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "kotlin",
-          "code": "import ai.uicheck.android.UiCheckAndroidOptions\nimport ai.uicheck.android.UiCheckAndroidSocketOptions\nimport ai.uicheck.android.createAndroidViewScreenshotProvider\nimport ai.uicheck.android.initUiCheck\n\nval client = initUiCheck(\n  UiCheckAndroidOptions(\n    socket = UiCheckAndroidSocketOptions(\n      url = \"ws://127.0.0.1:17322/socket\",\n      clientId = \"android-demo\"\n    ),\n    rootView = { rootView },\n    screenshot = createAndroidViewScreenshotProvider(rootView)\n  )\n)"
+          "code": "import ai.uicheck.android.UiCheckAndroidOptions\nimport ai.uicheck.android.UiCheckAndroidSocketOptions\nimport ai.uicheck.android.initUiCheck\n\nval client = initUiCheck(\n  UiCheckAndroidOptions(\n    socket = UiCheckAndroidSocketOptions(\n      url = \"ws://127.0.0.1:17322/socket\",\n      clientId = \"android-demo\"\n    ),\n    activity = this\n  )\n)"
         },
         {
           "type": "paragraph",
@@ -782,22 +1028,46 @@ export const generatedDocsByLocale = {
         {
           "type": "heading",
           "level": 2,
-          "text": "MCP Tools"
+          "text": "Options"
         },
         {
           "type": "table",
           "headers": [
-            "Tool",
+            "Option",
+            "Type",
+            "Default",
             "Description"
           ],
           "rows": [
             [
-              "capture_page",
-              "Uses the configured screenshot provider to return a PNG screenshot."
+              "socket.url",
+              "String",
+              "-",
+              "@uicheck/mcp WebSocket URL"
             ],
             [
-              "inspect_elements",
-              "Returns view tree metadata, text, layout boxes, and visibility."
+              "socket.clientId",
+              "String",
+              "-",
+              "Optional stable client id"
+            ],
+            [
+              "socket.reconnectMs",
+              "Long",
+              "1000",
+              "Reconnect interval"
+            ],
+            [
+              "activity",
+              "Activity",
+              "-",
+              "Current Activity used to read the root View and capture screenshots"
+            ],
+            [
+              "screenshot",
+              "function",
+              "-",
+              "Optional screenshot provider that returns PNG base64"
             ]
           ]
         }
@@ -806,7 +1076,7 @@ export const generatedDocsByLocale = {
     {
       "id": "apple",
       "name": "uicheck_apple",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "Apple native runtime client for uicheck",
       "install": "Swift Package: https://github.com/uicheck/uicheck, product UICheckApple",
       "source": "packages/apple",
@@ -874,22 +1144,40 @@ export const generatedDocsByLocale = {
         {
           "type": "heading",
           "level": 2,
-          "text": "MCP Tools"
+          "text": "Options"
         },
         {
           "type": "table",
           "headers": [
-            "Tool",
+            "Option",
+            "Type",
+            "Default",
             "Description"
           ],
           "rows": [
             [
-              "capture_page",
-              "Uses the configured screenshot provider to return a PNG screenshot."
+              "socket.url",
+              "String",
+              "-",
+              "@uicheck/mcp WebSocket URL"
             ],
             [
-              "inspect_elements",
-              "Returns UIKit/AppKit view tree metadata, text, layout boxes, and visibility."
+              "socket.clientId",
+              "String",
+              "-",
+              "Optional stable client id"
+            ],
+            [
+              "socket.reconnectMs",
+              "Int",
+              "1000",
+              "Reconnect interval"
+            ],
+            [
+              "screenshot",
+              "function",
+              "-",
+              "Optional screenshot function that returns PNG base64"
             ]
           ]
         }
@@ -898,7 +1186,7 @@ export const generatedDocsByLocale = {
     {
       "id": "mcp",
       "name": "@uicheck/mcp",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "description": "MCP server that communicates with uicheck clients over WebSocket",
       "install": "npm install -g @uicheck/mcp",
       "source": "packages/mcp",
@@ -968,20 +1256,28 @@ export const generatedDocsByLocale = {
           "type": "table",
           "headers": [
             "Tool",
-            "Description"
+            "Description",
+            "Parameters",
+            "Returns"
           ],
           "rows": [
             [
               "list_clients",
-              "Lists connected uicheck runtime clients."
+              "Lists connected uicheck runtime clients.",
+              "None",
+              "JSON text array. Each item includes id, connectedAt, lastSeenAt, plus optional userAgent and viewport."
             ],
             [
               "capture_page",
-              "Asks a connected runtime to return a PNG screenshot."
+              "Asks a connected runtime to return a PNG screenshot.",
+              "clientId optional target client id; timeoutMs MCP wait timeout; waitMs extra wait before capture; captureTimeoutMs runtime screenshot timeout; forceHtml2Canvas forces the Web client to use html2canvas.",
+              "MCP image content with image/png; plus JSON text { width, height }."
             ],
             [
               "inspect_elements",
-              "Returns tree-shaped nodes, text, layout boxes, and metadata."
+              "Returns tree-shaped nodes, text, layout boxes, and metadata.",
+              "clientId optional target client id; timeoutMs MCP wait timeout; limit maximum nodes, default 80; includeHidden includes hidden or zero-size nodes.",
+              "JSON text. Includes count and tree-shaped tree; nodes include runtime-provided text, visibility, layout boxes, test IDs, accessibility labels, classes, and children."
             ]
           ]
         },

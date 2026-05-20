@@ -66,9 +66,11 @@ Dispose when no longer needed:
 client.close()
 ```
 
-## MCP Tools
+## Options
 
-| Tool | Description |
-| --- | --- |
-| `capture_page` | Uses the configured screenshot provider to return a PNG screenshot. |
-| `inspect_elements` | Returns UIKit/AppKit view tree metadata, text, layout boxes, and visibility. |
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `socket.url` | `String` | - | `@uicheck/mcp` WebSocket URL |
+| `socket.clientId` | `String` | - | Optional stable client id |
+| `socket.reconnectMs` | `Int` | `1000` | Reconnect interval |
+| `screenshot` | `function` | - | Optional screenshot function that returns PNG base64 |

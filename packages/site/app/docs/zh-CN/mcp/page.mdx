@@ -59,11 +59,11 @@ Taro 小程序使用 `@uicheck/taro`，React Native 使用 `@uicheck/rn`，Flutt
 
 ## MCP 工具
 
-| 工具 | 说明 |
-| --- | --- |
-| `list_clients` | 查看已连接的 uicheck 运行环境客户端。 |
-| `capture_page` | 请求已连接运行环境返回 PNG 截图。 |
-| `inspect_elements` | 返回树状节点、文本、布局盒和元数据。 |
+| 工具 | 说明 | 参数 | 返回 |
+| --- | --- | --- | --- |
+| `list_clients` | 查看已连接的 uicheck 运行环境客户端。 | 无 | JSON 文本数组。每项包含 `id`、`connectedAt`、`lastSeenAt`，以及可选的 `userAgent`、`viewport`。 |
+| `capture_page` | 请求已连接运行环境返回 PNG 截图。 | `clientId` 可选目标客户端 ID；`timeoutMs` MCP 等待超时；`waitMs` 截图前等待时间；`captureTimeoutMs` 运行环境截图超时；`forceHtml2Canvas` 强制 Web 端使用 html2canvas。 | MCP image 内容，`mimeType` 为 `image/png`；附带 JSON 文本 `{ width, height }`。 |
+| `inspect_elements` | 返回树状节点、文本、布局盒和元数据。 | `clientId` 可选目标客户端 ID；`timeoutMs` MCP 等待超时；`limit` 最大节点数，默认 80；`includeHidden` 是否包含隐藏或零尺寸节点。 | JSON 文本。包含 `count` 和树状 `tree`，节点包含文本、可见性、布局盒、测试 ID、无障碍标签、类名和子节点等运行环境可提供的信息。 |
 
 ## CLI
 

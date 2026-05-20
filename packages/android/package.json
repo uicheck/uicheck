@@ -1,6 +1,6 @@
 {
   "name": "uicheck_android",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Android native client for uicheck",
   "private": true,
   "type": "module",

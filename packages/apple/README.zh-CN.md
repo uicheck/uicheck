@@ -53,9 +53,11 @@ let client = initUiCheck(
 client.close()
 ```
 
-## MCP 工具
+## 选项
 
-| 工具 | 说明 |
-| --- | --- |
-| `capture_page` | 使用配置的截图 provider 返回 PNG 截图。 |
-| `inspect_elements` | 返回 UIKit/AppKit view tree 元数据、文本、布局盒和可见性。 |
+| 选项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `socket.url` | `String` | - | `@uicheck/mcp` WebSocket 地址 |
+| `socket.clientId` | `String` | - | 可选的稳定客户端 ID |
+| `socket.reconnectMs` | `Int` | `1000` | 断线重连间隔 |
+| `screenshot` | `function` | - | 可选截图函数，返回 PNG base64 |

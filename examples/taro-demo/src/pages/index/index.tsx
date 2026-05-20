@@ -25,7 +25,6 @@ export default function Index() {
     if (!socketUrl) return
 
     initUiCheck({
-      taro: Taro,
       socket: {
         url: socketUrl,
         clientId,

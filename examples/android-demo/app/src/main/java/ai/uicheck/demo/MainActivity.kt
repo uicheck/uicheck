@@ -3,7 +3,6 @@ package ai.uicheck.demo
 import ai.uicheck.android.UiCheckAndroidClient
 import ai.uicheck.android.UiCheckAndroidOptions
 import ai.uicheck.android.UiCheckAndroidSocketOptions
-import ai.uicheck.android.createAndroidViewScreenshotProvider
 import ai.uicheck.android.initUiCheck
 import android.app.Activity
 import android.graphics.Color
@@ -25,8 +24,7 @@ class MainActivity : Activity() {
         View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
         View.SYSTEM_UI_FLAG_LAYOUT_STABLE
     val demo = createUICheckAndroidDemoView(this)
-    val screen = demo.screen
-    setContentView(screen)
+    setContentView(demo.screen)
 
     val socketUrl = System.getenv("UICHECK_SOCKET_URL")
     if (!socketUrl.isNullOrBlank()) {
@@ -37,8 +35,7 @@ class MainActivity : Activity() {
             clientId = "android-demo",
             reconnectMs = 500
           ),
-          rootView = { screen },
-          screenshot = createAndroidViewScreenshotProvider(screen)
+          activity = this
         )
       )
     }

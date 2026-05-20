@@ -1,6 +1,6 @@
 {
   "name": "@uicheck/web",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Browser DOM client for uicheck",
   "type": "module",
   "main": "./dist/index.js",

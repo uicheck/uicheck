@@ -30,7 +30,6 @@ Install the client near app startup:
 ```kotlin
 import ai.uicheck.android.UiCheckAndroidOptions
 import ai.uicheck.android.UiCheckAndroidSocketOptions
-import ai.uicheck.android.createAndroidViewScreenshotProvider
 import ai.uicheck.android.initUiCheck
 
 val client = initUiCheck(
@@ -39,8 +38,7 @@ val client = initUiCheck(
       url = "ws://127.0.0.1:17322/socket",
       clientId = "android-demo"
     ),
-    rootView = { rootView },
-    screenshot = createAndroidViewScreenshotProvider(rootView)
+    activity = this
   )
 )
 ```
@@ -51,9 +49,12 @@ Dispose when no longer needed:
 client.close()
 ```
 
-## MCP Tools
+## Options
 
-| Tool | Description |
-| --- | --- |
-| `capture_page` | Uses the configured screenshot provider to return a PNG screenshot. |
-| `inspect_elements` | Returns view tree metadata, text, layout boxes, and visibility. |
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `socket.url` | `String` | - | `@uicheck/mcp` WebSocket URL |
+| `socket.clientId` | `String` | - | Optional stable client id |
+| `socket.reconnectMs` | `Long` | `1000` | Reconnect interval |
+| `activity` | `Activity` | - | Current Activity used to read the root View and capture screenshots |
+| `screenshot` | `function` | - | Optional screenshot provider that returns PNG base64 |

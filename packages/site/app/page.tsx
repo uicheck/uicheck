@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { GeneratedLocale } from './generated-docs'
 
 const locales = ['zh-CN', 'en'] as const satisfies GeneratedLocale[]
@@ -30,8 +30,13 @@ interface HomeDictionary {
     title: string
     lead: string
     primary: string
-    mcp: string
-    platforms: string
+    secondary: string
+    previewLabel: string
+    agentPromptLabel: string
+    agentPrompt: string
+    copyPrompt: string
+    copiedPrompt: string
+    copyFailedPrompt: string
   }
   endpoints: [string, string, string][]
   platform: {
@@ -43,6 +48,7 @@ interface HomeDictionary {
   example: {
     title: string
     body: string
+    docsButton: string
   }
 }
 
@@ -55,12 +61,17 @@ const dictionaries = {
     },
     languageLabel: '语言',
     hero: {
-      eyebrow: 'UI Check for AI agents',
-      title: 'AI 客户端接 MCP，应用接 WebSocket',
-      lead: 'UI Check 把真实运行中的应用暴露给 AI。AI 只需要连接本机 @uicheck/mcp，应用侧以 @uicheck/web 为例连接同一个 WebSocket，就能返回截图、树状节点、布局盒、文本和坐标。',
-      primary: '开始',
-      mcp: '@uicheck/mcp',
-      platforms: '多平台接入'
+      eyebrow: '@uicheck/mcp + @uicheck/web',
+      title: '让 AI 看懂真实浏览器页面',
+      lead: 'UI Check 把页面截图、DOM 元素、布局盒、间距和坐标暴露给 AI。AI 可以通过 MCP 查询页面，也可以接收人工标注后的图片证据，再回到代码里修复 UI。',
+      primary: '开始接入',
+      secondary: '查看工具',
+      previewLabel: 'UI Check 产品预览',
+      agentPromptLabel: '给 Agent',
+      agentPrompt: '安装 uicheck.ai，并使用 uicheck 检查元素',
+      copyPrompt: '复制',
+      copiedPrompt: '已复制',
+      copyFailedPrompt: '复制失败'
     },
     endpoints: [
       ['AI 客户端', '连接 MCP endpoint', 'http://127.0.0.1:17322/mcp'],
@@ -80,7 +91,7 @@ const dictionaries = {
       }
     },
     example: {
-      title: '最小连接方式',
+      title: '在 Web 端接入',
       body: `# 1. 启动 MCP 服务
 npm install -g @uicheck/mcp
 uicheck-mcp
@@ -97,7 +108,8 @@ initUiCheck({
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
-})`
+})`,
+      docsButton: '查看多平台文档'
     }
   },
   en: {
@@ -108,12 +120,17 @@ initUiCheck({
     },
     languageLabel: 'Language',
     hero: {
-      eyebrow: 'UI Check for AI agents',
-      title: 'AI clients connect to MCP. Apps connect over WebSocket.',
-      lead: 'UI Check exposes real running apps to AI agents. The AI client connects to local @uicheck/mcp, while the app runtime, using @uicheck/web as the example, connects to the same WebSocket endpoint and returns screenshots, tree-shaped nodes, layout boxes, text, and coordinates.',
-      primary: 'Start',
-      mcp: '@uicheck/mcp',
-      platforms: 'Platform integrations'
+      eyebrow: '@uicheck/mcp + @uicheck/web',
+      title: 'Help AI understand real browser pages',
+      lead: 'UI Check exposes screenshots, DOM elements, layout boxes, spacing, and coordinates to AI. Agents can query the live page through MCP or use manually annotated visual evidence before fixing UI code.',
+      primary: 'Get started',
+      secondary: 'View tools',
+      previewLabel: 'UI Check product preview',
+      agentPromptLabel: 'For agents',
+      agentPrompt: 'Install uicheck.ai and use uicheck to inspect elements',
+      copyPrompt: 'Copy',
+      copiedPrompt: 'Copied',
+      copyFailedPrompt: 'Failed'
     },
     endpoints: [
       ['AI client', 'Connects to the MCP endpoint', 'http://127.0.0.1:17322/mcp'],
@@ -133,7 +150,7 @@ initUiCheck({
       }
     },
     example: {
-      title: 'Minimal connection',
+      title: 'Connect on Web',
       body: `# 1. Start the MCP server
 npm install -g @uicheck/mcp
 uicheck-mcp
@@ -150,13 +167,13 @@ initUiCheck({
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
-})`
+})`,
+      docsButton: 'View platform docs'
     }
   }
 } satisfies Record<Locale, HomeDictionary>
 
-function getInitialLocale(): Locale {
-  if (typeof window === 'undefined') return 'zh-CN'
+function getPreferredLocale(): Locale {
   const fromUrl = new URLSearchParams(window.location.search).get('lang')
   if (fromUrl === 'en' || fromUrl === 'zh-CN') return fromUrl
   const stored = window.localStorage.getItem('uicheck-locale')
@@ -164,10 +181,26 @@ function getInitialLocale(): Locale {
   return navigator.language.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en'
 }
 
+function highlightExampleLine(line: string): ReactNode {
+  if (!line) return '\u00a0'
+  if (line.startsWith('#')) return <span className="home-code-comment">{line}</span>
+  if (line.startsWith('npm ') || line === 'uicheck-mcp' || line.startsWith('http')) return <span className="home-code-command">{line}</span>
+  if (line.startsWith('import')) return <span className="home-code-keyword">{line}</span>
+  if (line.includes("'ws://")) return <span className="home-code-string">{line}</span>
+  if (/^\s*[{}),]+$/.test(line)) return <span className="home-code-punctuation">{line}</span>
+  return <span className="home-code-property">{line}</span>
+}
+
 export default function Home() {
-  const [locale, setLocale] = useState<Locale>(getInitialLocale)
+  const [locale, setLocale] = useState<Locale>('zh-CN')
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const t = dictionaries[locale]
   const docsBase = `/docs/${locale}/`
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setLocale(getPreferredLocale()), 0)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     document.documentElement.lang = t.htmlLang
@@ -181,62 +214,139 @@ export default function Home() {
     window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
   }
 
+  async function copyAgentPrompt() {
+    let copied = false
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(t.hero.agentPrompt)
+        copied = true
+      }
+    } catch {
+      copied = false
+    }
+
+    if (!copied) {
+      const textarea = document.createElement('textarea')
+      textarea.value = t.hero.agentPrompt
+      textarea.setAttribute('readonly', '')
+      textarea.style.position = 'fixed'
+      textarea.style.left = '-9999px'
+      textarea.style.top = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      copied = document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+
+    setCopyState(copied ? 'copied' : 'failed')
+    window.setTimeout(() => setCopyState('idle'), 1600)
+  }
+
   return (
-    <main className="home-entry">
-      <nav className="nav home-entry-nav" aria-label="Primary">
-        <a className="brand" href="#top" aria-label="UI Check home">
-          <span className="brand-mark">UI</span>
-          <span>UI Check</span>
-        </a>
-        <div className="nav-actions">
-          <div className="nav-links">
-            <a href={docsBase}>{t.nav.docs}</a>
-            <a href={githubUrl} rel="noreferrer" target="_blank">
-              {t.nav.github}
-            </a>
+    <main>
+      <section className="hero">
+        <nav className="nav" aria-label="Primary">
+          <a className="brand" href="#top" aria-label="UI Check home">
+            <span className="brand-mark">UI</span>
+            <span>UI Check</span>
+          </a>
+          <div className="nav-actions">
+            <div className="nav-links">
+              <a href={docsBase}>{t.nav.docs}</a>
+              <a href={githubUrl} rel="noreferrer" target="_blank">
+                {t.nav.github}
+              </a>
+            </div>
+            <div className="locale-switcher" aria-label={t.languageLabel}>
+              {locales.map((item) => (
+                <button className={item === locale ? 'active' : ''} key={item} type="button" onClick={() => changeLocale(item)}>
+                  {item === 'zh-CN' ? '中' : 'EN'}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="locale-switcher" aria-label={t.languageLabel}>
-            {locales.map((item) => (
-              <button className={item === locale ? 'active' : ''} key={item} type="button" onClick={() => changeLocale(item)}>
-                {item === 'zh-CN' ? '中' : 'EN'}
+        </nav>
+
+        <div className="hero-inner" id="top">
+          <div className="hero-copy">
+            <p className="eyebrow">{t.hero.eyebrow}</p>
+            <h1>{t.hero.title}</h1>
+            <p className="lead">{t.hero.lead}</p>
+            <div className="hero-actions">
+              <a className="button primary" href={docsBase}>
+                {t.hero.primary}
+              </a>
+              <a className="button secondary" href={`${docsBase}mcp/`}>
+                {t.hero.secondary}
+              </a>
+            </div>
+            <div className="agent-copy-row">
+              <span>{t.hero.agentPromptLabel}</span>
+              <code>{t.hero.agentPrompt}</code>
+              <button type="button" onClick={copyAgentPrompt}>
+                {copyState === 'copied' ? t.hero.copiedPrompt : copyState === 'failed' ? t.hero.copyFailedPrompt : t.hero.copyPrompt}
               </button>
-            ))}
+            </div>
           </div>
-        </div>
-      </nav>
 
-      <section className="entry-hero" id="top">
-        <div className="entry-copy">
-          <p className="eyebrow">{t.hero.eyebrow}</p>
-          <h1>{t.hero.title}</h1>
-          <p className="lead">{t.hero.lead}</p>
-          <div className="hero-actions">
-            <a className="button primary" href={docsBase}>
-              {t.hero.primary}
-            </a>
-            <a className="button secondary" href={`${docsBase}mcp/`}>
-              {t.hero.mcp}
-            </a>
-            <a className="button secondary" href="#platforms">
-              {t.hero.platforms}
-            </a>
-          </div>
-        </div>
+          <div className="inspector" aria-label={t.hero.previewLabel}>
+            <div className="browser">
+              <div className="browser-bar">
+                <span />
+                <span />
+                <span />
+                <code>localhost:3000/dashboard</code>
+              </div>
+              <div className="mock-page">
+                <div className="mock-sidebar">
+                  <b>Studio</b>
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <div className="mock-content">
+                  <div className="mock-header">
+                    <span />
+                    <button>Publish</button>
+                  </div>
+                  <div className="mock-grid">
+                    <article className="target target-one">
+                      <span className="pin">1</span>
+                      <strong>Revenue</strong>
+                      <em>+18.2%</em>
+                    </article>
+                    <article className="target target-two">
+                      <span className="pin">2</span>
+                      <strong>Conversion</strong>
+                      <em>3.74%</em>
+                    </article>
+                    <article>
+                      <strong>Latency</strong>
+                      <em>126ms</em>
+                    </article>
+                  </div>
+                  <div className="mock-table">
+                    <span />
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </div>
+              </div>
+            </div>
 
-        <div className="connection-panel" aria-label={t.hero.title}>
-          {t.endpoints.map(([label, title, endpoint]) => (
-            <article className="endpoint-card" key={endpoint}>
-              <span>{label}</span>
-              <h2>{title}</h2>
-              <code>{endpoint}</code>
-            </article>
-          ))}
-          <div className="connection-flow" aria-hidden="true">
-            <span>AI</span>
-            <i />
-            <span>MCP</span>
-            <i />
-            <span>App</span>
+            <div className="agent-panel">
+              <div>
+                <span className="status-dot" />
+                <span>AI Agent</span>
+              </div>
+              <pre>{`inspect_elements({
+  selector: ".mock-grid",
+  limit: 20
+})
+
+capture_page({ waitMs: 300 })`}</pre>
+            </div>
           </div>
         </div>
       </section>
@@ -258,11 +368,25 @@ export default function Home() {
       </section>
 
       <section className="quick-start">
-        <div>
+        <div className="quick-start-copy">
           <p className="eyebrow">Quick start</p>
           <h2>{t.example.title}</h2>
+          <a className="button secondary quick-start-doc-button" href={docsBase}>
+            <span>{t.example.docsButton}</span>
+            <span aria-hidden="true">→</span>
+          </a>
         </div>
-        <pre>{t.example.body}</pre>
+        <div className="quick-start-content">
+          <pre className="home-code-block">
+            <code>
+              {t.example.body.split('\n').map((line, index) => (
+                <span className="home-code-line" key={`${index}-${line}`}>
+                  {highlightExampleLine(line)}
+                </span>
+              ))}
+            </code>
+          </pre>
+        </div>
       </section>
     </main>
   )
