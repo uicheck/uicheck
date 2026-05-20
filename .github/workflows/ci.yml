@@ -91,6 +91,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Build workspace dependencies
+        run: pnpm run prepare:workspace
+
       - name: Typecheck
         run: |
           pnpm --filter @uicheck/taro run typecheck
