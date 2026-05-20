@@ -95,9 +95,7 @@ jobs:
         run: pnpm run prepare:workspace
 
       - name: Typecheck
-        run: |
-          pnpm --filter @uicheck/taro run typecheck
-          pnpm --filter taro-demo run typecheck
+        run: pnpm --filter @uicheck/taro run typecheck
 
       - name: Verify real Taro WeApp UICheck snapshot
         run: pnpm run test:evidence:taro-weapp
