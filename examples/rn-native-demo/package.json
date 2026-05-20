@@ -9,7 +9,7 @@
     "start": "react-native start",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "test:snapshot": "jest __tests__/uicheck-demo-snapshot.test.ts"
+    "test:snapshot": "jest __tests__/uicheck-demo-snapshot.test.ts --config jest.snapshot.config.js"
   },
   "dependencies": {
     "@react-native/new-app-screen": "0.85.3",
