@@ -1,7 +1,8 @@
-import { connectUiCheckRuntime } from '@uicheck/core'
+import html2canvas from 'html2canvas'
+import { connectUiCheckRuntime, createElementTree } from '@uicheck/core'
 import type { UiCheckSocketTransport } from '@uicheck/core/protocol'
 import type { UiCheckClientSnapshot, UiCheckScreenshotResult, UiCheckToolAdapter } from '@uicheck/core'
-import type { ResolvedUiCheckOptions } from './types'
+import type { ResolvedUiCheckOptions, UiCheckOptions } from './types'
 
 interface LayoutInfo {
   tag: string
@@ -141,11 +142,7 @@ function collectNodes(element: Element, result: NodeInfo[]): void {
 }
 
 function isUiCheckElement(element: Element): boolean {
-  return Boolean(
-    element.id === 'uicheck-floatball' ||
-      element.id === 'uicheck-modal-root' ||
-      element.closest('#uicheck-floatball, #uicheck-modal-root')
-  )
+  return Boolean(element.closest('[data-uicheck-internal="true"]'))
 }
 
 function buildNodeSignature(nodeInfo: NodeInfo): string {
@@ -452,36 +449,6 @@ function compactText(value: string): string | undefined {
   return text.length > 160 ? `${text.slice(0, 157)}...` : text || undefined
 }
 
-function cssEscape(value: string): string {
-  if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(value)
-  return value.replace(/["\\#.:\[\]>+~\s]/g, '\\$&')
-}
-
-function buildSelector(element: Element): string {
-  if (element.id) return `#${cssEscape(element.id)}`
-  const testId = element.getAttribute('data-testid') ?? element.getAttribute('data-test-id')
-  if (testId) return `[${element.hasAttribute('data-testid') ? 'data-testid' : 'data-test-id'}="${cssEscape(testId)}"]`
-
-  const parts: string[] = []
-  let current: Element | null = element
-  while (current && current !== document.documentElement && parts.length < 5) {
-    let part = current.tagName.toLowerCase()
-    const classes = Array.from(current.classList).slice(0, 2)
-    if (classes.length) part += `.${classes.map(cssEscape).join('.')}`
-
-    const parent: Element | null = current.parentElement
-    if (parent) {
-      const siblings = Array.from(parent.children).filter((child: Element) => child.tagName === current?.tagName)
-      if (siblings.length > 1) part += `:nth-of-type(${siblings.indexOf(current) + 1})`
-    }
-
-    parts.unshift(part)
-    current = parent
-  }
-
-  return parts.join(' > ')
-}
-
 function getSerializableElementInfo(element: Element): Record<string, unknown> {
   const rect = element.getBoundingClientRect()
   const styles = window.getComputedStyle(element)
@@ -494,7 +461,6 @@ function getSerializableElementInfo(element: Element): Record<string, unknown> {
 
   return {
     tag: element.tagName.toLowerCase(),
-    selector: buildSelector(element),
     id: element.id || undefined,
     classes: Array.from(element.classList),
     text: compactText(element.textContent ?? ''),
@@ -522,19 +488,17 @@ function getSerializableElementInfo(element: Element): Record<string, unknown> {
   }
 }
 
-function inspectSerializableElements(params: Record<string, unknown> = {}): Record<string, unknown> {
-  const selector = typeof params.selector === 'string' ? params.selector : undefined
+function inspectSerializableElements(options: ResolvedUiCheckOptions, params: Record<string, unknown> = {}): Record<string, unknown> {
   const limit = typeof params.limit === 'number' ? Math.min(Math.max(Math.floor(params.limit), 1), 500) : 80
   const includeHidden = params.includeHidden === true
-  const root = selector ? document.querySelector(selector) : document.body
+  const root = document.body
   if (!root) {
     return {
-      url: location.href,
-      title: document.title,
+      platform: 'web',
       viewport: getViewportInfo(),
       count: 0,
-      elements: [],
-      error: selector ? 'selector_not_found' : 'document_body_not_found'
+      tree: [],
+      error: 'document_body_not_found'
     }
   }
 
@@ -548,51 +512,20 @@ function inspectSerializableElements(params: Record<string, unknown> = {}): Reco
   }
 
   return {
-    url: location.href,
-    title: document.title,
+    platform: 'web',
     viewport: getViewportInfo(),
     count: elements.length,
-    elements
-  }
-}
-
-function getSerializableElementAtPoint(params: Record<string, unknown> = {}): Record<string, unknown> {
-  const x = typeof params.x === 'number' ? params.x : 0
-  const y = typeof params.y === 'number' ? params.y : 0
-  const element = document.elementFromPoint(x, y)
-  if (!element) {
-    return {
-      url: location.href,
-      title: document.title,
-      viewport: getViewportInfo(),
-      point: { x, y },
-      element: null,
-      ancestors: []
-    }
-  }
-
-  const chain: Array<Record<string, unknown>> = []
-  let current: Element | null = element
-  while (current && current !== document.documentElement) {
-    if (!isUiCheckElement(current)) chain.push(getSerializableElementInfo(current))
-    current = current.parentElement
-  }
-
-  return {
-    url: location.href,
-    title: document.title,
-    viewport: getViewportInfo(),
-    point: { x, y },
-    element: chain[0] ?? null,
-    ancestors: chain.slice(1)
+    tree: createElementTree(elements)
   }
 }
 
 async function captureSerializablePage(
   html2canvas: Html2Canvas,
+  options: ResolvedUiCheckOptions,
   params: Record<string, unknown> = {},
   elementsToHide: HTMLElement[] = []
 ): Promise<UiCheckScreenshotResult> {
+  if (options.screenshot) return options.screenshot(params)
   const waitMs = typeof params.waitMs === 'number' ? params.waitMs : 0
   const timeoutMs = typeof params.timeoutMs === 'number' ? Math.max(500, params.timeoutMs) : 10_000
   const forceHtml2Canvas = params.forceHtml2Canvas === true
@@ -610,11 +543,12 @@ async function captureSerializablePage(
     await waitForNextPaint()
     const canvasWidth = Math.max(1, window.innerWidth)
     const canvasHeight = Math.max(1, window.innerHeight)
+    const scale = Math.max(1, window.devicePixelRatio || 1)
     const screenshot = await withTimeout(
       () =>
         html2canvas(document.documentElement, {
           backgroundColor: null,
-          scale: 1,
+          scale,
           useCORS: true,
           logging: false,
           width: canvasWidth,
@@ -632,8 +566,6 @@ async function captureSerializablePage(
     )
 
     return {
-      url: location.href,
-      title: document.title,
       width: screenshot.width,
       height: screenshot.height,
       mimeType: 'image/png',
@@ -659,17 +591,19 @@ function createWebSocketTransport(url: string): UiCheckSocketTransport {
   }
 }
 
-export function createWebUiCheckAdapter(html2canvas: Html2Canvas, elementsToHide: HTMLElement[] = []): UiCheckToolAdapter {
+export function createWebUiCheckAdapter(
+  html2canvas: Html2Canvas,
+  options: ResolvedUiCheckOptions = {},
+  elementsToHide: HTMLElement[] = []
+): UiCheckToolAdapter {
   return {
     getClientInfo: () => ({
-      url: location.href,
-      title: document.title,
+      platform: 'web',
       userAgent: navigator.userAgent,
       viewport: getViewportInfo()
     }),
-    capturePage: (params) => captureSerializablePage(html2canvas, params, elementsToHide),
-    inspectElements: inspectSerializableElements,
-    getElementAtPoint: getSerializableElementAtPoint
+    capturePage: (params) => captureSerializablePage(html2canvas, options, params, elementsToHide),
+    inspectElements: (params) => inspectSerializableElements(options, params)
   }
 }
 
@@ -677,7 +611,7 @@ function connectUiCheckWebRuntime(html2canvas: Html2Canvas, config: ResolvedUiCh
   if (typeof WebSocket === 'undefined') return
   connectUiCheckRuntime({
     socket: config.socket,
-    adapter: createWebUiCheckAdapter(html2canvas, elementsToHide),
+    adapter: createWebUiCheckAdapter(html2canvas, config, elementsToHide),
     createTransport: createWebSocketTransport,
     hooks: {
       setTimeout: (handler, timeout) => window.setTimeout(handler, timeout),
@@ -1043,161 +977,6 @@ function renderDiagram(
   scheduleFitViewport()
 }
 
-export function installUiCheck(html2canvas: Html2Canvas, config: ResolvedUiCheckOptions): void {
-  if (document.getElementById('uicheck-floatball')) return
-
-  const style = document.createElement('style')
-  style.textContent = `
-#uicheck-floatball{position:fixed;z-index:999999;border-radius:50%;background:${config.color};color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:${Math.max(12, config.size * 0.4)}px;font-family:system-ui,sans-serif;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:box-shadow .2s;width:${config.size}px;height:${config.size}px}
-#uicheck-floatball:hover{box-shadow:0 4px 16px rgba(0,0,0,.35)}
-#uicheck-floatball.uicheck-dragging{transition:none!important;box-shadow:0 4px 20px rgba(0,0,0,.4)}
-#uicheck-modal-root{position:fixed;inset:0;z-index:999998;background:rgba(0,0,0,.42);display:none;align-items:center;justify-content:center}
-#uicheck-modal-root.open{display:flex}
-.uicheck-modal{width:95vw;height:88vh;background:#fff;border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.32);overflow:hidden;display:flex;flex-direction:column}
-.uicheck-modal-header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid #f0f0f0;font:600 20px/1.2 system-ui,sans-serif;color:#111}
-.uicheck-close{border:0;background:transparent;color:#9ca3af;font:32px/1 system-ui,sans-serif;cursor:pointer}
-.uicheck-body{flex:1;min-height:0}
-.uicheck-loading{height:100%;display:flex;align-items:center;justify-content:center;color:#64748b;font:14px/1.4 system-ui,sans-serif}
-.uicheck-viewport{position:relative;width:100%;height:100%;overflow:hidden;cursor:grab;touch-action:none;background-image:radial-gradient(#c9ced8 1px,transparent 1px)}
-.uicheck-diagram{position:relative;transform-origin:0 0}
-.uicheck-svg{position:absolute;inset:0;pointer-events:none;z-index:15}
-.uicheck-screenshot{position:absolute;border:1px solid #45475a;border-radius:4px;object-fit:contain}
-.uicheck-element-box{position:absolute;border:1.5px solid;border-radius:2px;box-sizing:border-box;pointer-events:none;z-index:10}
-.uicheck-element-marker{position:absolute;min-width:22px;height:22px;padding:0 6px;border-radius:11px;color:#fff;border:1px solid rgba(255,255,255,.9);box-shadow:0 1px 5px rgba(0,0,0,.32);box-sizing:border-box;font:700 11px/20px Menlo,Consolas,monospace;text-align:center;transform:translate(-50%,-50%);z-index:18;pointer-events:none}
-.uicheck-label-card{position:absolute;box-sizing:border-box;overflow:hidden;background:#2a2a3e;color:#cdd6f4;border:1px solid #45475a;border-left:5px solid;border-radius:4px;padding:5px 8px 5px 7px;z-index:20;font:10px/1.35 Menlo,Consolas,monospace;box-shadow:0 2px 6px rgba(0,0,0,.18)}
-.uicheck-card-title{display:flex;align-items:center;gap:6px;min-width:0}
-.uicheck-card-number{flex:0 0 auto;min-width:20px;height:18px;padding:0 5px;border-radius:9px;color:#fff;font:700 10px/18px Menlo,Consolas,monospace;text-align:center}
-.uicheck-card-tag{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;color:#89b4fa;font-size:11px}
-.uicheck-card-class{color:#a6e3a1;font-size:9px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.uicheck-card-meta{display:flex;gap:6px;align-items:center;color:#cdd6f4;font-size:9px}
-.uicheck-card-similar{color:#f9e2af}
-.uicheck-card-margin{color:#f5c2e7;font-size:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.uicheck-card-padding{color:#94e2d5;font-size:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.uicheck-controls{position:absolute;left:16px;bottom:16px;display:flex;flex-direction:column;background:#fff;border:1px solid #d9d9d9;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.12);overflow:hidden;z-index:40}
-.uicheck-controls button{width:42px;height:36px;border:0;border-bottom:1px solid #eee;background:#fff;font:600 14px/1 system-ui,sans-serif;cursor:pointer}
-.uicheck-controls button:last-child{border-bottom:0}
-`
-  document.head.appendChild(style)
-
-  const ball = document.createElement('div')
-  ball.id = 'uicheck-floatball'
-  ball.textContent = 'UI'
-  const [vertical, horizontal] = config.position.split('-')
-  ball.style[vertical as 'top' | 'bottom'] = `${config.offset[0]}px`
-  ball.style[horizontal as 'left' | 'right'] = `${config.offset[1]}px`
-  document.body.appendChild(ball)
-
-  const modalRoot = createElement('div')
-  modalRoot.id = 'uicheck-modal-root'
-  modalRoot.innerHTML = '<div class="uicheck-modal"><div class="uicheck-modal-header"><span>DOM Layout Annotation</span><button class="uicheck-close" type="button">×</button></div><div class="uicheck-body"></div></div>'
-  document.body.appendChild(modalRoot)
-  const body = modalRoot.querySelector('.uicheck-body') as HTMLElement
-  const closeButton = modalRoot.querySelector('.uicheck-close') as HTMLButtonElement
-  let isCapturing = false
-
-  function close(): void {
-    modalRoot.classList.remove('open')
-    body.innerHTML = ''
-  }
-
-  async function open(): Promise<void> {
-    if (isCapturing) return
-    isCapturing = true
-
-    const previousBallVisibility = ball.style.visibility
-    ball.style.visibility = 'hidden'
-    modalRoot.classList.remove('open')
-    body.innerHTML = ''
-
-    try {
-      await waitForNextPaint()
-
-      const rawNodes: NodeInfo[] = []
-      collectNodes(document.body, rawNodes)
-      const visible = rawNodes.filter((nodeInfo) => {
-        const dim = nodeInfo.element.getBoundingClientRect()
-        return dim.width > 0 && dim.height > 0 && hasLayoutSpacing(nodeInfo.layout)
-      })
-      const dedupedVisible = dedupeNodes(visible)
-      const doc = document.documentElement
-      const bodyElement = document.body
-      const canvasWidth = Math.max(doc.scrollWidth, doc.clientWidth, bodyElement.scrollWidth, bodyElement.clientWidth)
-      const canvasHeight = Math.max(doc.scrollHeight, doc.clientHeight, bodyElement.scrollHeight, bodyElement.clientHeight)
-
-      const screenshot = await html2canvas(document.body, {
-        backgroundColor: null,
-        scale: 1,
-        useCORS: true,
-        logging: false,
-        width: canvasWidth,
-        height: canvasHeight,
-        windowWidth: canvasWidth,
-        windowHeight: canvasHeight,
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
-        ignoreElements: isUiCheckElement
-      })
-
-      modalRoot.classList.add('open')
-      renderDiagram(body, dedupedVisible, screenshot.toDataURL('image/png'), canvasWidth, canvasHeight, 0, 0)
-    } finally {
-      ball.style.visibility = previousBallVisibility
-      isCapturing = false
-    }
-  }
-
-  if (config.draggable) {
-    let isDragging = false
-    let startX = 0
-    let startY = 0
-    let originX = 0
-    let originY = 0
-    ball.addEventListener('mousedown', (event) => {
-      isDragging = false
-      startX = event.clientX
-      startY = event.clientY
-      const rect = ball.getBoundingClientRect()
-      originX = rect.left
-      originY = rect.top
-      ball.classList.add('uicheck-dragging')
-
-      function onMove(moveEvent: MouseEvent): void {
-        const dx = moveEvent.clientX - startX
-        const dy = moveEvent.clientY - startY
-        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) isDragging = true
-        ball.style.left = `${originX + dx}px`
-        ball.style.top = `${originY + dy}px`
-        ball.style.right = 'auto'
-        ball.style.bottom = 'auto'
-      }
-      function onUp(): void {
-        document.removeEventListener('mousemove', onMove)
-        document.removeEventListener('mouseup', onUp)
-        ball.classList.remove('uicheck-dragging')
-      }
-      document.addEventListener('mousemove', onMove)
-      document.addEventListener('mouseup', onUp)
-    })
-    ball.addEventListener('click', () => {
-      if (isDragging) {
-        isDragging = false
-        return
-      }
-      void open()
-    })
-  } else {
-    ball.addEventListener('click', () => void open())
-  }
-
-  closeButton.addEventListener('click', close)
-  modalRoot.addEventListener('click', (event) => {
-    if (event.target === modalRoot) close()
-  })
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') close()
-  })
-
-  connectUiCheckWebRuntime(html2canvas, config, [ball, modalRoot])
+export function initUiCheck(config: UiCheckOptions = {}): void {
+  connectUiCheckWebRuntime(html2canvas, config, [])
 }

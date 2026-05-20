@@ -11,9 +11,8 @@
     "lint": "pnpm --filter @uicheck/site run lint",
     "prepare:workspace": "pnpm --filter @uicheck/core run build && pnpm --filter @uicheck/mcp run build",
     "test": "pnpm run prepare:workspace && pnpm -r run test",
-    "test:evidence": "pnpm run test:evidence:browser && pnpm run test:evidence:taro-weapp",
-    "test:evidence:browser": "pnpm run prepare:workspace && pnpm --filter @uicheck/web run build && pnpm --filter @uicheck/rn run build && node scripts/generate-runtime-evidence.mjs",
-    "test:evidence:taro-weapp": "pnpm run prepare:workspace && pnpm --filter @uicheck/taro run build && pnpm --filter taro-demo run build:weapp && node scripts/capture-taro-weapp-evidence.mjs",
+    "test:evidence": "pnpm run test:evidence:taro-weapp",
+    "test:evidence:taro-weapp": "pnpm run prepare:workspace && pnpm --filter @uicheck/taro run build && pnpm --filter taro-demo run typecheck && pnpm --filter taro-demo run build:weapp && pnpm --filter @uicheck/taro run test:weapp-snapshot",
     "typecheck": "pnpm run prepare:workspace && pnpm -r run typecheck"
   },
   "pnpm": {

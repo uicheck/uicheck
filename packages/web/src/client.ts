@@ -1,1 +1,1 @@
-export { installUiCheck } from './web'
+export { initUiCheck } from './web'

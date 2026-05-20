@@ -1,10 +1,9 @@
-export { createTaroUiCheckAdapter, installTaroUiCheck } from './taro'
-export { renderUiCheckEvidence } from './evidence'
-export type { UiCheckEvidenceElement, UiCheckEvidenceOptions, UiCheckEvidenceScreenshot } from './evidence'
+export { initUiCheck } from './taro'
 export type {
   TaroLike,
   TaroSelectorQuery,
   TaroSelectorQueryNode,
   TaroSocketTask,
-  TaroUiCheckOptions
+  TaroUiCheckOptions,
+  UiCheckOptions
 } from './taro'

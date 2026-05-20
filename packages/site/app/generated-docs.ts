@@ -28,7 +28,7 @@ export const generatedDocsByLocale = {
       "name": "@uicheck/web",
       "version": "0.1.4",
       "description": "浏览器 DOM 页面客户端",
-      "install": "npm install @uicheck/web html2canvas",
+      "install": "npm install @uicheck/web",
       "source": "packages/web",
       "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/web/README.zh-CN.md",
       "blocks": [
@@ -44,7 +44,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "import html2canvas from 'html2canvas'\nimport { installUiCheck } from '@uicheck/web'\n\ninstallUiCheck(html2canvas, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+          "code": "import { initUiCheck } from '@uicheck/web'\n\ninitUiCheck({\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         },
         {
           "type": "heading",
@@ -98,7 +98,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "import Taro from '@tarojs/taro'\nimport { installTaroUiCheck } from '@uicheck/taro'\n\ninstallTaroUiCheck(Taro, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+          "code": "import Taro from '@tarojs/taro'\nimport { initUiCheck } from '@uicheck/taro'\n\ninitUiCheck({\n  taro: Taro,\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         }
       ]
     },
@@ -113,12 +113,12 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "React Native 侧 UI 检查客户端。RN 没有 DOM 查询能力，因此需要把希望 AI 看到的组件 ref 注册给 uicheck；注册后 @uicheck/mcp 可以读取元素坐标、文本、testID 和 accessibilityLabel。"
+          "text": "React Native 客户端。initUiCheck 会在安装时接入 React / JSX 创建流程，让 AI 通过 @uicheck/mcp 读取真实运行时元素的布局、文本、testID 和无障碍标签。"
         },
         {
           "type": "code",
           "lang": "ts",
-          "code": "import { AppState, Dimensions, Platform } from 'react-native'\nimport {\n  installReactNativeUiCheck,\n  registerReactNativeUiCheckElement\n} from '@uicheck/rn'\n\ninstallReactNativeUiCheck(\n  { AppState, Dimensions, Platform, WebSocket },\n  {\n    route: 'Home',\n    socket: {\n      url: 'ws://127.0.0.1:17322/socket'\n    }\n  }\n)\n\nconst unregister = registerReactNativeUiCheckElement({\n  ref: submitButtonRef,\n  tag: 'Pressable',\n  testID: 'submit-button',\n  text: '提交'\n})"
+          "code": "import { initUiCheck } from '@uicheck/rn'\n\ninitUiCheck({\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         },
         {
           "type": "heading",
@@ -127,12 +127,12 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "RN 截图依赖宿主应用能力。需要使用 capture_page 时传入 screenshot 方法并返回 PNG base64。"
+          "text": "React Native 截图依赖宿主应用。需要支持 capture_page 时传入返回 PNG base64 的 screenshot 函数。"
         },
         {
           "type": "code",
           "lang": "ts",
-          "code": "installReactNativeUiCheck(reactNative, {\n  screenshot: async () => ({\n    mimeType: 'image/png',\n    base64: await captureAppAsBase64()\n  })\n})"
+          "code": "initUiCheck({\n  screenshot: async () => ({\n    mimeType: 'image/png',\n    base64: await captureAppAsBase64()\n  })\n})"
         }
       ]
     },
@@ -147,7 +147,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Flutter 运行环境客户端。它通过 WebSocket 把正在运行的 Flutter 应用连接到 @uicheck/mcp，让 AI 可以通过 MCP 工具读取截图、已注册组件元数据、布局盒和坐标。"
+          "text": "Flutter 运行时客户端。它把真实 Flutter 应用通过 WebSocket 接到 @uicheck/mcp，让 AI 请求截图并检查 Flutter render tree。"
         },
         {
           "type": "heading",
@@ -156,7 +156,7 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "添加包："
+          "text": "添加依赖："
         },
         {
           "type": "code",
@@ -174,25 +174,16 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "在应用启动附近安装 Flutter 客户端："
+          "text": "在应用启动时安装客户端："
         },
         {
           "type": "code",
           "lang": "dart",
-          "code": "import 'package:flutter/widgets.dart';\nimport 'package:uicheck_flutter/uicheck_flutter.dart';\n\nfinal uicheckClient = installFlutterUiCheck(\n  options: UiCheckFlutterOptions(\n    title: 'Demo',\n    route: '/home',\n    socket: UiCheckSocketOptions(\n      url: 'ws://127.0.0.1:17322/socket',\n      clientId: 'flutter-demo',\n    ),\n    screenshot: (params) => captureRepaintBoundaryAsPng(\n      repaintBoundaryKey: appBoundaryKey,\n      title: 'Demo',\n      url: '/home',\n    ),\n  ),\n);"
+          "code": "import 'package:flutter/widgets.dart';\nimport 'package:uicheck_flutter/uicheck_flutter.dart';\n\nfinal uicheckClient = initUiCheck(\n  UiCheckFlutterOptions(\n    socket: UiCheckSocketOptions(\n      clientId: 'flutter-demo',\n    ),\n    screenshot: (params) => captureRepaintBoundaryAsPng(\n      repaintBoundaryKey: appBoundaryKey,\n    ),\n  ),\n);"
         },
         {
           "type": "paragraph",
-          "text": "注册 AI 需要查看的组件："
-        },
-        {
-          "type": "code",
-          "lang": "dart",
-          "code": "final submitButtonKey = GlobalKey();\n\nfinal unregister = registerFlutterUiCheckElement(\n  UiCheckFlutterElementRegistration(\n    key: submitButtonKey,\n    tag: 'ElevatedButton',\n    testID: 'submit-button',\n    text: '提交',\n  ),\n);"
-        },
-        {
-          "type": "paragraph",
-          "text": "使用截图 helper 时，把 app 或页面包在 RepaintBoundary 中："
+          "text": "使用截图 helper 时，把应用或页面包在 RepaintBoundary 里："
         },
         {
           "type": "code",
@@ -201,12 +192,12 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "不再使用时释放客户端和注册回调："
+          "text": "不再需要时释放客户端："
         },
         {
           "type": "code",
           "lang": "dart",
-          "code": "unregister();\nuicheckClient.dispose();"
+          "code": "uicheckClient.dispose();"
         },
         {
           "type": "heading",
@@ -222,26 +213,13 @@ export const generatedDocsByLocale = {
           "rows": [
             [
               "capture_page",
-              "调用配置的截图回调返回 PNG 截图。"
+              "使用配置的截图回调返回 PNG 截图。"
             ],
             [
               "inspect_elements",
-              "返回已注册组件的元数据、文本、布局盒和可见状态。"
-            ],
-            [
-              "get_element_at_point",
-              "返回视口坐标处最小的已注册组件。"
+              "返回 render tree 元数据、文本、布局盒和可见性。"
             ]
           ]
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "说明"
-        },
-        {
-          "type": "paragraph",
-          "text": "Flutter 没有 DOM 查询 API。需要用 GlobalKey 注册 AI 需要检查的组件，客户端会通过 RenderBox.localToGlobal 读取组件位置。"
         }
       ]
     },
@@ -256,7 +234,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "UI Check 的 Android 原生运行环境客户端。它通过 WebSocket 连接 @uicheck/mcp，让 AI Agent 可以通过 MCP 工具读取截图、已注册原生 View 信息、布局盒子和坐标。"
+          "text": "Android 原生运行时客户端。它把真实 Android 应用通过 WebSocket 接到 @uicheck/mcp，让 AI 请求截图并检查 Android view tree。"
         },
         {
           "type": "heading",
@@ -265,7 +243,7 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "把这个仓库作为 Android library 依赖加入项目："
+          "text": "把这个仓库作为 Android library 依赖添加："
         },
         {
           "type": "code",
@@ -297,39 +275,21 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "在应用启动附近安装客户端："
+          "text": "在应用启动时安装客户端："
         },
         {
           "type": "code",
           "lang": "kotlin",
-          "code": "import ai.uicheck.android.UiCheckAndroidOptions\nimport ai.uicheck.android.UiCheckAndroidSocketOptions\nimport ai.uicheck.android.UiCheckAndroidViewportInfo\nimport ai.uicheck.android.createAndroidViewScreenshotProvider\nimport ai.uicheck.android.installAndroidUiCheck\n\nval client = installAndroidUiCheck(\n  UiCheckAndroidOptions(\n    socket = UiCheckAndroidSocketOptions(\n      url = \"ws://127.0.0.1:17322/socket\",\n      clientId = \"android-demo\"\n    ),\n    title = \"Demo\",\n    route = \"/home\",\n    platform = \"android\",\n    viewport = {\n      UiCheckAndroidViewportInfo(width = 393, height = 873, devicePixelRatio = 2.75)\n    },\n    screenshot = createAndroidViewScreenshotProvider(rootView)\n  )\n)"
+          "code": "import ai.uicheck.android.UiCheckAndroidOptions\nimport ai.uicheck.android.UiCheckAndroidSocketOptions\nimport ai.uicheck.android.createAndroidViewScreenshotProvider\nimport ai.uicheck.android.initUiCheck\n\nval client = initUiCheck(\n  UiCheckAndroidOptions(\n    socket = UiCheckAndroidSocketOptions(\n      url = \"ws://127.0.0.1:17322/socket\",\n      clientId = \"android-demo\"\n    ),\n    rootView = { rootView },\n    screenshot = createAndroidViewScreenshotProvider(rootView)\n  )\n)"
         },
         {
           "type": "paragraph",
-          "text": "注册希望 AI 检查的 View："
+          "text": "不再需要时释放："
         },
         {
           "type": "code",
           "lang": "kotlin",
-          "code": "import ai.uicheck.android.registerAndroidUiCheckView\n\nval unregister = registerAndroidUiCheckView(\n  submitButton,\n  tag = \"Button\",\n  testID = \"submit-button\",\n  text = \"Submit\"\n)"
-        },
-        {
-          "type": "paragraph",
-          "text": "如果是 Compose 或非 View 抽象，也可以注册自定义 frame provider："
-        },
-        {
-          "type": "code",
-          "lang": "kotlin",
-          "code": "import ai.uicheck.android.UiCheckAndroidElementRegistration\nimport ai.uicheck.android.UiCheckAndroidRect\nimport ai.uicheck.android.registerAndroidUiCheckElement\n\nval unregister = registerAndroidUiCheckElement(\n  UiCheckAndroidElementRegistration(\n    tag = \"Button\",\n    testID = \"submit-button\",\n    text = \"Submit\",\n    frame = { UiCheckAndroidRect(12.0, 24.0, 120.0, 48.0) }\n  )\n)"
-        },
-        {
-          "type": "paragraph",
-          "text": "不用时释放："
-        },
-        {
-          "type": "code",
-          "lang": "kotlin",
-          "code": "unregister()\nclient.close()"
+          "code": "client.close()"
         },
         {
           "type": "heading",
@@ -349,22 +309,9 @@ export const generatedDocsByLocale = {
             ],
             [
               "inspect_elements",
-              "返回已注册原生 View 的元数据、文本、布局盒子和可见状态。"
-            ],
-            [
-              "get_element_at_point",
-              "返回视口坐标下最小的已注册 View。"
+              "返回 view tree 元数据、文本、布局盒和可见性。"
             ]
           ]
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "说明"
-        },
-        {
-          "type": "paragraph",
-          "text": "Android 原生应用没有 DOM 查询 API。需要注册 AI 要检查的 View 或组件。registerAndroidUiCheckView 会用屏幕坐标测量原生 View。"
         }
       ]
     },
@@ -379,7 +326,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Apple 原生运行环境客户端。它通过 WebSocket 把 iOS、macOS、tvOS 或 visionOS 应用连接到 @uicheck/mcp，让 AI 可以通过 MCP 工具读取截图、已注册原生视图元数据、布局盒和坐标。"
+          "text": "Apple 原生运行时客户端。它把 iOS、macOS、tvOS 或 visionOS 应用通过 WebSocket 接到 @uicheck/mcp，让 AI 请求截图并检查 UIKit/AppKit view tree。"
         },
         {
           "type": "heading",
@@ -388,7 +335,7 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "把这个仓库作为 Swift Package 依赖，并选择 UICheckApple product："
+          "text": "把这个仓库作为 Swift Package 依赖添加，并选择 UICheckApple product："
         },
         {
           "type": "code",
@@ -420,39 +367,21 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "在应用启动附近安装客户端："
+          "text": "在应用启动时安装客户端："
         },
         {
           "type": "code",
           "lang": "swift",
-          "code": "import UICheckApple\n\nlet client = installAppleUiCheck(\n  options: UiCheckAppleOptions(\n    socket: UiCheckAppleSocketOptions(\n      url: \"ws://127.0.0.1:17322/socket\",\n      clientId: \"ios-demo\"\n    ),\n    title: \"Demo\",\n    route: \"/home\",\n    platform: \"ios\",\n    viewport: {\n      UiCheckAppleViewportInfo(width: 390, height: 844, devicePixelRatio: 3)\n    },\n    screenshot: { params in\n      UiCheckAppleScreenshotResult(\n        title: \"Demo\",\n        width: 390,\n        height: 844,\n        mimeType: \"image/png\",\n        base64: captureAppAsBase64Png()\n      )\n    }\n  )\n)"
+          "code": "import UICheckApple\n\nlet client = initUiCheck(\n  UiCheckAppleOptions(\n    socket: UiCheckAppleSocketOptions(\n      clientId: \"ios-demo\"\n    ),\n    screenshot: { params in\n      UiCheckAppleScreenshotResult(\n        width: 390,\n        height: 844,\n        mimeType: \"image/png\",\n        base64: captureAppAsBase64Png()\n      )\n    }\n  )\n)"
         },
         {
           "type": "paragraph",
-          "text": "注册 AI 需要查看的视图："
+          "text": "不再需要时释放："
         },
         {
           "type": "code",
           "lang": "swift",
-          "code": "let unregister = registerAppleUiCheckView(\n  submitButton,\n  tag: \"UIButton\",\n  testID: \"submit-button\",\n  text: \"提交\"\n)"
-        },
-        {
-          "type": "paragraph",
-          "text": "接入 SwiftUI 或非 View 抽象时，也可以注册自定义 frame provider："
-        },
-        {
-          "type": "code",
-          "lang": "swift",
-          "code": "let unregister = registerAppleUiCheckElement(\n  UiCheckAppleElementRegistration(\n    tag: \"Button\",\n    testID: \"submit-button\",\n    text: \"提交\",\n    frame: { CGRect(x: 12, y: 24, width: 120, height: 44) }\n  )\n)"
-        },
-        {
-          "type": "paragraph",
-          "text": "不再使用时释放："
-        },
-        {
-          "type": "code",
-          "lang": "swift",
-          "code": "unregister()\nclient.close()"
+          "code": "client.close()"
         },
         {
           "type": "heading",
@@ -468,26 +397,13 @@ export const generatedDocsByLocale = {
           "rows": [
             [
               "capture_page",
-              "调用配置的截图 provider 返回 PNG 截图。"
+              "使用配置的截图 provider 返回 PNG 截图。"
             ],
             [
               "inspect_elements",
-              "返回已注册原生视图的元数据、文本、布局盒和可见状态。"
-            ],
-            [
-              "get_element_at_point",
-              "返回视口坐标处最小的已注册视图。"
+              "返回 UIKit/AppKit view tree 元数据、文本、布局盒和可见性。"
             ]
           ]
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "说明"
-        },
-        {
-          "type": "paragraph",
-          "text": "Apple 原生应用没有 DOM 查询 API。需要注册 AI 需要检查的视图或组件。UIKit 和 AppKit helper 会用窗口坐标测量已注册视图。"
         }
       ]
     },
@@ -502,7 +418,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "本地 MCP 服务，用于通过 WebSocket 连接 uicheck 运行环境客户端。浏览器、Taro 小程序或 React Native 应用连接后，AI 可以调用 MCP 工具请求截图和元素信息。"
+          "text": "本地 MCP 服务，用于通过 WebSocket 连接 uicheck 运行环境客户端。Web、Taro 小程序、React Native、Flutter、Apple 原生或 Android 原生应用连接后，AI 可以调用 MCP 工具请求截图和树状元素信息。"
         },
         {
           "type": "heading",
@@ -549,11 +465,11 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "installUiCheck(html2canvas, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+          "code": "initUiCheck({\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         },
         {
           "type": "paragraph",
-          "text": "Taro 小程序使用 @uicheck/taro，React Native 使用 @uicheck/rn。"
+          "text": "Taro 小程序使用 @uicheck/taro，React Native 使用 @uicheck/rn，Flutter 使用 uicheck_flutter，Apple 原生使用 uicheck_apple，Android 原生使用 uicheck_android。"
         },
         {
           "type": "heading",
@@ -577,11 +493,7 @@ export const generatedDocsByLocale = {
             ],
             [
               "inspect_elements",
-              "返回可见选择器或已注册组件、文本、布局盒和元数据。"
-            ],
-            [
-              "get_element_at_point",
-              "返回视口坐标处的元素。"
+              "返回树状节点、文本、布局盒和元数据。"
             ]
           ]
         },
@@ -630,13 +542,13 @@ export const generatedDocsByLocale = {
       "name": "@uicheck/web",
       "version": "0.1.4",
       "description": "Browser DOM client for uicheck",
-      "install": "npm install @uicheck/web html2canvas",
+      "install": "npm install @uicheck/web",
       "source": "packages/web",
       "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/web/README.md",
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Browser runtime client for UI Check. It connects a live DOM page to @uicheck/mcp over WebSocket so AI agents can request screenshots, element metadata, layout boxes, and coordinates through MCP tools."
+          "text": "Browser runtime client for UI Check. It connects a live DOM page to @uicheck/mcp over WebSocket so AI agents can request screenshots, element metadata, layout boxes through MCP tools."
         },
         {
           "type": "heading",
@@ -646,7 +558,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "import html2canvas from 'html2canvas'\nimport { installUiCheck } from '@uicheck/web'\n\ninstallUiCheck(html2canvas, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+          "code": "import { initUiCheck } from '@uicheck/web'\n\ninitUiCheck({\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         },
         {
           "type": "heading",
@@ -700,7 +612,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "import Taro from '@tarojs/taro'\nimport { installTaroUiCheck } from '@uicheck/taro'\n\ninstallTaroUiCheck(Taro, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+          "code": "import Taro from '@tarojs/taro'\nimport { initUiCheck } from '@uicheck/taro'\n\ninitUiCheck({\n  taro: Taro,\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         }
       ]
     },
@@ -715,12 +627,12 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "React Native client for uicheck. React Native does not expose DOM-style queries, so the app registers refs for components that AI should inspect. Once registered, @uicheck/mcp can read element boxes, text, testID, and accessibilityLabel."
+          "text": "React Native client for uicheck. It instruments React / JSX creation during initUiCheck so AI agents can inspect runtime element boxes, text, testID, and accessibility labels through @uicheck/mcp."
         },
         {
           "type": "code",
           "lang": "ts",
-          "code": "import { AppState, Dimensions, Platform } from 'react-native'\nimport {\n  installReactNativeUiCheck,\n  registerReactNativeUiCheckElement\n} from '@uicheck/rn'\n\ninstallReactNativeUiCheck(\n  { AppState, Dimensions, Platform, WebSocket },\n  {\n    route: 'Home',\n    socket: {\n      url: 'ws://127.0.0.1:17322/socket'\n    }\n  }\n)\n\nconst unregister = registerReactNativeUiCheckElement({\n  ref: submitButtonRef,\n  tag: 'Pressable',\n  testID: 'submit-button',\n  text: 'Submit'\n})"
+          "code": "import { initUiCheck } from '@uicheck/rn'\n\ninitUiCheck({\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         },
         {
           "type": "heading",
@@ -734,7 +646,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "installReactNativeUiCheck(reactNative, {\n  screenshot: async () => ({\n    mimeType: 'image/png',\n    base64: await captureAppAsBase64()\n  })\n})"
+          "code": "initUiCheck({\n  screenshot: async () => ({\n    mimeType: 'image/png',\n    base64: await captureAppAsBase64()\n  })\n})"
         }
       ]
     },
@@ -749,7 +661,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Flutter runtime client for UI Check. It connects a running Flutter app to @uicheck/mcp over WebSocket so AI agents can request screenshots, registered widget metadata, layout boxes, and coordinates through MCP tools."
+          "text": "Flutter runtime client for UI Check. It connects a running Flutter app to @uicheck/mcp over WebSocket so AI agents can request screenshots and inspect the live Flutter render tree."
         },
         {
           "type": "heading",
@@ -781,16 +693,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "dart",
-          "code": "import 'package:flutter/widgets.dart';\nimport 'package:uicheck_flutter/uicheck_flutter.dart';\n\nfinal uicheckClient = installFlutterUiCheck(\n  options: UiCheckFlutterOptions(\n    title: 'Demo',\n    route: '/home',\n    socket: UiCheckSocketOptions(\n      url: 'ws://127.0.0.1:17322/socket',\n      clientId: 'flutter-demo',\n    ),\n    screenshot: (params) => captureRepaintBoundaryAsPng(\n      repaintBoundaryKey: appBoundaryKey,\n      title: 'Demo',\n      url: '/home',\n    ),\n  ),\n);"
-        },
-        {
-          "type": "paragraph",
-          "text": "Register widgets that AI should inspect:"
-        },
-        {
-          "type": "code",
-          "lang": "dart",
-          "code": "final submitButtonKey = GlobalKey();\n\nfinal unregister = registerFlutterUiCheckElement(\n  UiCheckFlutterElementRegistration(\n    key: submitButtonKey,\n    tag: 'ElevatedButton',\n    testID: 'submit-button',\n    text: 'Submit',\n  ),\n);"
+          "code": "import 'package:flutter/widgets.dart';\nimport 'package:uicheck_flutter/uicheck_flutter.dart';\n\nfinal uicheckClient = initUiCheck(\n  UiCheckFlutterOptions(\n    socket: UiCheckSocketOptions(\n      clientId: 'flutter-demo',\n    ),\n    screenshot: (params) => captureRepaintBoundaryAsPng(\n      repaintBoundaryKey: appBoundaryKey,\n    ),\n  ),\n);"
         },
         {
           "type": "paragraph",
@@ -803,12 +706,12 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "Dispose the client and unregister callbacks when they are no longer needed:"
+          "text": "Dispose the client when it is no longer needed:"
         },
         {
           "type": "code",
           "lang": "dart",
-          "code": "unregister();\nuicheckClient.dispose();"
+          "code": "uicheckClient.dispose();"
         },
         {
           "type": "heading",
@@ -828,22 +731,9 @@ export const generatedDocsByLocale = {
             ],
             [
               "inspect_elements",
-              "Returns registered widget metadata, text, layout boxes, and visibility."
-            ],
-            [
-              "get_element_at_point",
-              "Returns the smallest registered widget at viewport coordinates."
+              "Returns render tree metadata, text, layout boxes, and visibility."
             ]
           ]
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Notes"
-        },
-        {
-          "type": "paragraph",
-          "text": "Flutter does not expose a DOM query API. Register the widgets that AI needs to inspect with a GlobalKey. The client measures each registered widget through RenderBox.localToGlobal."
         }
       ]
     },
@@ -858,7 +748,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Android native runtime client for UI Check. It connects native Android apps to @uicheck/mcp over WebSocket so AI agents can request screenshots, registered view metadata, layout boxes, and coordinates through MCP tools."
+          "text": "Android native runtime client for UI Check. It connects native Android apps to @uicheck/mcp over WebSocket so AI agents can request screenshots and inspect the live Android view tree."
         },
         {
           "type": "heading",
@@ -904,25 +794,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "kotlin",
-          "code": "import ai.uicheck.android.UiCheckAndroidOptions\nimport ai.uicheck.android.UiCheckAndroidSocketOptions\nimport ai.uicheck.android.UiCheckAndroidViewportInfo\nimport ai.uicheck.android.createAndroidViewScreenshotProvider\nimport ai.uicheck.android.installAndroidUiCheck\n\nval client = installAndroidUiCheck(\n  UiCheckAndroidOptions(\n    socket = UiCheckAndroidSocketOptions(\n      url = \"ws://127.0.0.1:17322/socket\",\n      clientId = \"android-demo\"\n    ),\n    title = \"Demo\",\n    route = \"/home\",\n    platform = \"android\",\n    viewport = {\n      UiCheckAndroidViewportInfo(width = 393, height = 873, devicePixelRatio = 2.75)\n    },\n    screenshot = createAndroidViewScreenshotProvider(rootView)\n  )\n)"
-        },
-        {
-          "type": "paragraph",
-          "text": "Register views that AI should inspect:"
-        },
-        {
-          "type": "code",
-          "lang": "kotlin",
-          "code": "import ai.uicheck.android.registerAndroidUiCheckView\n\nval unregister = registerAndroidUiCheckView(\n  submitButton,\n  tag = \"Button\",\n  testID = \"submit-button\",\n  text = \"Submit\"\n)"
-        },
-        {
-          "type": "paragraph",
-          "text": "You can also register a custom frame provider for Compose or non-view abstractions:"
-        },
-        {
-          "type": "code",
-          "lang": "kotlin",
-          "code": "import ai.uicheck.android.UiCheckAndroidElementRegistration\nimport ai.uicheck.android.UiCheckAndroidRect\nimport ai.uicheck.android.registerAndroidUiCheckElement\n\nval unregister = registerAndroidUiCheckElement(\n  UiCheckAndroidElementRegistration(\n    tag = \"Button\",\n    testID = \"submit-button\",\n    text = \"Submit\",\n    frame = { UiCheckAndroidRect(12.0, 24.0, 120.0, 48.0) }\n  )\n)"
+          "code": "import ai.uicheck.android.UiCheckAndroidOptions\nimport ai.uicheck.android.UiCheckAndroidSocketOptions\nimport ai.uicheck.android.createAndroidViewScreenshotProvider\nimport ai.uicheck.android.initUiCheck\n\nval client = initUiCheck(\n  UiCheckAndroidOptions(\n    socket = UiCheckAndroidSocketOptions(\n      url = \"ws://127.0.0.1:17322/socket\",\n      clientId = \"android-demo\"\n    ),\n    rootView = { rootView },\n    screenshot = createAndroidViewScreenshotProvider(rootView)\n  )\n)"
         },
         {
           "type": "paragraph",
@@ -931,7 +803,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "kotlin",
-          "code": "unregister()\nclient.close()"
+          "code": "client.close()"
         },
         {
           "type": "heading",
@@ -951,22 +823,9 @@ export const generatedDocsByLocale = {
             ],
             [
               "inspect_elements",
-              "Returns registered native view metadata, text, layout boxes, and visibility."
-            ],
-            [
-              "get_element_at_point",
-              "Returns the smallest registered view at viewport coordinates."
+              "Returns view tree metadata, text, layout boxes, and visibility."
             ]
           ]
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Notes"
-        },
-        {
-          "type": "paragraph",
-          "text": "Android native apps do not expose a DOM query API. Register the views or components that AI needs to inspect. registerAndroidUiCheckView measures native views in screen coordinates."
         }
       ]
     },
@@ -981,7 +840,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Apple native runtime client for UI Check. It connects iOS, macOS, tvOS, or visionOS apps to @uicheck/mcp over WebSocket so AI agents can request screenshots, registered native view metadata, layout boxes, and coordinates through MCP tools."
+          "text": "Apple native runtime client for UI Check. It connects iOS, macOS, tvOS, or visionOS apps to @uicheck/mcp over WebSocket so AI agents can request screenshots and inspect the live UIKit/AppKit view tree."
         },
         {
           "type": "heading",
@@ -1027,25 +886,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "swift",
-          "code": "import UICheckApple\n\nlet client = installAppleUiCheck(\n  options: UiCheckAppleOptions(\n    socket: UiCheckAppleSocketOptions(\n      url: \"ws://127.0.0.1:17322/socket\",\n      clientId: \"ios-demo\"\n    ),\n    title: \"Demo\",\n    route: \"/home\",\n    platform: \"ios\",\n    viewport: {\n      UiCheckAppleViewportInfo(width: 390, height: 844, devicePixelRatio: 3)\n    },\n    screenshot: { params in\n      UiCheckAppleScreenshotResult(\n        title: \"Demo\",\n        width: 390,\n        height: 844,\n        mimeType: \"image/png\",\n        base64: captureAppAsBase64Png()\n      )\n    }\n  )\n)"
-        },
-        {
-          "type": "paragraph",
-          "text": "Register views that AI should inspect:"
-        },
-        {
-          "type": "code",
-          "lang": "swift",
-          "code": "let unregister = registerAppleUiCheckView(\n  submitButton,\n  tag: \"UIButton\",\n  testID: \"submit-button\",\n  text: \"Submit\"\n)"
-        },
-        {
-          "type": "paragraph",
-          "text": "You can also register a custom frame provider when integrating with SwiftUI or non-view abstractions:"
-        },
-        {
-          "type": "code",
-          "lang": "swift",
-          "code": "let unregister = registerAppleUiCheckElement(\n  UiCheckAppleElementRegistration(\n    tag: \"Button\",\n    testID: \"submit-button\",\n    text: \"Submit\",\n    frame: { CGRect(x: 12, y: 24, width: 120, height: 44) }\n  )\n)"
+          "code": "import UICheckApple\n\nlet client = initUiCheck(\n  UiCheckAppleOptions(\n    socket: UiCheckAppleSocketOptions(\n      clientId: \"ios-demo\"\n    ),\n    screenshot: { params in\n      UiCheckAppleScreenshotResult(\n        width: 390,\n        height: 844,\n        mimeType: \"image/png\",\n        base64: captureAppAsBase64Png()\n      )\n    }\n  )\n)"
         },
         {
           "type": "paragraph",
@@ -1054,7 +895,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "swift",
-          "code": "unregister()\nclient.close()"
+          "code": "client.close()"
         },
         {
           "type": "heading",
@@ -1074,22 +915,9 @@ export const generatedDocsByLocale = {
             ],
             [
               "inspect_elements",
-              "Returns registered native view metadata, text, layout boxes, and visibility."
-            ],
-            [
-              "get_element_at_point",
-              "Returns the smallest registered view at viewport coordinates."
+              "Returns UIKit/AppKit view tree metadata, text, layout boxes, and visibility."
             ]
           ]
-        },
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Notes"
-        },
-        {
-          "type": "paragraph",
-          "text": "Apple native apps do not expose a DOM query API. Register the views or components that AI needs to inspect. UIKit and AppKit helpers measure registered views in window coordinates."
         }
       ]
     },
@@ -1104,7 +932,7 @@ export const generatedDocsByLocale = {
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Local MCP server for uicheck clients. Runtime clients connect to this server through WebSocket, and AI agents call MCP tools to request screenshots and element info from browser, Taro, or React Native apps."
+          "text": "Local MCP server for uicheck clients. Runtime clients connect to this server through WebSocket, and AI agents call MCP tools to request screenshots and tree-shaped element info from Web, Taro, React Native, Flutter, Apple native, or Android native apps."
         },
         {
           "type": "heading",
@@ -1151,11 +979,11 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "ts",
-          "code": "installUiCheck(html2canvas, {\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
+          "code": "initUiCheck({\n  socket: {\n    url: 'ws://127.0.0.1:17322/socket'\n  }\n})"
         },
         {
           "type": "paragraph",
-          "text": "Use @uicheck/taro for Taro Mini Program pages and @uicheck/rn for React Native screens."
+          "text": "Use @uicheck/taro for Taro Mini Program pages, @uicheck/rn for React Native screens, uicheck_flutter for Flutter apps, uicheck_apple for Apple native apps, and uicheck_android for Android native apps."
         },
         {
           "type": "heading",
@@ -1179,11 +1007,7 @@ export const generatedDocsByLocale = {
             ],
             [
               "inspect_elements",
-              "Returns visible selectors or registered components, text, layout boxes, and metadata."
-            ],
-            [
-              "get_element_at_point",
-              "Returns the element at viewport coordinates."
+              "Returns tree-shaped nodes, text, layout boxes, and metadata."
             ]
           ]
         },

@@ -4,9 +4,10 @@ Taro 小程序侧 UI 检查客户端。它通过小程序 selector query 读取�
 
 ```ts
 import Taro from '@tarojs/taro'
-import { installTaroUiCheck } from '@uicheck/taro'
+import { initUiCheck } from '@uicheck/taro'
 
-installTaroUiCheck(Taro, {
+initUiCheck({
+  taro: Taro,
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }

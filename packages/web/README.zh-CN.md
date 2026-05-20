@@ -5,10 +5,9 @@
 ## 使用
 
 ```ts
-import html2canvas from 'html2canvas'
-import { installUiCheck } from '@uicheck/web'
+import { initUiCheck } from '@uicheck/web'
 
-installUiCheck(html2canvas, {
+initUiCheck({
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }

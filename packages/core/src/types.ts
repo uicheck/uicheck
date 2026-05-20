@@ -18,15 +18,11 @@ export interface UiCheckViewportInfo {
 }
 
 export interface UiCheckClientSnapshot {
-  url?: string
-  title?: string
   userAgent?: string
   viewport: UiCheckViewportInfo
 }
 
 export interface UiCheckScreenshotResult {
-  url?: string
-  title?: string
   width?: number
   height?: number
   mimeType: string
@@ -37,5 +33,4 @@ export interface UiCheckToolAdapter {
   getClientInfo(): UiCheckClientSnapshot
   capturePage(params?: Record<string, unknown>): Promise<UiCheckScreenshotResult> | UiCheckScreenshotResult
   inspectElements(params?: Record<string, unknown>): Promise<Record<string, unknown>> | Record<string, unknown>
-  getElementAtPoint(params?: Record<string, unknown>): Promise<Record<string, unknown>> | Record<string, unknown>
 }

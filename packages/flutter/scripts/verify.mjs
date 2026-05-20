@@ -17,12 +17,10 @@ for (const file of requiredFiles) {
 const source = await readFile(new URL('../lib/src/uicheck_flutter_client.dart', import.meta.url), 'utf8')
 const requiredSourceSnippets = [
   'class UiCheckFlutterClient',
-  'installFlutterUiCheck',
-  'registerFlutterUiCheckElement',
+  'initUiCheck',
   'captureRepaintBoundaryAsPng',
   'inspect_elements',
   'capture_page',
-  'get_element_at_point',
   'WebSocketChannel.connect'
 ]
 

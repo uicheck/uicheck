@@ -1,4 +1,4 @@
-import { connectUiCheckRuntime } from '@uicheck/core'
+import { connectUiCheckRuntime, createElementTree } from '@uicheck/core'
 import type { UiCheckSocketTransport } from '@uicheck/core/protocol'
 import type { UiCheckClientSnapshot, UiCheckScreenshotResult, UiCheckSocketOptions, UiCheckToolAdapter } from '@uicheck/core'
 
@@ -63,22 +63,16 @@ export interface ReactNativeJsxRuntimeLike {
   jsxDEV?(type: unknown, props?: Record<string, unknown> | null, key?: unknown, ...rest: unknown[]): unknown
 }
 
-export interface ReactNativeUiCheckAutoRegisterOptions {
-  enabled?: boolean
-  includeProps?: Array<'testID' | 'accessibilityLabel' | 'nativeID'>
-}
-
 export type ReactNativeRef =
   | {
       current?: unknown
     }
   | unknown
 
-export interface ReactNativeElementRegistration {
+interface ReactNativeMeasuredElement {
   ref: ReactNativeRef
   id?: string
   tag?: string
-  selector?: string
   testID?: string
   text?: string
   accessibilityLabel?: string
@@ -89,23 +83,19 @@ export interface ReactNativeElementRegistration {
 
 export interface ReactNativeUiCheckOptions {
   socket?: UiCheckSocketOptions
-  title?: string
-  route?: string
-  platform?: string
-  WebSocket?: ReactNativeWebSocketConstructor
-  React?: ReactNativeReactLike
-  jsxRuntime?: ReactNativeJsxRuntimeLike
-  autoRegister?: boolean | ReactNativeUiCheckAutoRegisterOptions
   screenshot?(params?: Record<string, unknown>): Promise<UiCheckScreenshotResult> | UiCheckScreenshotResult
 }
 
-interface RegisteredElement extends ReactNativeElementRegistration {
+export type UiCheckOptions = ReactNativeUiCheckOptions
+type ReactNativeRuntimeOptions = ReactNativeUiCheckOptions & ReactNativeLike
+type OptionalRequire = (id: string) => unknown
+
+interface RegisteredElement extends ReactNativeMeasuredElement {
   uid: number
 }
 
 interface ReactNativeElementInfo {
   tag: string
-  selector: string
   id?: string
   testID?: string
   accessibilityLabel?: string
@@ -128,7 +118,38 @@ const registry = new Set<RegisteredElement>()
 const autoRegisteredReact = new WeakSet<ReactNativeReactLike>()
 const autoRegisteredJsxRuntime = new WeakSet<ReactNativeJsxRuntimeLike>()
 
-export function registerReactNativeUiCheckElement(registration: ReactNativeElementRegistration): () => void {
+function getOptionalRequire(): OptionalRequire | undefined {
+  const globalRequire = (globalThis as { require?: OptionalRequire }).require
+  if (typeof globalRequire === 'function') return globalRequire
+  try {
+    return new Function('id', 'return require(id)') as OptionalRequire
+  } catch {
+    return undefined
+  }
+}
+
+function loadModule<T>(id: string): T | undefined {
+  const optionalRequire = getOptionalRequire()
+  if (!optionalRequire) return undefined
+  try {
+    return optionalRequire(id) as T
+  } catch {
+    return undefined
+  }
+}
+
+function resolveReactNativeRuntime(options: ReactNativeRuntimeOptions): ReactNativeRuntimeOptions {
+  const reactNative = loadModule<ReactNativeLike>('react-native') ?? {}
+  return {
+    ...reactNative,
+    React: loadModule<ReactNativeReactLike>('react'),
+    jsxRuntime: loadModule<ReactNativeJsxRuntimeLike>('react/jsx-runtime'),
+    WebSocket: globalThis.WebSocket as unknown as ReactNativeWebSocketConstructor | undefined,
+    ...options
+  }
+}
+
+function registerMeasuredElement(registration: ReactNativeMeasuredElement): () => void {
   const item: RegisteredElement = {
     ...registration,
     uid: nextUid++
@@ -165,33 +186,16 @@ function getViewportInfo(reactNative: ReactNativeLike): UiCheckClientSnapshot['v
   }
 }
 
-function createSelector(item: RegisteredElement): string {
-  if (item.selector) return item.selector
-  if (item.id) return `#${item.id}`
-  if (item.testID) return `[testID="${item.testID}"]`
-  if (item.accessibilityLabel) return `[accessibilityLabel="${item.accessibilityLabel}"]`
-  return `${item.tag ?? 'View'}:registered(${item.uid})`
-}
-
-function matchesSelector(item: RegisteredElement, selector: string): boolean {
-  if (!selector || selector === '*') return true
-  return (
-    item.selector === selector ||
-    item.id === selector.replace(/^#/, '') ||
-    item.testID === selector ||
-    item.tag === selector ||
-    createSelector(item) === selector
-  )
-}
-
 function toClasses(className: string | undefined): string[] {
   return className?.split(/\s+/).filter(Boolean) ?? []
 }
 
-function getAutoRegisterOptions(options: ReactNativeUiCheckOptions): ReactNativeUiCheckAutoRegisterOptions | undefined {
-  if (options.autoRegister === true) return { enabled: true }
-  if (typeof options.autoRegister === 'object') return { enabled: options.autoRegister.enabled !== false, includeProps: options.autoRegister.includeProps }
-  return undefined
+interface ReactNativeUiCheckAutoRegisterOptions {
+  enabled: boolean
+}
+
+function getAutoRegisterOptions(hasRuntime: boolean): ReactNativeUiCheckAutoRegisterOptions | undefined {
+  return hasRuntime ? { enabled: true } : undefined
 }
 
 function installAutoRegister(React: ReactNativeReactLike | undefined, options: ReactNativeUiCheckAutoRegisterOptions | undefined): void {
@@ -246,13 +250,12 @@ function getAutoRegistration(
   type: unknown,
   props: Record<string, unknown> | null | undefined,
   options: ReactNativeUiCheckAutoRegisterOptions
-): Omit<ReactNativeElementRegistration, 'ref'> | undefined {
+): Omit<ReactNativeMeasuredElement, 'ref'> | undefined {
   if (!props) return undefined
-  const includeProps = options.includeProps ?? ['testID', 'accessibilityLabel', 'nativeID']
-  const testID = includeProps.includes('testID') && typeof props.testID === 'string' ? props.testID : undefined
+  const testID = typeof props.testID === 'string' ? props.testID : undefined
   const accessibilityLabel =
-    includeProps.includes('accessibilityLabel') && typeof props.accessibilityLabel === 'string' ? props.accessibilityLabel : undefined
-  const nativeID = includeProps.includes('nativeID') && typeof props.nativeID === 'string' ? props.nativeID : undefined
+    typeof props.accessibilityLabel === 'string' ? props.accessibilityLabel : undefined
+  const nativeID = typeof props.nativeID === 'string' ? props.nativeID : undefined
   const id = nativeID ?? testID
 
   if (!id && !accessibilityLabel) return undefined
@@ -260,7 +263,6 @@ function getAutoRegistration(
   return {
     id,
     tag: getComponentName(type),
-    selector: testID ? `[testID="${testID}"]` : nativeID ? `#${nativeID}` : `[accessibilityLabel="${accessibilityLabel}"]`,
     testID,
     accessibilityLabel,
     text: getAutoText(props),
@@ -270,7 +272,7 @@ function getAutoRegistration(
 
 function createAutoRegisteredProps(
   props: Record<string, unknown> | null | undefined,
-  registration: Omit<ReactNativeElementRegistration, 'ref'>
+  registration: Omit<ReactNativeMeasuredElement, 'ref'>
 ): Record<string, unknown> {
   const originalRef = props?.ref
   const refState: { current?: unknown } = {}
@@ -285,7 +287,7 @@ function createAutoRegisteredProps(
       assignRef(originalRef, value)
 
       if (value) {
-        cleanup = registerReactNativeUiCheckElement({
+        cleanup = registerMeasuredElement({
           ...registration,
           ref: refState
         })
@@ -384,7 +386,6 @@ async function normalizeElement(reactNative: ReactNativeLike, item: RegisteredEl
   const visible = item.visible !== false && box.width > 0 && box.height > 0
   return {
     tag: item.tag ?? 'View',
-    selector: createSelector(item),
     id: item.id,
     testID: item.testID,
     accessibilityLabel: item.accessibilityLabel,
@@ -398,66 +399,26 @@ async function normalizeElement(reactNative: ReactNativeLike, item: RegisteredEl
 
 async function inspectReactNativeElements(
   reactNative: ReactNativeLike,
-  options: ReactNativeUiCheckOptions,
+  options: ReactNativeRuntimeOptions,
   params: Record<string, unknown> = {}
 ): Promise<Record<string, unknown>> {
-  const selector = typeof params.selector === 'string' ? params.selector : '*'
   const includeHidden = params.includeHidden === true
   const limit = clampLimit(params.limit)
-  const elements = (
-    await Promise.all([...registry].filter((item) => matchesSelector(item, selector)).map((item) => normalizeElement(reactNative, item)))
-  )
+  const elements = (await Promise.all([...registry].map((item) => normalizeElement(reactNative, item))))
     .filter((element): element is ReactNativeElementInfo => Boolean(element))
     .filter((element) => includeHidden || element.visible)
     .slice(0, limit)
 
   return {
     platform: 'react-native',
-    os: options.platform ?? reactNative.Platform?.OS,
-    url: options.route,
-    title: options.title,
+    os: reactNative.Platform?.OS,
     viewport: getViewportInfo(reactNative),
     count: elements.length,
-    elements
+    tree: createElementTree(elements)
   }
 }
 
-function containsPoint(element: ReactNativeElementInfo, x: number, y: number): boolean {
-  return (
-    x >= element.box.x &&
-    x <= element.box.x + element.box.width &&
-    y >= element.box.y &&
-    y <= element.box.y + element.box.height
-  )
-}
-
-async function getReactNativeElementAtPoint(
-  reactNative: ReactNativeLike,
-  options: ReactNativeUiCheckOptions,
-  params: Record<string, unknown> = {}
-): Promise<Record<string, unknown>> {
-  const x = typeof params.x === 'number' ? params.x : 0
-  const y = typeof params.y === 'number' ? params.y : 0
-  const result = await inspectReactNativeElements(reactNative, options, { selector: params.selector, includeHidden: false, limit: 500 })
-  const elements = Array.isArray(result.elements) ? (result.elements as ReactNativeElementInfo[]) : []
-  const element =
-    elements
-      .filter((item) => containsPoint(item, x, y))
-      .sort((a, b) => a.box.width * a.box.height - b.box.width * b.box.height)[0] ?? null
-
-  return {
-    platform: 'react-native',
-    os: options.platform ?? reactNative.Platform?.OS,
-    url: options.route,
-    title: options.title,
-    viewport: result.viewport,
-    point: { x, y },
-    element,
-    ancestors: []
-  }
-}
-
-function captureReactNativePage(options: ReactNativeUiCheckOptions, params: Record<string, unknown> = {}): UiCheckScreenshotResult | Promise<UiCheckScreenshotResult> {
+function captureReactNativePage(options: ReactNativeRuntimeOptions, params: Record<string, unknown> = {}): UiCheckScreenshotResult | Promise<UiCheckScreenshotResult> {
   if (options.screenshot) return options.screenshot(params)
   throw new Error('capture_page requires a React Native screenshot option')
 }
@@ -536,37 +497,37 @@ function addLifecycleListener(source: { addEventListener?: (event: 'change', lis
   source?.addEventListener?.('change', listener)
 }
 
-export function createReactNativeUiCheckAdapter(reactNative: ReactNativeLike, options: ReactNativeUiCheckOptions = {}): UiCheckToolAdapter {
+export function createReactNativeUiCheckAdapter(reactNative: ReactNativeLike, options: ReactNativeRuntimeOptions = {}): UiCheckToolAdapter {
   return {
     getClientInfo: () => ({
-      url: options.route,
-      title: options.title,
-      userAgent: options.platform ?? reactNative.Platform?.OS,
+      userAgent: reactNative.Platform?.OS,
       viewport: getViewportInfo(reactNative)
     }),
     capturePage: (params) => captureReactNativePage(options, params),
-    inspectElements: (params) => inspectReactNativeElements(reactNative, options, params),
-    getElementAtPoint: (params) => getReactNativeElementAtPoint(reactNative, options, params)
+    inspectElements: (params) => inspectReactNativeElements(reactNative, options, params)
   }
 }
 
-export function installReactNativeUiCheck(reactNative: ReactNativeLike, options: ReactNativeUiCheckOptions = {}): void {
-  const SocketCtor = options.WebSocket ?? reactNative.WebSocket ?? (globalThis.WebSocket as unknown as ReactNativeWebSocketConstructor | undefined)
-  if (!SocketCtor) throw new Error('installReactNativeUiCheck requires WebSocket from React Native or options.WebSocket')
+export function initUiCheck(options: ReactNativeUiCheckOptions = {}): void {
+  const runtime = resolveReactNativeRuntime(options as ReactNativeRuntimeOptions)
+  const SocketCtor = runtime.WebSocket
+  if (!SocketCtor) throw new Error('initUiCheck requires WebSocket from React Native or options.WebSocket')
 
-  const autoRegisterOptions = getAutoRegisterOptions(options)
-  installAutoRegister(options.React ?? reactNative.React, autoRegisterOptions)
-  installJsxRuntimeAutoRegister(options.jsxRuntime ?? reactNative.jsxRuntime, autoRegisterOptions)
+  const React = runtime.React
+  const jsxRuntime = runtime.jsxRuntime
+  const autoRegisterOptions = getAutoRegisterOptions(Boolean(React || jsxRuntime))
+  installAutoRegister(React, autoRegisterOptions)
+  installJsxRuntimeAutoRegister(jsxRuntime, autoRegisterOptions)
 
   connectUiCheckRuntime({
-    socket: options.socket,
-    adapter: createReactNativeUiCheckAdapter(reactNative, options),
+    socket: runtime.socket,
+    adapter: createReactNativeUiCheckAdapter(runtime, runtime),
     createTransport: (url) => createReactNativeSocketTransport(SocketCtor, url),
     hooks: {
       setTimeout: (handler, timeout) => setTimeout(handler, timeout),
       clearTimeout: (timer) => clearTimeout(timer as ReturnType<typeof setTimeout>),
-      onFocus: (listener) => addLifecycleListener(reactNative.AppState, listener),
-      onResize: (listener) => addLifecycleListener(reactNative.Dimensions, listener),
+      onFocus: (listener) => addLifecycleListener(runtime.AppState, listener),
+      onResize: (listener) => addLifecycleListener(runtime.Dimensions, listener),
       resolveSocketUrl: (url) => url
     }
   })

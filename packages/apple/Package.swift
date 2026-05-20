@@ -21,7 +21,8 @@ let package = Package(
     ),
     .testTarget(
       name: "UICheckAppleTests",
-      dependencies: ["UICheckApple"]
+      dependencies: ["UICheckApple"],
+      exclude: ["Snapshots"]
     )
   ]
 )

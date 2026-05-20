@@ -1,26 +1,5 @@
 export { connectUiCheckRuntime, emptySnapshot, handleRuntimeMessage } from './protocol'
-export {
-  buildUiCheckEvidenceConnectorPath,
-  createUiCheckEvidenceLayout,
-  getUiCheckEvidenceColor,
-  getUiCheckEvidenceLabelAnchor,
-  getUiCheckEvidenceLabelPosition,
-  getUiCheckEvidenceMarkerPosition,
-  getUiCheckEvidenceMetrics,
-  getUiCheckEvidenceScaledBox
-} from './evidence'
 export type { UiCheckRuntimeConnectionOptions, UiCheckRuntimeHooks, UiCheckSocketTransport } from './protocol'
-export type {
-  UiCheckEvidenceElement,
-  UiCheckEvidenceLabelPosition,
-  UiCheckEvidenceLabelSide,
-  UiCheckEvidenceLayout,
-  UiCheckEvidenceLayoutItem,
-  UiCheckEvidenceMetrics,
-  UiCheckEvidenceOptions,
-  UiCheckEvidenceRect,
-  UiCheckEvidenceScreenshot
-} from './evidence'
 export type {
   UiCheckClientSnapshot,
   UiCheckScreenshotResult,
@@ -28,3 +7,5 @@ export type {
   UiCheckToolAdapter,
   UiCheckViewportInfo
 } from './types'
+export { createElementTree } from './tree'
+export type { UiCheckBoxLike, UiCheckTreeElement } from './tree'

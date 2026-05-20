@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process'
 
 const requiredFiles = [
   'build.gradle.kts',
+  'gradle.properties',
   'settings.gradle.kts',
   'src/main/AndroidManifest.xml',
   'src/main/java/ai/uicheck/android/UiCheckAndroid.kt',
@@ -18,13 +19,11 @@ for (const file of requiredFiles) {
 const source = await readFile(new URL('../src/main/java/ai/uicheck/android/UiCheckAndroid.kt', import.meta.url), 'utf8')
 const requiredSourceSnippets = [
   'class UiCheckAndroidClient',
-  'installAndroidUiCheck',
-  'registerAndroidUiCheckElement',
-  'registerAndroidUiCheckView',
+  'initUiCheck',
+  'rootView',
   'createAndroidViewScreenshotProvider',
   'inspect_elements',
   'capture_page',
-  'get_element_at_point',
   'OkHttpClient'
 ]
 

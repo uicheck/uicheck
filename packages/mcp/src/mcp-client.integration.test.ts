@@ -41,12 +41,12 @@ describe('MCP tool integration', () => {
     const requestPromise = waitForSocketMessage(socket)
     const toolPromise = client.callTool({
       name: 'inspect_elements',
-      arguments: { clientId: 'page-a', selector: '#submit' }
+      arguments: { clientId: 'page-a' }
     })
     const request = JSON.parse(await requestPromise) as { id: string; method: string; params: Record<string, unknown> }
     expect(request).toMatchObject({
       method: 'inspect_elements',
-      params: { selector: '#submit' }
+      params: {}
     })
 
     socket.send(
@@ -54,10 +54,8 @@ describe('MCP tool integration', () => {
         type: 'response',
         id: request.id,
         result: {
-          url: 'http://localhost:3000/',
-          title: 'Integration page',
           count: 1,
-          elements: [{ selector: '#submit', text: 'Submit' }]
+          tree: [{ id: 'submit', text: 'Submit', children: [] }]
         }
       })
     )
@@ -68,10 +66,8 @@ describe('MCP tool integration', () => {
         type: 'text',
         text: JSON.stringify(
           {
-            url: 'http://localhost:3000/',
-            title: 'Integration page',
             count: 1,
-            elements: [{ selector: '#submit', text: 'Submit' }]
+            tree: [{ id: 'submit', text: 'Submit', children: [] }]
           },
           null,
           2

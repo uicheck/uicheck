@@ -1,0 +1,17 @@
+name: uicheck_flutter_demo
+description: Real Flutter demo app for UICheck MCP inspection.
+publish_to: none
+version: 0.0.0
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  uicheck_flutter:
+    path: ../../packages/flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

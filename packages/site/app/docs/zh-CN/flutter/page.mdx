@@ -13,11 +13,11 @@ description: "Flutter 应用运行环境客户端"
 flutter pub add uicheck_flutter
 ```
 
-Flutter 运行环境客户端。它通过 WebSocket 把正在运行的 Flutter 应用连接到 `@uicheck/mcp`，让 AI 可以通过 MCP 工具读取截图、已注册组件元数据、布局盒和坐标。
+Flutter 运行时客户端。它把真实 Flutter 应用通过 WebSocket 接到 `@uicheck/mcp`，让 AI 请求截图并检查 Flutter render tree。
 
 ## 使用
 
-添加包：
+添加依赖：
 
 ```sh
 flutter pub add uicheck_flutter
@@ -30,45 +30,25 @@ npm install -g @uicheck/mcp
 uicheck-mcp
 ```
 
-在应用启动附近安装 Flutter 客户端：
+在应用启动时安装客户端：
 
 ```dart
 import 'package:flutter/widgets.dart';
 import 'package:uicheck_flutter/uicheck_flutter.dart';
 
-final uicheckClient = installFlutterUiCheck(
-  options: UiCheckFlutterOptions(
-    title: 'Demo',
-    route: '/home',
+final uicheckClient = initUiCheck(
+  UiCheckFlutterOptions(
     socket: UiCheckSocketOptions(
-      url: 'ws://127.0.0.1:17322/socket',
       clientId: 'flutter-demo',
     ),
     screenshot: (params) => captureRepaintBoundaryAsPng(
       repaintBoundaryKey: appBoundaryKey,
-      title: 'Demo',
-      url: '/home',
     ),
   ),
 );
 ```
 
-注册 AI 需要查看的组件：
-
-```dart
-final submitButtonKey = GlobalKey();
-
-final unregister = registerFlutterUiCheckElement(
-  UiCheckFlutterElementRegistration(
-    key: submitButtonKey,
-    tag: 'ElevatedButton',
-    testID: 'submit-button',
-    text: '提交',
-  ),
-);
-```
-
-使用截图 helper 时，把 app 或页面包在 `RepaintBoundary` 中：
+使用截图 helper 时，把应用或页面包在 `RepaintBoundary` 里：
 
 ```dart
 final appBoundaryKey = GlobalKey();
@@ -79,10 +59,9 @@ RepaintBoundary(
 );
 ```
 
-不再使用时释放客户端和注册回调：
+不再需要时释放客户端：
 
 ```dart
-unregister();
 uicheckClient.dispose();
 ```
 
@@ -90,10 +69,5 @@ uicheckClient.dispose();
 
 | 工具 | 说明 |
 | --- | --- |
-| `capture_page` | 调用配置的截图回调返回 PNG 截图。 |
-| `inspect_elements` | 返回已注册组件的元数据、文本、布局盒和可见状态。 |
-| `get_element_at_point` | 返回视口坐标处最小的已注册组件。 |
-
-## 说明
-
-Flutter 没有 DOM 查询 API。需要用 `GlobalKey` 注册 AI 需要检查的组件，客户端会通过 `RenderBox.localToGlobal` 读取组件位置。
+| `capture_page` | 使用配置的截图回调返回 PNG 截图。 |
+| `inspect_elements` | 返回 render tree 元数据、文本、布局盒和可见性。 |

@@ -14,10 +14,6 @@
     "./protocol": {
       "import": "./dist/protocol.js",
       "types": "./dist/protocol.d.ts"
-    },
-    "./evidence": {
-      "import": "./dist/evidence.js",
-      "types": "./dist/evidence.d.ts"
     }
   },
   "files": [

@@ -6,7 +6,7 @@
 
 AI-readable runtime UI inspection for browser, React Native, Flutter, Android native, Apple native, and Taro Mini Program apps.
 
-UI Check connects live app runtimes to AI agents through MCP. It exposes screenshots, element metadata, layout boxes, coordinates, and route state so AI can debug UI issues against the real running app instead of guessing from code alone.
+UI Check connects live app runtimes to AI agents through MCP. It exposes screenshots, element metadata, layout boxes so AI can debug UI issues against the real running app instead of guessing from code alone.
 
 Website: https://uicheck.ai
 
@@ -37,14 +37,13 @@ uicheck-mcp
 Install the browser client:
 
 ```sh
-npm install @uicheck/web html2canvas
+npm install @uicheck/web
 ```
 
 ```ts
-import html2canvas from 'html2canvas'
-import { installUiCheck } from '@uicheck/web'
+import { initUiCheck } from '@uicheck/web'
 
-installUiCheck(html2canvas, {
+initUiCheck({
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
@@ -59,9 +58,10 @@ npm install @uicheck/taro
 
 ```ts
 import Taro from '@tarojs/taro'
-import { installTaroUiCheck } from '@uicheck/taro'
+import { initUiCheck } from '@uicheck/taro'
 
-installTaroUiCheck(Taro, {
+initUiCheck({
+  taro: Taro,
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
@@ -75,27 +75,12 @@ npm install @uicheck/rn
 ```
 
 ```ts
-import { AppState, Dimensions, Platform } from 'react-native'
-import {
-  installReactNativeUiCheck,
-  registerReactNativeUiCheckElement
-} from '@uicheck/rn'
+import { initUiCheck } from '@uicheck/rn'
 
-installReactNativeUiCheck(
-  { AppState, Dimensions, Platform, WebSocket },
-  {
-    route: 'Home',
-    socket: {
-      url: 'ws://127.0.0.1:17322/socket'
-    }
+initUiCheck({
+  socket: {
+    url: 'ws://127.0.0.1:17322/socket'
   }
-)
-
-registerReactNativeUiCheckElement({
-  ref: submitButtonRef,
-  tag: 'Pressable',
-  testID: 'submit-button',
-  text: 'Submit'
 })
 ```
 
@@ -108,22 +93,10 @@ flutter pub add uicheck_flutter
 ```dart
 import 'package:uicheck_flutter/uicheck_flutter.dart';
 
-final client = installFlutterUiCheck(
+final client = initUiCheck(
   options: UiCheckFlutterOptions(
-    title: 'Demo',
-    route: '/home',
     socket: UiCheckSocketOptions(
-      url: 'ws://127.0.0.1:17322/socket',
     ),
-  ),
-);
-
-registerFlutterUiCheckElement(
-  UiCheckFlutterElementRegistration(
-    key: submitButtonKey,
-    tag: 'ElevatedButton',
-    testID: 'submit-button',
-    text: 'Submit',
   ),
 );
 ```
@@ -138,25 +111,14 @@ Path: packages/android
 ```kotlin
 import ai.uicheck.android.UiCheckAndroidOptions
 import ai.uicheck.android.UiCheckAndroidSocketOptions
-import ai.uicheck.android.installAndroidUiCheck
-import ai.uicheck.android.registerAndroidUiCheckView
+import ai.uicheck.android.initUiCheck
 
-val client = installAndroidUiCheck(
+val client = initUiCheck(
   UiCheckAndroidOptions(
     socket = UiCheckAndroidSocketOptions(
       url = "ws://127.0.0.1:17322/socket"
-    ),
-    title = "Demo",
-    route = "/home",
-    platform = "android"
+    rootView = { rootView }
   )
-)
-
-registerAndroidUiCheckView(
-  submitButton,
-  tag = "Button",
-  testID = "submit-button",
-  text = "Submit"
 )
 ```
 
@@ -171,22 +133,11 @@ Path: packages/apple
 ```swift
 import UICheckApple
 
-let client = installAppleUiCheck(
+let client = initUiCheck(
   options: UiCheckAppleOptions(
     socket: UiCheckAppleSocketOptions(
-      url: "ws://127.0.0.1:17322/socket"
-    ),
-    title: "Demo",
-    route: "/home",
-    platform: "ios"
+    )
   )
-)
-
-registerAppleUiCheckView(
-  submitButton,
-  tag: "UIButton",
-  testID: "submit-button",
-  text: "Submit"
 )
 ```
 
@@ -196,8 +147,7 @@ registerAppleUiCheckView(
 | --- | --- |
 | `list_clients` | Lists connected uicheck runtime clients |
 | `capture_page` | Requests a PNG screenshot from a connected runtime |
-| `inspect_elements` | Returns selectors or registered components, text, layout boxes, and metadata |
-| `get_element_at_point` | Returns the element at viewport coordinates |
+| `inspect_elements` | Returns registered components, text, layout boxes, and metadata |
 
 ## Development
 

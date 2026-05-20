@@ -199,7 +199,7 @@ export class UiCheckMcpServer {
             },
             {
               type: 'text',
-              text: JSON.stringify({ url: screenshot.url, title: screenshot.title, width: screenshot.width, height: screenshot.height }, null, 2)
+              text: JSON.stringify({ width: screenshot.width, height: screenshot.height }, null, 2)
             }
           ]
         }
@@ -210,10 +210,9 @@ export class UiCheckMcpServer {
       'inspect_elements',
       {
         title: 'Inspect Connected Page Elements',
-        description: 'Ask the connected uicheck client to return selectors, text, layout boxes, and spacing info.',
+        description: 'Ask the connected uicheck client to return text, layout boxes, and spacing info.',
         inputSchema: {
           ...clientArgs,
-          selector: z.string().optional().describe('Optional root selector to inspect under.'),
           limit: z.number().int().min(1).max(500).optional().describe('Maximum elements to return. Defaults to 80.'),
           includeHidden: z.boolean().optional().describe('Include hidden or zero-size elements. Defaults to false.')
         },
@@ -226,41 +225,12 @@ export class UiCheckMcpServer {
         const result = await this.hub.request(
           'inspect_elements',
           {
-            selector: args.selector,
             limit: args.limit,
             includeHidden: args.includeHidden
           },
           args.clientId,
           args.timeoutMs
         )
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify(result, null, 2)
-            }
-          ]
-        }
-      }
-    )
-
-    server.registerTool(
-      'get_element_at_point',
-      {
-        title: 'Get Connected Page Element At Point',
-        description: 'Ask the connected uicheck client to return the element and ancestors at viewport coordinates.',
-        inputSchema: {
-          ...clientArgs,
-          x: z.number().int().min(0).describe('Viewport x coordinate.'),
-          y: z.number().int().min(0).describe('Viewport y coordinate.')
-        },
-        annotations: {
-          readOnlyHint: true,
-          openWorldHint: false
-        }
-      },
-      async (args) => {
-        const result = await this.hub.request('get_element_at_point', { x: args.x, y: args.y }, args.clientId, args.timeoutMs)
         return {
           content: [
             {
@@ -300,8 +270,6 @@ function setCorsHeaders(response: ServerResponse): void {
 function asScreenshot(value: unknown): {
   mimeType: string
   base64: string
-  url?: string
-  title?: string
   width?: number
   height?: number
 } {
@@ -312,8 +280,6 @@ function asScreenshot(value: unknown): {
   return {
     mimeType: typeof value.mimeType === 'string' ? value.mimeType : 'image/png',
     base64: value.base64,
-    url: typeof value.url === 'string' ? value.url : undefined,
-    title: typeof value.title === 'string' ? value.title : undefined,
     width: typeof value.width === 'number' ? value.width : undefined,
     height: typeof value.height === 'number' ? value.height : undefined
   }

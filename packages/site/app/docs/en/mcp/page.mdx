@@ -13,7 +13,7 @@ description: "MCP server that communicates with uicheck clients over WebSocket"
 npm install -g @uicheck/mcp
 ```
 
-Local MCP server for uicheck clients. Runtime clients connect to this server through WebSocket, and AI agents call MCP tools to request screenshots and element info from browser, Taro, or React Native apps.
+Local MCP server for uicheck clients. Runtime clients connect to this server through WebSocket, and AI agents call MCP tools to request screenshots and tree-shaped element info from Web, Taro, React Native, Flutter, Apple native, or Android native apps.
 
 ## Start
 
@@ -48,14 +48,14 @@ Add the MCP endpoint to any MCP-capable AI client:
 Connect the app runtime to the socket URL. Browser pages use `@uicheck/web`:
 
 ```ts
-installUiCheck(html2canvas, {
+initUiCheck({
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }
 })
 ```
 
-Use `@uicheck/taro` for Taro Mini Program pages and `@uicheck/rn` for React Native screens.
+Use `@uicheck/taro` for Taro Mini Program pages, `@uicheck/rn` for React Native screens, `uicheck_flutter` for Flutter apps, `uicheck_apple` for Apple native apps, and `uicheck_android` for Android native apps.
 
 ## MCP Tools
 
@@ -63,8 +63,7 @@ Use `@uicheck/taro` for Taro Mini Program pages and `@uicheck/rn` for React Nati
 | --- | --- |
 | `list_clients` | Lists connected uicheck runtime clients. |
 | `capture_page` | Asks a connected runtime to return a PNG screenshot. |
-| `inspect_elements` | Returns visible selectors or registered components, text, layout boxes, and metadata. |
-| `get_element_at_point` | Returns the element at viewport coordinates. |
+| `inspect_elements` | Returns tree-shaped nodes, text, layout boxes, and metadata. |
 
 ## CLI
 

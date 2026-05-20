@@ -13,7 +13,7 @@ description: "Android native runtime client for uicheck"
 Android library: https://github.com/uicheck/uicheck, path packages/android
 ```
 
-Android native runtime client for UI Check. It connects native Android apps to `@uicheck/mcp` over WebSocket so AI agents can request screenshots, registered view metadata, layout boxes, and coordinates through MCP tools.
+Android native runtime client for UI Check. It connects native Android apps to `@uicheck/mcp` over WebSocket so AI agents can request screenshots and inspect the live Android view tree.
 
 ## Install
 
@@ -43,53 +43,17 @@ Install the client near app startup:
 ```kotlin
 import ai.uicheck.android.UiCheckAndroidOptions
 import ai.uicheck.android.UiCheckAndroidSocketOptions
-import ai.uicheck.android.UiCheckAndroidViewportInfo
 import ai.uicheck.android.createAndroidViewScreenshotProvider
-import ai.uicheck.android.installAndroidUiCheck
+import ai.uicheck.android.initUiCheck
 
-val client = installAndroidUiCheck(
+val client = initUiCheck(
   UiCheckAndroidOptions(
     socket = UiCheckAndroidSocketOptions(
       url = "ws://127.0.0.1:17322/socket",
       clientId = "android-demo"
     ),
-    title = "Demo",
-    route = "/home",
-    platform = "android",
-    viewport = {
-      UiCheckAndroidViewportInfo(width = 393, height = 873, devicePixelRatio = 2.75)
-    },
+    rootView = { rootView },
     screenshot = createAndroidViewScreenshotProvider(rootView)
-  )
-)
-```
-
-Register views that AI should inspect:
-
-```kotlin
-import ai.uicheck.android.registerAndroidUiCheckView
-
-val unregister = registerAndroidUiCheckView(
-  submitButton,
-  tag = "Button",
-  testID = "submit-button",
-  text = "Submit"
-)
-```
-
-You can also register a custom frame provider for Compose or non-view abstractions:
-
-```kotlin
-import ai.uicheck.android.UiCheckAndroidElementRegistration
-import ai.uicheck.android.UiCheckAndroidRect
-import ai.uicheck.android.registerAndroidUiCheckElement
-
-val unregister = registerAndroidUiCheckElement(
-  UiCheckAndroidElementRegistration(
-    tag = "Button",
-    testID = "submit-button",
-    text = "Submit",
-    frame = { UiCheckAndroidRect(12.0, 24.0, 120.0, 48.0) }
   )
 )
 ```
@@ -97,7 +61,6 @@ val unregister = registerAndroidUiCheckElement(
 Dispose when no longer needed:
 
 ```kotlin
-unregister()
 client.close()
 ```
 
@@ -106,9 +69,4 @@ client.close()
 | Tool | Description |
 | --- | --- |
 | `capture_page` | Uses the configured screenshot provider to return a PNG screenshot. |
-| `inspect_elements` | Returns registered native view metadata, text, layout boxes, and visibility. |
-| `get_element_at_point` | Returns the smallest registered view at viewport coordinates. |
-
-## Notes
-
-Android native apps do not expose a DOM query API. Register the views or components that AI needs to inspect. `registerAndroidUiCheckView` measures native views in screen coordinates.
+| `inspect_elements` | Returns view tree metadata, text, layout boxes, and visibility. |

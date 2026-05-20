@@ -135,7 +135,6 @@ function decodeBytes(bytes: Uint8Array): string {
 function callAdapter(adapter: UiCheckToolAdapter, method: string, params: Record<string, unknown>): Promise<unknown> | unknown {
   if (method === 'capture_page') return adapter.capturePage(params)
   if (method === 'inspect_elements') return adapter.inspectElements(params)
-  if (method === 'get_element_at_point') return adapter.getElementAtPoint(params)
   throw new Error(`Unknown uicheck method: ${method}`)
 }
 

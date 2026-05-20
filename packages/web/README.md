@@ -1,14 +1,13 @@
 # @uicheck/web
 
-Browser runtime client for UI Check. It connects a live DOM page to `@uicheck/mcp` over WebSocket so AI agents can request screenshots, element metadata, layout boxes, and coordinates through MCP tools.
+Browser runtime client for UI Check. It connects a live DOM page to `@uicheck/mcp` over WebSocket so AI agents can request screenshots, element metadata, layout boxes through MCP tools.
 
 ## Usage
 
 ```ts
-import html2canvas from 'html2canvas'
-import { installUiCheck } from '@uicheck/web'
+import { initUiCheck } from '@uicheck/web'
 
-installUiCheck(html2canvas, {
+initUiCheck({
   socket: {
     url: 'ws://127.0.0.1:17322/socket'
   }

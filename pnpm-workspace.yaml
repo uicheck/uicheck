@@ -1,3 +1,4 @@
 packages:
   - packages/*
   - examples/taro-demo
+  - examples/rn-native-demo

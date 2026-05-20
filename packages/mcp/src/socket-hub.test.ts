@@ -31,11 +31,11 @@ describe('UiCheckSocketHub', () => {
       JSON.stringify({
         type: 'response',
         id: request.id,
-        result: { count: 1, elements: [{ selector: '#app' }] }
+        result: { count: 1, tree: [{ selector: '#app', children: [] }] }
       })
     )
 
-    await expect(requestPromise).resolves.toEqual({ count: 1, elements: [{ selector: '#app' }] })
+    await expect(requestPromise).resolves.toEqual({ count: 1, tree: [{ selector: '#app', children: [] }] })
     socket.close()
     await closeHub(hub, server)
   })

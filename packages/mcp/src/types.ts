@@ -16,8 +16,6 @@ export interface ResolvedUiCheckMcpServerOptions {
 
 export interface UiCheckClientInfo {
   id: string
-  url?: string
-  title?: string
   userAgent?: string
   connectedAt: number
   lastSeenAt: number
@@ -40,12 +38,6 @@ export interface CapturePageRequest extends UiCheckClientRequest {
 }
 
 export interface InspectElementsRequest extends UiCheckClientRequest {
-  selector?: string
   limit?: number
   includeHidden?: boolean
-}
-
-export interface ElementAtPointRequest extends UiCheckClientRequest {
-  x: number
-  y: number
 }

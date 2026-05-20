@@ -1,10 +1,10 @@
 # UICheckApple
 
-Apple 原生运行环境客户端。它通过 WebSocket 把 iOS、macOS、tvOS 或 visionOS 应用连接到 `@uicheck/mcp`，让 AI 可以通过 MCP 工具读取截图、已注册原生视图元数据、布局盒和坐标。
+Apple 原生运行时客户端。它把 iOS、macOS、tvOS 或 visionOS 应用通过 WebSocket 接到 `@uicheck/mcp`，让 AI 请求截图并检查 UIKit/AppKit view tree。
 
 ## 安装
 
-把这个仓库作为 Swift Package 依赖，并选择 `UICheckApple` product：
+把这个仓库作为 Swift Package 依赖添加，并选择 `UICheckApple` product：
 
 ```txt
 https://github.com/uicheck/uicheck
@@ -25,26 +25,18 @@ uicheck-mcp
 
 ## 使用
 
-在应用启动附近安装客户端：
+在应用启动时安装客户端：
 
 ```swift
 import UICheckApple
 
-let client = installAppleUiCheck(
-  options: UiCheckAppleOptions(
+let client = initUiCheck(
+  UiCheckAppleOptions(
     socket: UiCheckAppleSocketOptions(
-      url: "ws://127.0.0.1:17322/socket",
       clientId: "ios-demo"
     ),
-    title: "Demo",
-    route: "/home",
-    platform: "ios",
-    viewport: {
-      UiCheckAppleViewportInfo(width: 390, height: 844, devicePixelRatio: 3)
-    },
     screenshot: { params in
       UiCheckAppleScreenshotResult(
-        title: "Demo",
         width: 390,
         height: 844,
         mimeType: "image/png",
@@ -55,34 +47,9 @@ let client = installAppleUiCheck(
 )
 ```
 
-注册 AI 需要查看的视图：
+不再需要时释放：
 
 ```swift
-let unregister = registerAppleUiCheckView(
-  submitButton,
-  tag: "UIButton",
-  testID: "submit-button",
-  text: "提交"
-)
-```
-
-接入 SwiftUI 或非 View 抽象时，也可以注册自定义 frame provider：
-
-```swift
-let unregister = registerAppleUiCheckElement(
-  UiCheckAppleElementRegistration(
-    tag: "Button",
-    testID: "submit-button",
-    text: "提交",
-    frame: { CGRect(x: 12, y: 24, width: 120, height: 44) }
-  )
-)
-```
-
-不再使用时释放：
-
-```swift
-unregister()
 client.close()
 ```
 
@@ -90,10 +57,5 @@ client.close()
 
 | 工具 | 说明 |
 | --- | --- |
-| `capture_page` | 调用配置的截图 provider 返回 PNG 截图。 |
-| `inspect_elements` | 返回已注册原生视图的元数据、文本、布局盒和可见状态。 |
-| `get_element_at_point` | 返回视口坐标处最小的已注册视图。 |
-
-## 说明
-
-Apple 原生应用没有 DOM 查询 API。需要注册 AI 需要检查的视图或组件。UIKit 和 AppKit helper 会用窗口坐标测量已注册视图。
+| `capture_page` | 使用配置的截图 provider 返回 PNG 截图。 |
+| `inspect_elements` | 返回 UIKit/AppKit view tree 元数据、文本、布局盒和可见性。 |

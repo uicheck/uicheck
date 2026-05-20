@@ -3,7 +3,7 @@ import { Client } from '@modelcontextprotocol/sdk/client'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { UiCheckMcpServer } from '@uicheck/mcp'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { installTaroUiCheck, type TaroLike, type TaroSelectorQueryNode } from './taro'
+import { initUiCheck, type TaroLike, type TaroSelectorQueryNode, type TaroSocketTask } from './taro'
 
 const servers: UiCheckMcpServer[] = []
 const clients: Client[] = []
@@ -31,14 +31,13 @@ describe('taro client integration', () => {
         height: 32
       }
     ])
-    installTaroUiCheck(taro, {
-      title: 'Taro integration',
+    initUiCheck({
+      taro,
       socket: {
         url: server.socketUrl,
         clientId: 'taro-real'
       },
       screenshot: () => ({
-        title: 'Taro integration',
         mimeType: 'image/png',
         base64: 'dGFyby1wbmc='
       })
@@ -55,13 +54,10 @@ describe('taro client integration', () => {
     })
     expect(getJsonToolPayload(inspected)).toMatchObject({
       platform: 'taro',
-      url: 'pages/index/index?id=1',
-      title: 'Taro integration',
       count: 1,
-      elements: [
+      tree: [
         {
           tag: 'button',
-          selector: '#submit',
           text: '提交',
           visible: true,
           box: { x: 10, y: 20, width: 88, height: 32 }
@@ -106,12 +102,11 @@ function createTaro(nodes: TaroSelectorQueryNode[]): TaroLike {
       }
       return query
     },
-    getSystemInfoSync: () => ({ windowWidth: 390, windowHeight: 844, pixelRatio: 3 }),
-    getCurrentPages: () => [{ route: 'pages/index/index', options: { id: 1 } }]
+    getSystemInfoSync: () => ({ windowWidth: 390, windowHeight: 844, pixelRatio: 3 })
   }
 }
 
-function createSocketTask(url: string): ReturnType<TaroLike['connectSocket']> {
+function createSocketTask(url: string): TaroSocketTask {
   const socket = new WebSocket(url)
   return {
     send: ({ data }) => socket.send(data),

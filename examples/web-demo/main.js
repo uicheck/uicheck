@@ -1,178 +1,110 @@
-import html2canvas from '/vendor/html2canvas.esm.js'
-import { renderUiCheckEvidence } from '../../packages/web/dist/evidence.js'
-import { installUiCheck } from '../../packages/web/dist/index.js'
+import { initUiCheck } from '../../packages/web/dist/index.js'
 
 const params = new URLSearchParams(location.search)
-const webElements = [
-  { id: 'app', selector: 'main.checkout-app', tag: 'main', text: 'Order review', box: { x: 0, y: 0, width: 560, height: 360 }, meta: ['p: 22px'] },
-  { id: 'header', selector: 'header.screen-header', tag: 'header', text: 'Checkout page', box: { x: 0, y: 0, width: 560, height: 62 }, meta: ['m: 0px'] },
-  { id: 'title', selector: 'h1', tag: 'h1', text: 'Order review', box: { x: 22, y: 84, width: 152, height: 28 }, meta: ['font: 22px'] },
-  { id: 'intro', selector: '.screen-body > p', tag: 'p', text: 'Rendered page captured by the Web demo app.', box: { x: 22, y: 120, width: 330, height: 22 }, meta: ['color: slate'] },
-  { id: 'cards', selector: '.cards', tag: 'div', text: 'Cart Address Status', box: { x: 22, y: 164, width: 516, height: 78 }, meta: ['display: grid'] },
-  { id: 'cart', selector: '.card:nth(1)', tag: 'div', text: 'Cart 3 items', box: { x: 22, y: 164, width: 160, height: 78 }, meta: ['p: 12px'] },
-  { id: 'address', selector: '.card:nth(2)', tag: 'div', text: 'Address Ready', box: { x: 194, y: 164, width: 160, height: 78 }, meta: ['p: 12px'] },
-  { id: 'status', selector: '.card:nth(3)', tag: 'div', text: 'Status Visible', box: { x: 366, y: 164, width: 160, height: 78 }, meta: ['p: 12px'] },
-  { id: 'cart-bar', selector: '.card:nth(1) .bar', tag: 'div', box: { x: 34, y: 213, width: 136, height: 7 }, meta: ['radius: 999px'] },
-  { id: 'address-bar', selector: '.card:nth(2) .bar', tag: 'div', box: { x: 206, y: 213, width: 136, height: 7 }, meta: ['radius: 999px'] },
-  { id: 'status-bar', selector: '.card:nth(3) .bar', tag: 'div', box: { x: 378, y: 213, width: 136, height: 7 }, meta: ['radius: 999px'] },
-  { id: 'actions', selector: '.actions', tag: 'div', text: 'Inspect Submit order', box: { x: 284, y: 288, width: 254, height: 48 }, meta: ['display: flex'] },
-  { id: 'inspect', selector: 'button.secondary', tag: 'button', text: 'Inspect', box: { x: 284, y: 288, width: 92, height: 48 }, meta: ['visible: true'] },
-  {
-    id: 'submit',
-    selector: '#submit',
-    tag: 'button',
-    text: 'Submit order',
-    box: { x: 388, y: 288, width: 150, height: 48 },
-    meta: ['testId: submit-button', 'visible: true'],
-    selected: true
-  },
-  { id: 'platform', selector: '.screen-pill', tag: 'div', text: 'Web', box: { x: 482, y: 15, width: 56, height: 32 }, meta: ['role: badge'] },
-  { id: 'route', selector: '.screen-route', tag: 'div', text: '/checkout', box: { x: 18, y: 38, width: 86, height: 14 }, meta: ['opacity: .78'] },
-  { id: 'card-title', selector: '.card strong', tag: 'strong', text: 'Cart', box: { x: 34, y: 177, width: 36, height: 18 }, meta: ['font-weight: 700'] },
-  { id: 'card-meta', selector: '.card span', tag: 'span', text: '3 items', box: { x: 34, y: 197, width: 52, height: 18 }, meta: ['inline text'] }
-]
+const detailRows = Array.from({ length: 34 }, (_, index) => {
+  const number = index + 1
+  const padded = String(number).padStart(2, '0')
+  return {
+    id: `detail-row-${padded}`,
+    labelId: `detail-label-${padded}`,
+    valueId: `detail-value-${padded}`,
+    text: `Runtime check ${padded}`,
+    value: number % 3 === 0 ? 'ok' : number % 3 === 1 ? 'warn' : 'trace'
+  }
+})
 
-const webEvidenceOptions = {
-  title: 'UICheck Web Demo App',
-  subtitle: 'All visible DOM elements with selected target #submit',
-  mode: 'desktop',
-  theme: {
-    background: '#eef4ff',
-    nav: '#2563eb',
-    accent: '#f97316',
-    soft: '#dbeafe'
-  },
-  screenshot: {
-    title: 'Checkout page',
-    route: '/checkout',
-    platform: 'Web',
-    width: 560,
-    height: 360,
-    contentHtml: `
-      <h1 data-uicheck-id="title">Order review</h1>
-      <p data-uicheck-id="intro">Rendered page captured by the Web demo app.</p>
-      <div class="cards" data-uicheck-id="cards">
-        <div class="card" data-uicheck-id="cart"><strong data-uicheck-id="card-title">Cart</strong><span data-uicheck-id="card-meta">3 items</span><div class="bar" data-uicheck-id="cart-bar"></div><div class="bar short"></div></div>
-        <div class="card" data-uicheck-id="address"><strong>Address</strong><span>Ready</span><div class="bar" data-uicheck-id="address-bar"></div><div class="bar short"></div></div>
-        <div class="card" data-uicheck-id="status"><strong>Status</strong><span>Visible</span><div class="bar" data-uicheck-id="status-bar"></div><div class="bar short"></div></div>
-      </div>
-      <div class="actions" data-uicheck-id="actions">
-        <button class="secondary" data-uicheck-id="inspect">Inspect</button>
-        <button id="submit" class="primary" data-testid="submit-button" data-uicheck-target>Submit order</button>
-      </div>
-    `
-  },
-  elements: webElements
+const theme = {
+  background: '#f8fafc',
+  nav: '#111827',
+  accent: '#a855f7'
 }
 
-renderDemoApp(webEvidenceOptions)
+const demoHtml = `
+      <main id="screen" class="checkout-screen" data-uicheck-id="screen">
+        <header id="header" class="header" data-uicheck-id="header">
+          <div>
+            <div id="eyebrow" class="eyebrow" data-uicheck-id="eyebrow">UICheck Web</div>
+            <h1 id="title" data-uicheck-id="title">Checkout screen</h1>
+          </div>
+          <div id="runtime-badge" class="runtime-badge" data-uicheck-id="runtime-badge">web</div>
+        </header>
+        <div id="content" class="content" data-uicheck-id="content">
+        <section id="summary-card" class="card compact-card" data-uicheck-id="summary-card">
+          <strong id="summary-title" data-uicheck-id="summary-title">Registered ref summary</strong>
+          <span id="summary-text" data-uicheck-id="summary-text">MCP reads runtime boxes, text, testID and labels.</span>
+        </section>
+        <section id="items-card" class="card items-card compact-card" data-uicheck-id="items-card">
+          <strong id="items-title" data-uicheck-id="items-title">Order items</strong>
+          <div id="item-row-1" data-uicheck-id="item-row-1" class="item-row"><span>Starter license</span><b>$19</b></div>
+          <div id="item-row-2" data-uicheck-id="item-row-2" class="item-row"><span>Team add-on</span><b>$8</b></div>
+          <div id="total-row" data-uicheck-id="total-row" class="item-row total-row"><span>Total</span><span>$27</span></div>
+        </section>
+        <section id="status-card" class="card status-card compact-card" data-uicheck-id="status-card">
+          <strong id="status-title" data-uicheck-id="status-title">Ready for MCP inspection</strong>
+          <span id="status-text" data-uicheck-id="status-text">This real demo has 100+ inspectable nodes.</span>
+        </section>
+        <section id="details-panel" class="details-panel" data-uicheck-id="details-panel">
+          <strong id="details-title" data-uicheck-id="details-title">Runtime detail matrix</strong>
+          <div id="details-grid" class="details-grid" data-uicheck-id="details-grid">
+            ${detailRows
+              .map(
+                (row) => `
+                  <div id="${row.id}" class="detail-row" data-uicheck-id="${row.id}">
+                    <span id="${row.labelId}" data-uicheck-id="${row.labelId}">${row.text}</span>
+                    <b id="${row.valueId}" data-uicheck-id="${row.valueId}">${row.value}</b>
+                  </div>
+                `
+              )
+              .join('')}
+          </div>
+        </section>
+        <div id="hint-banner" class="hint-banner" data-uicheck-id="hint-banner">MCP can inspect all elements or a selected target.</div>
+        <button id="submit-button" class="primary" data-testid="submit-button" data-uicheck-target data-uicheck-id="submit-button"><span id="submit-label" data-uicheck-id="submit-label">Submit order</span></button>
+        </div>
+      </main>
+`
 
-globalThis.uicheckRenderEvidence = () => {
-  renderUiCheckEvidence(document.body, webEvidenceOptions)
-  document.documentElement.dataset.uicheckEvidenceReady = 'true'
-}
-
-globalThis.uicheckRenderEvidenceFromMcp = ({ screenshot, inspected }) => {
-  renderUiCheckEvidence(document.body, createMcpEvidenceOptions(webEvidenceOptions, screenshot, inspected))
-  document.documentElement.dataset.uicheckEvidenceReady = 'true'
-}
+renderDemoApp()
 
 if (params.has('socketUrl')) {
-  installUiCheck(html2canvas, {
-    position: 'bottom-left',
-    offset: [20, 20],
-    size: 36,
-    color: '#2563eb',
-    draggable: false,
+  initUiCheck({
     socket: {
       url: params.get('socketUrl') ?? '',
       clientId: params.get('clientId') ?? 'web-evidence',
-      reconnectMs: 300,
-      enabled: true
+      reconnectMs: 300
     }
   })
 }
 
 document.documentElement.dataset.uicheckReady = 'true'
 
-function renderDemoApp(options) {
-  document.head.append(createDemoStyle(options))
+function renderDemoApp() {
+  document.head.append(createDemoStyle())
   document.body.innerHTML = `
     <main class="uicheck-demo-app">
-      <section class="uicheck-demo-screen">
-        <header class="screen-header">
-          <div>
-            <div class="screen-title">${options.screenshot.title}</div>
-            <div class="screen-route">${options.screenshot.route}</div>
-          </div>
-          <div class="screen-pill">${options.screenshot.platform}</div>
-        </header>
-        <div class="screen-body">${options.screenshot.contentHtml}</div>
-      </section>
+      ${demoHtml}
     </main>
   `
 }
 
-function createDemoStyle(options) {
+function createDemoStyle() {
   const style = document.createElement('style')
   style.textContent = `
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:#f8fbff;color:#111827;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-.uicheck-demo-app{min-height:100vh;display:grid;place-items:center;padding:48px;background:linear-gradient(135deg,#f8fbff,${options.theme.background})}
-.uicheck-demo-screen{width:${options.screenshot.width}px;height:${options.screenshot.height}px;overflow:hidden;border:1px solid rgba(15,23,42,.16);border-radius:14px;background:#fff;box-shadow:0 18px 42px rgba(15,23,42,.16)}
-.screen-header{height:62px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:${options.theme.nav};color:#fff}
-.screen-title{font-size:18px;font-weight:850}.screen-route{margin-top:3px;font-size:11px;opacity:.78}
-.screen-pill{border:1px solid rgba(255,255,255,.36);background:rgba(255,255,255,.16);border-radius:999px;padding:7px 10px;font-size:11px;font-weight:800}
-.screen-body{position:relative;height:calc(100% - 62px);padding:22px}
-.screen-body h1{margin:0 0 8px;font-size:22px}.screen-body p{margin:0 0 18px;color:#64748b}
-.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:22px}
-.card{min-height:78px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;padding:12px}.card strong{display:block;margin-bottom:6px}
-.bar{height:7px;margin-top:9px;border-radius:999px;background:#cbd5e1}.bar.short{width:64%;background:${options.theme.soft}}
-.actions{display:flex;justify-content:flex-end;gap:12px}.secondary,.primary{height:48px;border-radius:10px;font-weight:850}
-.secondary{padding:0 20px;border:1px solid #cbd5e1;background:#fff;color:#334155}.primary{min-width:150px;border:0;background:${options.theme.accent};color:#fff}
+html,body{width:100%;height:100%;overflow:hidden}
+body{margin:0;background:${theme.background};color:#111827;font:14px/1.45 Roboto,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.uicheck-demo-app{width:100vw;height:100vh;padding:0;background:${theme.background}}
+.checkout-screen{width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc}
+.header{height:78px;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;background:${theme.nav};color:#fff}
+.eyebrow{margin-bottom:4px;color:#93c5fd;font-size:13px;font-weight:700}.checkout-screen h1{margin:0;color:#fff;font-size:22px;line-height:28px;font-weight:900}
+.runtime-badge{border:1px solid rgba(255,255,255,.36);border-radius:999px;padding:7px 12px;color:#fff;font-size:12px;font-weight:800}
+.content{flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;gap:8px}
+.card,.details-panel{border:1px solid #dbe3ef;border-radius:10px;background:#fff;padding:10px;box-shadow:none}
+.compact-card{height:66px}.items-card{height:92px}.status-card{height:66px}.card strong,.details-panel strong{display:block;margin-bottom:4px;color:#111827;font-size:13px;font-weight:850}.card span{display:block;color:#475569;font-size:11px;line-height:15px}
+.item-row{display:flex;min-height:15px;margin-top:3px;color:#334155;font-size:11px;line-height:15px;justify-content:space-between}.item-row b{color:#111827}.total-row{margin-top:4px;padding-top:4px;border-top:1px solid #e2e8f0;color:#111827;font-weight:900}
+.details-panel{height:370px;padding:8px}.details-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 6px}.detail-row{display:flex;justify-content:space-between;min-height:16px;padding:1px 4px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;color:#334155;font-size:9px;line-height:13px}.detail-row b{color:#0f766e;font-size:9px}
+.hint-banner{min-height:34px;border-radius:10px;padding:8px 10px;background:#ecfeff;color:#0f766e;font-size:11px;font-weight:800;line-height:16px}
+.primary{height:40px;margin-top:auto;border:0;border-radius:10px;background:${theme.accent};color:#fff;font-size:14px;font-weight:850}
 `
   return style
-}
-
-function createMcpEvidenceOptions(baseOptions, screenshot, inspected) {
-  const elements = Array.isArray(inspected?.elements)
-    ? inspected.elements.map(normalizeMcpElement).filter(Boolean).slice(0, 18)
-    : baseOptions.elements
-
-  return {
-    ...baseOptions,
-    subtitle: 'Real @uicheck/mcp capture_page + inspect_elements result',
-    screenshot: {
-      title: screenshot.title ?? baseOptions.screenshot.title,
-      route: screenshot.url ?? baseOptions.screenshot.route,
-      platform: baseOptions.screenshot.platform,
-      width: screenshot.width ?? baseOptions.screenshot.width,
-      height: screenshot.height ?? baseOptions.screenshot.height,
-      imageBase64: screenshot.base64,
-      mimeType: screenshot.mimeType ?? 'image/png'
-    },
-    elements: elements.length > 0 ? elements : baseOptions.elements
-  }
-}
-
-function normalizeMcpElement(element, index) {
-  if (!element?.box) return null
-  const id = element.id ?? element.testID ?? element.testId ?? `element-${index + 1}`
-  return {
-    id: String(id),
-    selector: element.selector ?? `#${id}`,
-    tag: element.tag ?? 'node',
-    text: element.text,
-    box: {
-      x: element.box.x ?? element.box.left ?? 0,
-      y: element.box.y ?? element.box.top ?? 0,
-      width: element.box.width ?? 0,
-      height: element.box.height ?? 0
-    },
-    meta: [
-      element.testID || element.testId ? `testID: ${element.testID ?? element.testId}` : '',
-      Array.isArray(element.classes) && element.classes.length > 0 ? `class: ${element.classes.slice(0, 2).join('.')}` : ''
-    ].filter(Boolean),
-    selected: id === 'submit' || element.testID === 'submit-button' || element.testId === 'submit-button'
-  }
 }

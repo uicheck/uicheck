@@ -14,8 +14,7 @@ function createAdapter(): UiCheckToolAdapter {
       }
     }),
     capturePage: vi.fn(() => ({ mimeType: 'image/png', base64: 'a' })),
-    inspectElements: vi.fn(() => ({ elements: [] })),
-    getElementAtPoint: vi.fn(() => ({ element: null }))
+    inspectElements: vi.fn(() => ({ tree: [] }))
   }
 }
 
@@ -27,7 +26,7 @@ describe('handleRuntimeMessage', () => {
     await handleRuntimeMessage(adapter, JSON.stringify({ type: 'request', id: '1', method: 'inspect_elements', params: { limit: 2 } }), send)
 
     expect(adapter.inspectElements).toHaveBeenCalledWith({ limit: 2 })
-    expect(send).toHaveBeenCalledWith({ type: 'response', id: '1', result: { elements: [] } })
+    expect(send).toHaveBeenCalledWith({ type: 'response', id: '1', result: { tree: [] } })
   })
 
   it('returns an error response for unknown methods', async () => {

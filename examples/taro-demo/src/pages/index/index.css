@@ -1,109 +1,182 @@
 .taro-demo-page {
+  display: flex;
   min-height: 100vh;
-  padding: 28px 20px 92px;
+  padding: 0;
   color: #111827;
   background: #f8fafc;
   box-sizing: border-box;
+  flex-direction: column;
 }
 
-.hero {
-  padding: 20px;
+.header {
+  display: flex;
+  height: 78px;
+  padding: 12px 24px;
   color: #fff;
-  background: #14532d;
-  border-radius: 18px;
+  background: #111827;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.content {
+  display: flex;
+  min-height: 0;
+  padding: 14px;
+  box-sizing: border-box;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .eyebrow {
   display: block;
-  margin-bottom: 8px;
-  color: #bbf7d0;
-  font-size: 12px;
-  font-weight: 800;
+  margin-bottom: 4px;
+  color: #93c5fd;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .title {
   display: block;
-  font-size: 24px;
+  color: #fff;
+  font-size: 22px;
   font-weight: 900;
-  line-height: 1.2;
+  line-height: 28px;
 }
 
-.subtitle {
+.runtime-badge {
   display: block;
-  margin-top: 10px;
-  color: #dcfce7;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.stat-card,
-.summary-card {
-  padding: 14px;
-  background: #fff;
-  border: 1px solid #d9e7df;
-  border-radius: 14px;
-}
-
-.stat-label,
-.summary-label {
-  display: block;
-  color: #64748b;
+  padding: 7px 12px;
+  color: #fff;
   font-size: 12px;
   font-weight: 800;
-}
-
-.stat-value {
-  display: block;
-  margin-top: 8px;
-  color: #14532d;
-  font-size: 24px;
-  font-weight: 900;
-}
-
-.summary-card {
-  margin-top: 12px;
-}
-
-.summary-text {
-  display: block;
-  margin-top: 8px;
-  color: #334155;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.progress {
-  height: 8px;
-  margin-top: 12px;
-  overflow: hidden;
-  background: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.36);
   border-radius: 999px;
 }
 
-.progress-bar {
+.card {
+  height: 66px;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.items-card {
+  height: 92px;
+}
+
+.card-title {
   display: block;
-  width: 72%;
-  height: 100%;
-  background: #22c55e;
+  margin-bottom: 4px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.card-text {
+  display: block;
+  color: #475569;
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.item-row {
+  display: flex;
+  min-height: 15px;
+  margin-top: 3px;
+  color: #334155;
+  font-size: 11px;
+  line-height: 15px;
+  justify-content: space-between;
+}
+
+.item-price {
+  color: #111827;
+  font-weight: 900;
+}
+
+.total-row {
+  margin-top: 4px;
+  padding-top: 4px;
+  color: #111827;
+  font-size: 11px;
+  font-weight: 900;
+  border-top: 1px solid #e2e8f0;
+}
+
+.details-panel {
+  height: 370px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.details-title {
+  display: block;
+  margin-bottom: 4px;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.details-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 6px;
+}
+
+.detail-row {
+  display: flex;
+  width: 48%;
+  min-height: 16px;
+  padding: 1px 4px;
+  color: #334155;
+  font-size: 9px;
+  line-height: 13px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  box-sizing: border-box;
+  justify-content: space-between;
+}
+
+.detail-label,
+.detail-value {
+  font-size: 9px;
+  line-height: 13px;
+}
+
+.detail-value {
+  color: #0f766e;
+  font-weight: 900;
+}
+
+.hint-banner {
+  display: block;
+  min-height: 34px;
+  padding: 8px 10px;
+  color: #0f766e;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  background: #ecfeff;
+  border-radius: 12px;
+  box-sizing: border-box;
 }
 
 .submit-button {
-  position: fixed;
-  right: 20px;
-  bottom: 26px;
-  left: 20px;
-  height: 52px;
+  height: 40px;
+  margin-top: auto;
   color: #fff;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 900;
-  line-height: 52px;
-  background: #0284c7;
-  border-radius: 14px;
+  line-height: 40px;
+  background: #a855f7;
+  border-radius: 10px;
 }

@@ -26,6 +26,12 @@ export function DocsShell({ children }: Readonly<{ children: React.ReactNode }>)
   const locale = getLocale(pathname)
   const docs = generatedDocsByLocale[locale]
   const docId = getDocId(pathname)
+  const mcpDoc = docs.find((doc) => doc.id === 'mcp')
+  const platformDocs = docs.filter((doc) => doc.id !== 'mcp')
+  const labels = {
+    startDescription: locale === 'zh-CN' ? 'AI 接 MCP，应用接 WebSocket' : 'AI to MCP, apps to WebSocket',
+    platformGroup: locale === 'zh-CN' ? '多平台接入' : 'Platform integrations'
+  }
 
   return (
     <div className="docs-framework-shell">
@@ -55,9 +61,16 @@ export function DocsShell({ children }: Readonly<{ children: React.ReactNode }>)
         <aside className="docs-framework-sidebar">
           <Link className={!docId ? 'active' : ''} href={`/docs/${locale}/`}>
             <span>{locale === 'zh-CN' ? '开始' : 'Start'}</span>
-            <small>{locale === 'zh-CN' ? '选择包文档' : 'Choose a package'}</small>
+            <small>{labels.startDescription}</small>
           </Link>
-          {docs.map((doc) => (
+          {mcpDoc ? (
+            <Link className={mcpDoc.id === docId ? 'active' : ''} href={`/docs/${locale}/${mcpDoc.id}/`}>
+              <span>{mcpDoc.name}</span>
+              <small>{mcpDoc.description}</small>
+            </Link>
+          ) : null}
+          <div className="docs-sidebar-group-label">{labels.platformGroup}</div>
+          {platformDocs.map((doc) => (
             <Link className={doc.id === docId ? 'active' : ''} href={`/docs/${locale}/${doc.id}/`} key={doc.id}>
               <span>{doc.name}</span>
               <small>{doc.description}</small>

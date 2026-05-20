@@ -1,13 +1,7 @@
 export {
-  createReactNativeUiCheckAdapter,
-  installReactNativeUiCheck,
-  registerReactNativeUiCheckElement
+  initUiCheck
 } from './react-native'
-export { renderUiCheckEvidence } from './evidence'
-export type { UiCheckEvidenceElement, UiCheckEvidenceOptions, UiCheckEvidenceScreenshot } from './evidence'
 export type {
-  ReactNativeElementRegistration,
-  ReactNativeLike,
-  ReactNativeRef,
-  ReactNativeUiCheckOptions
+  ReactNativeUiCheckOptions,
+  UiCheckOptions
 } from './react-native'

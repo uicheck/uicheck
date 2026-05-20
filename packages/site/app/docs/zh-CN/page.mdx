@@ -5,7 +5,13 @@ description: "AI 可读的 UI 检查工具文档"
 
 # UI Check 文档
 
-选择一个包开始查看安装方式、API 和平台接入说明。
+UI Check 的连接模型很简单：AI 客户端接 MCP，应用运行环境接 WebSocket。先把 @uicheck/mcp 配到 AI 客户端，再根据应用平台选择对应接入包。
+
+## AI 客户端
+
+- [@uicheck/mcp](./mcp/) - 配置 @uicheck/mcp，让 AI 可以调用 list_clients、capture_page 和 inspect_elements。
+
+## 多平台接入
 
 - [@uicheck/web](./web/) - 浏览器 DOM 页面客户端
 - [@uicheck/taro](./taro/) - Taro 小程序页面客户端
@@ -13,5 +19,4 @@ description: "AI 可读的 UI 检查工具文档"
 - [uicheck_flutter](./flutter/) - Flutter 应用运行环境客户端
 - [uicheck_android](./android/) - Android 原生应用运行环境客户端
 - [uicheck_apple](./apple/) - Apple 原生应用运行环境客户端
-- [@uicheck/mcp](./mcp/) - 通过 WebSocket 连接 uicheck 客户端的 MCP 服务
 - [@uicheck/core](./core/) - uicheck 客户端共享协议 runtime 和类型

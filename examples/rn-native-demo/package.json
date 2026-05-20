@@ -7,7 +7,9 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:snapshot": "jest __tests__/uicheck-demo-snapshot.test.ts"
   },
   "dependencies": {
     "@react-native/new-app-screen": "0.85.3",

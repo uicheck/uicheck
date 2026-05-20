@@ -205,6 +205,168 @@ h1 {
   background: rgba(255, 255, 255, 0.62);
 }
 
+.home-entry {
+  min-height: 100vh;
+  padding: 22px clamp(18px, 4vw, 58px) 72px;
+  background: #f8fafc;
+}
+
+.home-entry-nav,
+.entry-hero,
+.platform-entry,
+.quick-start {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.entry-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.94fr) minmax(360px, 0.82fr);
+  gap: clamp(28px, 5vw, 64px);
+  align-items: center;
+  min-height: calc(100vh - 170px);
+  padding: clamp(54px, 8vw, 96px) 0 42px;
+}
+
+.entry-copy h1 {
+  max-width: 860px;
+}
+
+.connection-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgba(24, 36, 58, 0.1);
+}
+
+.endpoint-card {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.endpoint-card span {
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.endpoint-card h2 {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 32px);
+}
+
+.endpoint-card code {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 11px 12px;
+  border: 1px solid #dbe3ee;
+  border-radius: 7px;
+  color: #0f766e;
+  background: #fff;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.connection-flow {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 6px 2px;
+}
+
+.connection-flow span {
+  display: grid;
+  min-width: 54px;
+  height: 36px;
+  place-items: center;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.connection-flow i {
+  height: 2px;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.platform-entry {
+  padding: 68px 0 36px;
+}
+
+.platform-entry .section-head {
+  margin-bottom: 26px;
+}
+
+.platform-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.platform-entry-card {
+  display: grid;
+  gap: 12px;
+  min-height: 156px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(24, 36, 58, 0.06);
+}
+
+.platform-entry-card:hover {
+  border-color: #b8c4d4;
+  transform: translateY(-1px);
+}
+
+.platform-entry-card span {
+  color: var(--blue);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.platform-entry-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.quick-start {
+  display: grid;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+  gap: 24px;
+  align-items: start;
+  padding: 56px 0 0;
+}
+
+.quick-start h2 {
+  margin-bottom: 0;
+}
+
+.quick-start pre {
+  border: 1px solid #24324b;
+  border-radius: 8px;
+  background: #101828;
+}
+
 .inspector {
   position: relative;
   min-height: 570px;
@@ -942,6 +1104,15 @@ h3 {
   gap: 6px;
 }
 
+.docs-sidebar-group-label {
+  margin: 10px 10px 2px;
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
 .docs-framework-sidebar a {
   display: grid;
   gap: 4px;
@@ -1229,8 +1400,18 @@ h3 {
   .clipboard-preview,
   .docs-preview-grid,
   .docs-layout,
-  .code-grid {
+  .code-grid,
+  .entry-hero,
+  .quick-start {
     grid-template-columns: 1fr;
+  }
+
+  .entry-hero {
+    min-height: auto;
+  }
+
+  .platform-entry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .docs-callout,
@@ -1307,6 +1488,21 @@ h3 {
 
   .nav-actions {
     width: 100%;
+  }
+
+  .entry-copy h1 {
+    font-size: 42px;
+  }
+
+  .platform-entry-grid,
+  .connection-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .connection-flow i {
+    width: 2px;
+    height: 24px;
+    justify-self: center;
   }
 
   .docs-framework-nav .nav-actions {

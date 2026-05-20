@@ -41,14 +41,16 @@ jobs:
           pnpm --filter @uicheck/web run typecheck
           pnpm --filter @uicheck/taro run typecheck
           pnpm --filter @uicheck/rn run typecheck
+          pnpm --filter UICheckRNDemo run typecheck
 
-      - name: Test
+      - name: Unit tests
         run: |
           pnpm --filter @uicheck/core run test
           pnpm --filter @uicheck/mcp run test
           pnpm --filter @uicheck/web run test
           pnpm --filter @uicheck/taro run test
           pnpm --filter @uicheck/rn run test
+          pnpm --filter UICheckRNDemo run test:snapshot
 
       - name: Build
         run: |
@@ -59,21 +61,19 @@ jobs:
           pnpm --filter @uicheck/rn run build
           pnpm --filter @uicheck/site run build
 
-      - name: Generate rendered runtime evidence
-        run: pnpm run test:evidence:browser
-
-      - name: Upload JavaScript runtime evidence
+      - name: Upload JavaScript evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: javascript-runtime-test-evidence
+          name: javascript-test-evidence
           path: |
             packages/web/build/uicheck-test-artifacts/**
             packages/rn/build/uicheck-test-artifacts/**
+            examples/rn-native-demo/build/uicheck-test-artifacts/**
 
   taro-weapp:
-    name: Taro WeApp runtime evidence
-    runs-on: macos-latest
+    name: Taro WeApp snapshot evidence
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -88,68 +88,27 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Cache WeChat Developer Tools
-        uses: actions/cache@v4
-        with:
-          path: ~/Library/Caches/uicheck/wechatwebdevtools-2.01.2510290-darwin-arm64.dmg
-          key: wechatwebdevtools-2.01.2510290-darwin-arm64
-
-      - name: Install WeChat Developer Tools
-        timeout-minutes: 30
-        run: |
-          set -euo pipefail
-          if [ -x /Applications/wechatwebdevtools.app/Contents/MacOS/cli ]; then
-            /Applications/wechatwebdevtools.app/Contents/MacOS/cli --version || true
-            exit 0
-          fi
-          version="2.01.2510290"
-          arch="$(uname -m)"
-          if [ "$arch" = "arm64" ]; then
-            devtools_arch="arm64"
-            expected_sha="555d6a36fc128ab1eb3b5e9bc72ad8a1a5825e962e285180e51803d8d4dde9b5"
-          else
-            devtools_arch="x64"
-            expected_sha="344e15fcdd442b0d6a7add9802380cedd42f1bd4303f1f0c1291caade3583cb2"
-          fi
-          cache_dir="$HOME/Library/Caches/uicheck"
-          dmg="$cache_dir/wechatwebdevtools-${version}-darwin-${devtools_arch}.dmg"
-          mkdir -p "$cache_dir"
-          if [ ! -f "$dmg" ]; then
-            curl --fail --location --retry 3 --retry-delay 5 --connect-timeout 30 --progress-bar \
-              "https://dldir1.qq.com/WechatWebDev/release/be1ec64cf6184b0fa64091919793f068/wechat_devtools_${version}_darwin_${devtools_arch}.dmg" \
-              --output "$dmg"
-          fi
-          echo "${expected_sha}  ${dmg}" | shasum -a 256 --check
-          mount_dir="$RUNNER_TEMP/wechatwebdevtools"
-          rm -rf "$mount_dir"
-          mkdir -p "$mount_dir"
-          hdiutil attach "$dmg" -nobrowse -quiet -mountpoint "$mount_dir"
-          rm -rf /Applications/wechatwebdevtools.app
-          ditto "$mount_dir/wechatwebdevtools.app" /Applications/wechatwebdevtools.app
-          hdiutil detach "$mount_dir" -quiet
-          xattr -dr com.apple.quarantine /Applications/wechatwebdevtools.app || true
-          /Applications/wechatwebdevtools.app/Contents/MacOS/cli --version || true
-
-      - name: Reset WeChat Developer Tools
-        run: |
-          /Applications/wechatwebdevtools.app/Contents/MacOS/cli quit || true
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install browser runtime
-        run: pnpm exec playwright install chromium
+      - name: Typecheck
+        run: |
+          pnpm --filter @uicheck/taro run typecheck
+          pnpm --filter taro-demo run typecheck
 
-      - name: Generate real Taro WeApp runtime evidence
+      - name: Verify real Taro WeApp UICheck snapshot
         run: pnpm run test:evidence:taro-weapp
 
-      - name: Upload Taro WeApp runtime evidence
+      - name: Upload Taro WeApp snapshot evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: taro-weapp-runtime-test-evidence
+          name: taro-weapp-snapshot-test-evidence
           path: |
+            packages/taro/src/__snapshots__/**
             packages/taro/build/uicheck-test-artifacts/**
+            examples/taro-demo/dist/pages/index/index.js
+            examples/taro-demo/dist/pages/index/index.wxml
 
   android:
     name: Android native
@@ -186,8 +145,12 @@ jobs:
       - name: Typecheck and build
         run: pnpm --filter uicheck_android run typecheck
 
-      - name: Test
+      - name: Verify Android package
         run: pnpm --filter uicheck_android run test
+
+      - name: Verify real Android demo
+        run: ../../packages/android/gradlew -p . :app:testDebugUnitTest :app:assembleDebug
+        working-directory: examples/android-demo
 
       - name: Upload Android evidence
         if: always()
@@ -196,6 +159,7 @@ jobs:
           name: android-native-test-evidence
           path: |
             packages/android/build/uicheck-test-artifacts/**
+            examples/android-demo/app/build/uicheck-test-artifacts/**
             packages/android/build/reports/**
 
   flutter:
@@ -227,8 +191,16 @@ jobs:
       - name: Analyze
         run: pnpm --filter uicheck_flutter run typecheck
 
-      - name: Test
+      - name: Verify Flutter package
         run: pnpm --filter uicheck_flutter run test
+
+      - name: Analyze Flutter demo app
+        working-directory: examples/flutter-demo
+        run: flutter pub get && flutter analyze
+
+      - name: Verify real Flutter demo
+        working-directory: examples/flutter-demo
+        run: flutter test
 
       - name: Build verification
         run: pnpm --filter uicheck_flutter run build
@@ -240,6 +212,7 @@ jobs:
           name: flutter-test-evidence
           path: |
             packages/flutter/build/uicheck-test-artifacts/**
+            examples/flutter-demo/build/uicheck-test-artifacts/**
 
   apple:
     name: Apple native
@@ -249,13 +222,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
         working-directory: packages/apple
         run: swift build
 
-      - name: Test
+      - name: Verify Apple package
         working-directory: packages/apple
         run: swift test
+
+      - name: Verify real Apple demo app
+        run: swift test
+        working-directory: examples/apple-demo
 
       - name: Upload Apple evidence
         if: always()
@@ -264,4 +253,5 @@ jobs:
           name: apple-native-test-evidence
           path: |
             packages/apple/.build/uicheck-test-artifacts/**
+            examples/apple-demo/.build/uicheck-test-artifacts/**
             packages/apple/.build/**/*.xctest

@@ -76,6 +76,16 @@ const packages = [
   }
 ]
 
+const mcpPackageId = 'mcp'
+
+function getMcpDoc(docs) {
+  return docs.find((doc) => doc.id === mcpPackageId)
+}
+
+function getPlatformDocs(docs) {
+  return docs.filter((doc) => doc.id !== mcpPackageId)
+}
+
 function repoUrl(relativePath) {
   return new URL(relativePath, repoRoot)
 }
@@ -198,7 +208,7 @@ function parseMarkdown(markdown) {
 }
 
 function getInstallCommand(packageName) {
-  if (packageName === '@uicheck/web') return 'npm install @uicheck/web html2canvas'
+  if (packageName === '@uicheck/web') return 'npm install @uicheck/web'
   if (packageName === '@uicheck/mcp') return 'npm install -g @uicheck/mcp'
   if (packageName === 'uicheck_flutter') return 'flutter pub add uicheck_flutter'
   if (packageName === 'uicheck_android') return 'Android library: https://github.com/uicheck/uicheck, path packages/android'
@@ -257,25 +267,56 @@ export default meta
       new URL('_meta.js', localeRoot),
       `const meta = {
   index: '${locale === 'zh-CN' ? '开始' : 'Start'}',
-${packages.map((item) => `  ${JSON.stringify(item.id)}: ${JSON.stringify(readmesByLocale[locale][item.id].name)},`).join('\n')}
+  mcp: ${JSON.stringify(readmesByLocale[locale].mcp.name)},
+${packages
+  .filter((item) => item.id !== 'mcp')
+  .map((item) => `  ${JSON.stringify(item.id)}: ${JSON.stringify(readmesByLocale[locale][item.id].name)},`)
+  .join('\n')}
 }
 
 export default meta
 `
     )
 
+    const mcpDoc = getMcpDoc(generated[locale])
+    const platformDocs = getPlatformDocs(generated[locale])
+    const startCopy =
+      locale === 'zh-CN'
+        ? {
+            title: 'UI Check 文档',
+            description: 'AI 可读的 UI 检查工具文档',
+            lead: 'UI Check 的连接模型很简单：AI 客户端接 MCP，应用运行环境接 WebSocket。先把 @uicheck/mcp 配到 AI 客户端，再根据应用平台选择对应接入包。',
+            mcpHeading: 'AI 客户端',
+            mcpText: '配置 @uicheck/mcp，让 AI 可以调用 list_clients、capture_page 和 inspect_elements。',
+            platformHeading: '多平台接入'
+          }
+        : {
+            title: 'UI Check Docs',
+            description: 'Documentation for AI-readable UI inspection',
+            lead: 'UI Check has one connection model: AI clients connect to MCP, and app runtimes connect over WebSocket. Configure @uicheck/mcp in the AI client first, then choose the runtime package for your app platform.',
+            mcpHeading: 'AI client',
+            mcpText: 'Configure @uicheck/mcp so AI can call list_clients, capture_page, and inspect_elements.',
+            platformHeading: 'Platform integrations'
+          }
+
     await writeFile(
       new URL('page.mdx', localeRoot),
       `---
-title: "${locale === 'zh-CN' ? 'UI Check 文档' : 'UI Check Docs'}"
-description: "${locale === 'zh-CN' ? 'AI 可读的 UI 检查工具文档' : 'Documentation for AI-readable UI inspection'}"
+title: "${startCopy.title}"
+description: "${startCopy.description}"
 ---
 
-# ${locale === 'zh-CN' ? 'UI Check 文档' : 'UI Check Docs'}
+# ${startCopy.title}
 
-${locale === 'zh-CN' ? '选择一个包开始查看安装方式、API 和平台接入说明。' : 'Choose a package to read install notes, APIs, and platform setup.'}
+${startCopy.lead}
 
-${generated[locale].map((doc) => `- [${doc.name}](./${doc.id}/) - ${doc.description}`).join('\n')}
+## ${startCopy.mcpHeading}
+
+- [${mcpDoc.name}](./${mcpDoc.id}/) - ${startCopy.mcpText}
+
+## ${startCopy.platformHeading}
+
+${platformDocs.map((doc) => `- [${doc.name}](./${doc.id}/) - ${doc.description}`).join('\n')}
 `
     )
 

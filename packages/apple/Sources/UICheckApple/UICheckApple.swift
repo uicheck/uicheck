@@ -22,7 +22,7 @@ public struct UiCheckAppleSocketOptions: Sendable {
   }
 }
 
-public struct UiCheckAppleViewportInfo: Codable, Sendable {
+private struct UiCheckAppleViewportInfo {
   public var width: Int
   public var height: Int
   public var devicePixelRatio: Double
@@ -49,16 +49,12 @@ public struct UiCheckAppleViewportInfo: Codable, Sendable {
 }
 
 public struct UiCheckAppleScreenshotResult: Sendable {
-  public var url: String?
-  public var title: String?
   public var width: Int?
   public var height: Int?
   public var mimeType: String
   public var base64: String
 
-  public init(url: String? = nil, title: String? = nil, width: Int? = nil, height: Int? = nil, mimeType: String = "image/png", base64: String) {
-    self.url = url
-    self.title = title
+  public init(width: Int? = nil, height: Int? = nil, mimeType: String = "image/png", base64: String) {
     self.width = width
     self.height = height
     self.mimeType = mimeType
@@ -67,8 +63,6 @@ public struct UiCheckAppleScreenshotResult: Sendable {
 
   public var jsonValue: [String: Any] {
     removeNilValues([
-      "url": url,
-      "title": title,
       "width": width,
       "height": height,
       "mimeType": mimeType,
@@ -79,69 +73,19 @@ public struct UiCheckAppleScreenshotResult: Sendable {
 
 public struct UiCheckAppleOptions {
   public var socket: UiCheckAppleSocketOptions?
-  public var title: String?
-  public var route: String?
-  public var platform: String?
-  public var viewport: () -> UiCheckAppleViewportInfo
   public var screenshot: (([String: Any]) async throws -> UiCheckAppleScreenshotResult)?
 
   public init(
     socket: UiCheckAppleSocketOptions? = nil,
-    title: String? = nil,
-    route: String? = nil,
-    platform: String? = nil,
-    viewport: @escaping () -> UiCheckAppleViewportInfo = { UiCheckAppleViewportInfo() },
     screenshot: (([String: Any]) async throws -> UiCheckAppleScreenshotResult)? = nil
   ) {
     self.socket = socket
-    self.title = title
-    self.route = route
-    self.platform = platform
-    self.viewport = viewport
     self.screenshot = screenshot
-  }
-}
-
-public struct UiCheckAppleElementRegistration {
-  public var id: String?
-  public var tag: String?
-  public var selector: String?
-  public var testID: String?
-  public var text: String?
-  public var accessibilityLabel: String?
-  public var className: String?
-  public var visible: Bool
-  public var dataset: [String: String]?
-  public var frame: () -> CGRect?
-
-  public init(
-    id: String? = nil,
-    tag: String? = nil,
-    selector: String? = nil,
-    testID: String? = nil,
-    text: String? = nil,
-    accessibilityLabel: String? = nil,
-    className: String? = nil,
-    visible: Bool = true,
-    dataset: [String: String]? = nil,
-    frame: @escaping () -> CGRect?
-  ) {
-    self.id = id
-    self.tag = tag
-    self.selector = selector
-    self.testID = testID
-    self.text = text
-    self.accessibilityLabel = accessibilityLabel
-    self.className = className
-    self.visible = visible
-    self.dataset = dataset
-    self.frame = frame
   }
 }
 
 public struct UiCheckAppleElementInfo: Sendable {
   public var tag: String
-  public var selector: String
   public var id: String?
   public var testID: String?
   public var accessibilityLabel: String?
@@ -154,7 +98,6 @@ public struct UiCheckAppleElementInfo: Sendable {
   public var jsonValue: [String: Any] {
     removeNilValues([
       "tag": tag,
-      "selector": selector,
       "id": id,
       "testID": testID,
       "accessibilityLabel": accessibilityLabel,
@@ -167,11 +110,6 @@ public struct UiCheckAppleElementInfo: Sendable {
   }
 }
 
-private struct RegisteredAppleElement {
-  var registration: UiCheckAppleElementRegistration
-  var uid: Int
-}
-
 public final class UiCheckAppleClient: NSObject, URLSessionWebSocketDelegate, @unchecked Sendable {
   private let options: UiCheckAppleOptions
   private let session: URLSession
@@ -179,29 +117,10 @@ public final class UiCheckAppleClient: NSObject, URLSessionWebSocketDelegate, @u
   private var reconnectTask: Task<Void, Never>?
   private var closed = false
 
-  private static let registryLock = NSLock()
-  private static var nextUid = 1
-  private static var registry: [RegisteredAppleElement] = []
-
   public init(options: UiCheckAppleOptions = UiCheckAppleOptions(), session: URLSession? = nil) {
     self.options = options
     self.session = session ?? URLSession(configuration: .default)
     super.init()
-  }
-
-  public static func registerElement(_ registration: UiCheckAppleElementRegistration) -> () -> Void {
-    registryLock.lock()
-    let uid = nextUid
-    nextUid += 1
-    let item = RegisteredAppleElement(registration: registration, uid: uid)
-    registry.append(item)
-    registryLock.unlock()
-
-    return {
-      registryLock.lock()
-      registry.removeAll { $0.uid == uid }
-      registryLock.unlock()
-    }
   }
 
   public func connect() {
@@ -224,56 +143,24 @@ public final class UiCheckAppleClient: NSObject, URLSessionWebSocketDelegate, @u
 
   public func clientInfo() -> [String: Any] {
     removeNilValues([
-      "url": options.route,
-      "title": options.title,
-      "userAgent": options.platform ?? "apple-native",
-      "viewport": options.viewport().jsonValue
+      "userAgent": "apple-native",
+      "viewport": defaultAppleViewportInfo().jsonValue
     ])
   }
 
   public func inspectElements(_ params: [String: Any] = [:]) -> [String: Any] {
-    let selector = params["selector"] as? String ?? "*"
     let includeHidden = params["includeHidden"] as? Bool == true
     let limit = clampLimit(params["limit"])
-    let elements = registeredElements()
-      .filter { matchesSelector($0, selector: selector) }
-      .compactMap(normalizeElement)
+    let elements = collectAppleElements(defaultAppleRootViews())
       .filter { includeHidden || $0.visible }
       .prefix(limit)
       .map { $0.jsonValue }
 
     return removeNilValues([
       "platform": "apple-native",
-      "os": options.platform,
-      "url": options.route,
-      "title": options.title,
-      "viewport": options.viewport().jsonValue,
+      "viewport": defaultAppleViewportInfo().jsonValue,
       "count": elements.count,
-      "elements": Array(elements)
-    ])
-  }
-
-  public func getElementAtPoint(_ params: [String: Any] = [:]) -> [String: Any] {
-    let x = doubleValue(params["x"]) ?? 0
-    let y = doubleValue(params["y"]) ?? 0
-    let result = inspectElements([
-      "selector": params["selector"] ?? "*",
-      "includeHidden": false,
-      "limit": 500
-    ])
-    let elements = (result["elements"] as? [[String: Any]] ?? [])
-      .filter { containsPoint($0, x: x, y: y) }
-      .sorted { boxArea($0) < boxArea($1) }
-
-    return removeNilValues([
-      "platform": "apple-native",
-      "os": options.platform,
-      "url": options.route,
-      "title": options.title,
-      "viewport": result["viewport"],
-      "point": ["x": x, "y": y],
-      "element": elements.first,
-      "ancestors": []
+      "tree": createElementTree(Array(elements))
     ])
   }
 
@@ -335,8 +222,6 @@ public final class UiCheckAppleClient: NSObject, URLSessionWebSocketDelegate, @u
         result = try await capturePage(params).jsonValue
       case "inspect_elements":
         result = inspectElements(params)
-      case "get_element_at_point":
-        result = getElementAtPoint(params)
       default:
         throw UiCheckAppleError.unknownMethod(method ?? "")
       }
@@ -368,16 +253,6 @@ public final class UiCheckAppleClient: NSObject, URLSessionWebSocketDelegate, @u
       self?.connect()
     }
   }
-
-  private static func registeredElementsSnapshot() -> [RegisteredAppleElement] {
-    registryLock.lock()
-    defer { registryLock.unlock() }
-    return registry
-  }
-
-  private func registeredElements() -> [RegisteredAppleElement] {
-    Self.registeredElementsSnapshot()
-  }
 }
 
 public enum UiCheckAppleError: Error, CustomStringConvertible {
@@ -395,103 +270,235 @@ public enum UiCheckAppleError: Error, CustomStringConvertible {
 }
 
 @discardableResult
-public func installAppleUiCheck(options: UiCheckAppleOptions = UiCheckAppleOptions()) -> UiCheckAppleClient {
+public func initUiCheck(_ options: UiCheckAppleOptions = UiCheckAppleOptions()) -> UiCheckAppleClient {
   let client = UiCheckAppleClient(options: options)
   client.connect()
   return client
 }
 
-@discardableResult
-public func registerAppleUiCheckElement(_ registration: UiCheckAppleElementRegistration) -> () -> Void {
-  UiCheckAppleClient.registerElement(registration)
+private func collectAppleElements(_ roots: [Any]) -> [UiCheckAppleElementInfo] {
+  var elements: [UiCheckAppleElementInfo] = []
+  for root in roots {
+    visitAppleView(root, output: &elements)
+  }
+  return elements
 }
 
-#if canImport(UIKit)
-@MainActor
-@discardableResult
-public func registerAppleUiCheckView(
-  _ view: UIView,
-  id: String? = nil,
-  tag: String? = nil,
-  selector: String? = nil,
-  testID: String? = nil,
-  text: String? = nil,
-  accessibilityLabel: String? = nil,
-  className: String? = nil,
-  visible: Bool = true,
-  dataset: [String: String]? = nil
-) -> () -> Void {
-  registerAppleUiCheckElement(
-    UiCheckAppleElementRegistration(
-      id: id,
-      tag: tag ?? String(describing: type(of: view)),
-      selector: selector,
-      testID: testID ?? view.accessibilityIdentifier,
-      text: text,
-      accessibilityLabel: accessibilityLabel ?? view.accessibilityLabel,
-      className: className,
-      visible: visible,
-      dataset: dataset,
-      frame: { [weak view] in
-        guard let view, let window = view.window else { return nil }
-        return view.convert(view.bounds, to: window)
-      }
-    )
+private struct TreeBox {
+  let x: Int
+  let y: Int
+  let width: Int
+  let height: Int
+
+  var area: Int { width * height }
+
+  func contains(_ child: TreeBox) -> Bool {
+    child.x >= x &&
+      child.y >= y &&
+      child.x + child.width <= x + width &&
+      child.y + child.height <= y + height
+  }
+}
+
+private func createElementTree(_ elements: [[String: Any]]) -> [[String: Any]] {
+  let boxes = elements.map { treeBox($0["box"] as? [String: Any]) }
+  let parents = elements.indices.map { findTreeParent(index: $0, boxes: boxes) }
+  var childrenByParent: [Int: [Int]] = [:]
+  var roots: [Int] = []
+
+  for index in elements.indices {
+    if let parent = parents[index] {
+      childrenByParent[parent, default: []].append(index)
+    } else {
+      roots.append(index)
+    }
+  }
+
+  func build(_ index: Int) -> [String: Any] {
+    var node = elements[index]
+    node["children"] = (childrenByParent[index] ?? []).map(build)
+    return node
+  }
+
+  return roots.map(build)
+}
+
+private func treeBox(_ raw: [String: Any]?) -> TreeBox? {
+  guard
+    let raw,
+    let width = numberValue(raw["width"]),
+    let height = numberValue(raw["height"]),
+    width > 0,
+    height > 0
+  else {
+    return nil
+  }
+  return TreeBox(
+    x: numberValue(raw["x"]) ?? numberValue(raw["left"]) ?? 0,
+    y: numberValue(raw["y"]) ?? numberValue(raw["top"]) ?? 0,
+    width: width,
+    height: height
   )
 }
-#endif
 
-#if canImport(AppKit)
-@MainActor
-@discardableResult
-public func registerAppleUiCheckView(
-  _ view: NSView,
-  id: String? = nil,
-  tag: String? = nil,
-  selector: String? = nil,
-  testID: String? = nil,
-  text: String? = nil,
-  accessibilityLabel: String? = nil,
-  className: String? = nil,
-  visible: Bool = true,
-  dataset: [String: String]? = nil
-) -> () -> Void {
-  registerAppleUiCheckElement(
-    UiCheckAppleElementRegistration(
-      id: id,
-      tag: tag ?? String(describing: type(of: view)),
-      selector: selector,
-      testID: testID ?? view.identifier?.rawValue,
-      text: text,
-      accessibilityLabel: accessibilityLabel,
-      className: className,
-      visible: visible,
-      dataset: dataset,
-      frame: { [weak view] in
-        guard let view, let window = view.window else { return nil }
-        return view.convert(view.bounds, to: nil).offsetBy(dx: window.frame.minX, dy: window.frame.minY)
-      }
-    )
-  )
+private func findTreeParent(index: Int, boxes: [TreeBox?]) -> Int? {
+  guard let child = boxes[index] else { return nil }
+  var parentIndex: Int?
+  var parentArea = Int.max
+
+  for candidateIndex in boxes.indices {
+    guard candidateIndex != index, let candidate = boxes[candidateIndex] else { continue }
+    guard candidate.area > child.area, candidate.contains(child), candidate.area < parentArea else { continue }
+    parentArea = candidate.area
+    parentIndex = candidateIndex
+  }
+
+  return parentIndex
 }
-#endif
 
-private func normalizeElement(_ item: RegisteredAppleElement) -> UiCheckAppleElementInfo? {
-  guard let frame = item.registration.frame() else { return nil }
+private func defaultAppleRootViews() -> [Any] {
+  #if canImport(UIKit)
+  return runOnMainThread {
+    UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }
+      .flatMap { $0.windows }
+      .compactMap { $0.rootViewController?.view ?? $0.subviews.first }
+  }
+  #elseif canImport(AppKit)
+  return runOnMainThread {
+    NSApplication.shared.windows.compactMap { $0.contentView }
+  }
+  #else
+  return []
+  #endif
+}
+
+private func defaultAppleViewportInfo() -> UiCheckAppleViewportInfo {
+  #if canImport(UIKit)
+  return runOnMainThread {
+    guard
+      let window = UIApplication.shared.connectedScenes
+        .compactMap({ $0 as? UIWindowScene })
+        .flatMap({ $0.windows })
+        .first(where: { !$0.isHidden })
+    else {
+      return UiCheckAppleViewportInfo()
+    }
+    let bounds = window.bounds
+    return UiCheckAppleViewportInfo(
+      width: Int(bounds.width.rounded()),
+      height: Int(bounds.height.rounded()),
+      devicePixelRatio: Double(window.screen.scale)
+    )
+  }
+  #elseif canImport(AppKit)
+  return runOnMainThread {
+    guard let window = NSApplication.shared.windows.first(where: { $0.isVisible }) ?? NSApplication.shared.windows.first else {
+      return UiCheckAppleViewportInfo()
+    }
+    let frame = window.contentView?.bounds ?? window.frame
+    return UiCheckAppleViewportInfo(
+      width: Int(frame.width.rounded()),
+      height: Int(frame.height.rounded()),
+      devicePixelRatio: Double(window.backingScaleFactor)
+    )
+  }
+  #else
+  return UiCheckAppleViewportInfo()
+  #endif
+}
+
+private func runOnMainThread<T>(_ body: () -> T) -> T {
+  if Thread.isMainThread {
+    return body()
+  }
+  var output: T?
+  DispatchQueue.main.sync {
+    output = body()
+  }
+  return output!
+}
+
+private func visitAppleView(_ view: Any, output: inout [UiCheckAppleElementInfo]) {
+  normalizeAppleView(view).map { output.append($0) }
+
+  #if canImport(UIKit)
+  if let view = view as? UIView {
+    for child in view.subviews {
+      visitAppleView(child, output: &output)
+    }
+    return
+  }
+  #endif
+
+  #if canImport(AppKit)
+  if let view = view as? NSView {
+    for child in view.subviews {
+      visitAppleView(child, output: &output)
+    }
+  }
+  #endif
+}
+
+private func normalizeAppleView(_ view: Any) -> UiCheckAppleElementInfo? {
+  #if canImport(UIKit)
+  if let view = view as? UIView {
+    guard let frame = uiKitFrame(view) else { return nil }
+    return normalizeAppleFrame(
+      frame,
+      tag: String(describing: type(of: view)),
+      id: view.accessibilityIdentifier,
+      testID: view.accessibilityIdentifier,
+      accessibilityLabel: view.accessibilityLabel,
+      text: uiKitText(view),
+      visible: !view.isHidden && view.alpha > 0.01,
+      className: String(describing: type(of: view))
+    )
+  }
+  #endif
+
+  #if canImport(AppKit)
+  if let view = view as? NSView {
+    guard let frame = appKitFrame(view) else { return nil }
+    let id = view.identifier?.rawValue
+    return normalizeAppleFrame(
+      frame,
+      tag: String(describing: type(of: view)),
+      id: id,
+      testID: id,
+      accessibilityLabel: view.accessibilityLabel(),
+      text: appKitText(view),
+      visible: !view.isHidden,
+      className: String(describing: type(of: view))
+    )
+  }
+  #endif
+
+  return nil
+}
+
+private func normalizeAppleFrame(
+  _ frame: CGRect,
+  tag: String,
+  id: String?,
+  testID: String?,
+  accessibilityLabel: String?,
+  text: String?,
+  visible: Bool,
+  className: String
+) -> UiCheckAppleElementInfo? {
   let width = Int(frame.width.rounded())
   let height = Int(frame.height.rounded())
   let x = Int(frame.minX.rounded())
   let y = Int(frame.minY.rounded())
-  let visible = item.registration.visible && width > 0 && height > 0
   return UiCheckAppleElementInfo(
-    tag: item.registration.tag ?? "NativeView",
-    selector: createSelector(item),
-    id: item.registration.id,
-    testID: item.registration.testID,
-    accessibilityLabel: item.registration.accessibilityLabel,
-    classes: classes(from: item.registration.className),
-    text: compactText(item.registration.text ?? item.registration.accessibilityLabel),
-    visible: visible,
+    tag: tag,
+    id: id,
+    testID: testID,
+    accessibilityLabel: accessibilityLabel,
+    classes: [className],
+    text: compactText(text ?? accessibilityLabel),
+    visible: visible && width > 0 && height > 0,
     box: [
       "x": x,
       "y": y,
@@ -500,49 +507,56 @@ private func normalizeElement(_ item: RegisteredAppleElement) -> UiCheckAppleEle
       "top": y,
       "left": x
     ],
-    dataset: item.registration.dataset
+    dataset: nil
   )
 }
 
-private func createSelector(_ item: RegisteredAppleElement) -> String {
-  let registration = item.registration
-  if let selector = registration.selector, !selector.isEmpty { return selector }
-  if let id = registration.id, !id.isEmpty { return "#\(id)" }
-  if let testID = registration.testID, !testID.isEmpty { return "[testID=\"\(testID)\"]" }
-  if let accessibilityLabel = registration.accessibilityLabel, !accessibilityLabel.isEmpty {
-    return "[accessibilityLabel=\"\(accessibilityLabel)\"]"
+#if canImport(UIKit)
+private func uiKitFrame(_ view: UIView) -> CGRect? {
+  guard view.bounds.width > 0, view.bounds.height > 0 else { return nil }
+  if let window = view.window {
+    return view.convert(view.bounds, to: window)
   }
-  return "\(registration.tag ?? "NativeView"):registered(\(item.uid))"
+  return view.convert(view.bounds, to: nil)
 }
 
-private func matchesSelector(_ item: RegisteredAppleElement, selector: String) -> Bool {
-  if selector.isEmpty || selector == "*" { return true }
-  let registration = item.registration
-  return registration.selector == selector ||
-    registration.id == selector.replacingOccurrences(of: "^#", with: "", options: .regularExpression) ||
-    registration.testID == selector ||
-    registration.tag == selector ||
-    createSelector(item) == selector
+private func uiKitText(_ view: UIView) -> String? {
+  if let label = view as? UILabel { return label.text }
+  if let button = view as? UIButton { return button.title(for: .normal) }
+  if let textField = view as? UITextField { return textField.text }
+  if let textView = view as? UITextView { return textView.text }
+  return nil
+}
+#endif
+
+#if canImport(AppKit)
+private func appKitFrame(_ view: NSView) -> CGRect? {
+  guard view.bounds.width > 0, view.bounds.height > 0 else { return nil }
+  if let window = view.window {
+    return view.convert(view.bounds, to: nil).offsetBy(dx: window.frame.minX, dy: window.frame.minY)
+  }
+  return view.convert(view.bounds, to: nil)
 }
 
-private func containsPoint(_ element: [String: Any], x: Double, y: Double) -> Bool {
-  guard let box = element["box"] as? [String: Any] else { return false }
-  let left = doubleValue(box["x"]) ?? 0
-  let top = doubleValue(box["y"]) ?? 0
-  let width = doubleValue(box["width"]) ?? 0
-  let height = doubleValue(box["height"]) ?? 0
-  return x >= left && x <= left + width && y >= top && y <= top + height
+private func appKitText(_ view: NSView) -> String? {
+  if let label = view as? NSTextField { return label.stringValue }
+  if let button = view as? NSButton { return button.title }
+  return nil
 }
-
-private func boxArea(_ element: [String: Any]) -> Double {
-  guard let box = element["box"] as? [String: Any] else { return 0 }
-  return (doubleValue(box["width"]) ?? 0) * (doubleValue(box["height"]) ?? 0)
-}
+#endif
 
 private func doubleValue(_ value: Any?) -> Double? {
   if let value = value as? Double { return value }
   if let value = value as? Int { return Double(value) }
   if let value = value as? CGFloat { return Double(value) }
+  return nil
+}
+
+private func numberValue(_ value: Any?) -> Int? {
+  if let value = value as? Int { return value }
+  if let value = value as? Double { return Int(value.rounded()) }
+  if let value = value as? CGFloat { return Int(value.rounded()) }
+  if let value = value as? String, let parsed = Double(value) { return Int(parsed.rounded()) }
   return nil
 }
 

@@ -56,8 +56,6 @@ describe('UiCheckMcpServer', () => {
       socket.send(
         JSON.stringify({
           type: 'update',
-          url: 'http://localhost:3000/',
-          title: 'Local page',
           userAgent: 'vitest',
           viewport: {
             width: 1280,
@@ -69,7 +67,7 @@ describe('UiCheckMcpServer', () => {
         })
       )
 
-      await waitFor(() => serverHealth(port).then((health) => health.clients.length === 1 && health.clients[0].title === 'Local page'))
+      await waitFor(() => serverHealth(port).then((health) => health.clients.length === 1 && health.clients[0].userAgent === 'vitest'))
       const health = await serverHealth(port)
 
       expect(health.ok).toBe(true)
@@ -77,8 +75,6 @@ describe('UiCheckMcpServer', () => {
       expect(health.socket).toBe(`ws://127.0.0.1:${port}/socket`)
       expect(health.clients[0]).toMatchObject({
         id: 'page-a',
-        url: 'http://localhost:3000/',
-        title: 'Local page',
         userAgent: 'vitest',
         viewport: {
           width: 1280,

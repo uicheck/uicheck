@@ -4,7 +4,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { UiCheckMcpServer } from '@uicheck/mcp'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { WebSocket } from 'ws'
-import { installUiCheck } from './web'
+import { initUiCheck } from './web'
 import type { ResolvedUiCheckOptions } from './types'
 
 const servers: UiCheckMcpServer[] = []
@@ -37,12 +37,18 @@ describe('web client integration', () => {
     setRect(document.getElementById('app'), { x: 0, y: 0, width: 240, height: 120 })
     setRect(document.getElementById('submit'), { x: 20, y: 16, width: 100, height: 32 })
 
-    installUiCheck(fakeHtml2Canvas, {
+    initUiCheck({
       ...baseConfig,
       socket: {
         url: server.socketUrl,
         clientId: 'web-real'
-      }
+      },
+      screenshot: () => ({
+        width: 320,
+        height: 180,
+        mimeType: 'image/png',
+        base64: 'ZmFrZS1wbmc='
+      })
     })
 
     await waitForClient(server, 'web-real')
@@ -52,20 +58,24 @@ describe('web client integration', () => {
 
     const inspected = await client.callTool({
       name: 'inspect_elements',
-      arguments: { clientId: 'web-real', selector: '#app', limit: 10 }
+      arguments: { clientId: 'web-real', limit: 10 }
     })
     const inspectPayload = getJsonToolPayload(inspected)
     expect(inspectPayload).toMatchObject({
-      title: 'Web integration',
-      count: 1,
-      elements: [
+      count: 2,
+      tree: [
         {
-          tag: 'button',
-          selector: '#submit',
-          text: 'Submit',
-          testId: 'submit-button',
-          visible: true,
-          box: { x: 20, y: 16, width: 100, height: 32 }
+          tag: 'main',
+          id: 'app',
+          children: [
+            {
+              tag: 'button',
+              text: 'Submit',
+              testId: 'submit-button',
+              visible: true,
+              box: { x: 20, y: 16, width: 100, height: 32 }
+            }
+          ]
         }
       ]
     })
@@ -77,25 +87,11 @@ describe('web client integration', () => {
     const image = getToolContent(captured).find((item) => item.type === 'image')
     const metadata = getJsonToolPayload(captured)
     expect(image).toMatchObject({ type: 'image', mimeType: 'image/png', data: 'ZmFrZS1wbmc=' })
-    expect(metadata).toMatchObject({ title: 'Web integration', width: 320, height: 180 })
+    expect(metadata).toMatchObject({ width: 320, height: 180 })
   })
 })
 
-const baseConfig: ResolvedUiCheckOptions = {
-  position: 'bottom-left',
-  offset: [20, 20],
-  size: 36,
-  color: '#ef4444',
-  draggable: true
-}
-
-function fakeHtml2Canvas(): Promise<HTMLCanvasElement> {
-  return Promise.resolve({
-    width: 320,
-    height: 180,
-    toDataURL: () => 'data:image/png;base64,ZmFrZS1wbmc='
-  } as HTMLCanvasElement)
-}
+const baseConfig: ResolvedUiCheckOptions = {}
 
 function setRect(element: Element | null, rect: { x: number; y: number; width: number; height: number }) {
   if (!element) throw new Error('Missing test element')

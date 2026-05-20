@@ -1,7 +1,13 @@
 {
   "extends": "@react-native/typescript-config",
   "compilerOptions": {
-    "types": ["jest"]
+    "types": ["jest", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@uicheck/core": ["../../packages/core/src/index.ts"],
+      "@uicheck/core/*": ["../../packages/core/src/*"],
+      "@uicheck/rn": ["../../packages/rn/src/react-native.ts"]
+    }
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["**/node_modules", "**/Pods"]

@@ -1,89 +1,55 @@
+import 'dart:convert';
 import 'dart:io';
-import 'dart:ui' as ui;
 
-import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uicheck_flutter/uicheck_flutter.dart';
 
+import '../../../examples/flutter-demo/lib/main.dart';
+
 void main() {
-  testWidgets('inspects registered Flutter widgets and finds elements at a point', (tester) async {
-    final buttonKey = GlobalKey();
+  testWidgets('inspects the real Flutter example demo', (tester) async {
+    await loadRobotoFont();
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final boundaryKey = GlobalKey();
-    final unregister = registerFlutterUiCheckElement(
-      UiCheckFlutterElementRegistration(
-        key: buttonKey,
-        tag: 'GestureDetector',
-        testID: 'submit-button',
-        text: 'Submit',
-        semanticsLabel: 'Submit order',
-        dataset: const {'role': 'primary-action'},
-      ),
-    );
+    await tester.pumpWidget(UiCheckFlutterDemoApp(boundaryKey: boundaryKey));
+    await tester.pump(const Duration(milliseconds: 100));
 
-    addTearDown(unregister);
-
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: RepaintBoundary(
-          key: boundaryKey,
-          child: Container(
-            width: 393,
-            height: 240,
-            color: const Color(0xfff7f9fc),
-            padding: const EdgeInsets.all(24),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: SizedBox(
-                key: buttonKey,
-                width: 120,
-                height: 44,
-                child: const Text('Submit'),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    final client = UiCheckFlutterClient(
-      options: const UiCheckFlutterOptions(
-        title: 'Flutter integration',
-        route: '/home',
-      ),
-    );
-
-    final inspected = client.inspectElements({'selector': 'submit-button'});
+    final client = UiCheckFlutterClient();
+    final inspected = client.inspectElements({'limit': 500});
     expect(inspected, containsPair('platform', 'flutter'));
-    expect(inspected, containsPair('url', '/home'));
-    expect(inspected, containsPair('title', 'Flutter integration'));
-    expect(inspected, containsPair('count', 1));
-    expect(inspected['elements'], [
-      isA<Map<String, Object?>>()
-          .having((item) => item['tag'], 'tag', 'GestureDetector')
-          .having((item) => item['selector'], 'selector', '[testID="submit-button"]')
-          .having((item) => item['testID'], 'testID', 'submit-button')
-          .having((item) => item['semanticsLabel'], 'semanticsLabel', 'Submit order')
-          .having((item) => item['text'], 'text', 'Submit')
-          .having((item) => item['visible'], 'visible', true)
-          .having((item) => item['dataset'], 'dataset', {'role': 'primary-action'})
-          .having((item) => item['box'], 'box', containsPair('width', 120))
-          .having((item) => item['box'], 'box', containsPair('height', 44)),
-    ]);
-
-    final atPoint = client.getElementAtPoint({'x': 30, 'y': 30});
-    expect(atPoint['element'], isA<Map<String, Object?>>().having((item) => item['selector'], 'selector', '[testID="submit-button"]'));
-
-    await tester.runAsync(() => writeFlutterEvidenceScreenshot(boundaryKey));
+    expect(inspected['count'] as int, greaterThan(10));
+    final inspectedJson = prettyJson(inspected);
+    expect(inspectedJson, contains('Runtime check 34'));
+    expect(inspectedJson, contains('Submit order'));
   });
 }
 
-Future<void> writeFlutterEvidenceScreenshot(GlobalKey boundaryKey) async {
-  final boundary = boundaryKey.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-  final image = await boundary.toImage(pixelRatio: 2);
-  final data = await image.toByteData(format: ui.ImageByteFormat.png);
-  final file = File('build/uicheck-test-artifacts/flutter-widget.png');
-  file.parent.createSync(recursive: true);
-  file.writeAsBytesSync(data!.buffer.asUint8List());
+Future<void> loadRobotoFont() async {
+  final root = Platform.environment['FLUTTER_ROOT'] ?? flutterRootFromDartExecutable();
+  final regular = File('$root/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf');
+  final bold = File('$root/bin/cache/artifacts/material_fonts/Roboto-Bold.ttf');
+  if (!regular.existsSync() || !bold.existsSync()) return;
+
+  final loader = FontLoader('Roboto')
+    ..addFont(Future.value(ByteData.sublistView(regular.readAsBytesSync())))
+    ..addFont(Future.value(ByteData.sublistView(bold.readAsBytesSync())));
+  await loader.load();
 }
+
+String flutterRootFromDartExecutable() {
+  var dir = File(Platform.resolvedExecutable).parent;
+  while (dir.path != dir.parent.path) {
+    final candidate = Directory('${dir.path}/artifacts/material_fonts');
+    if (candidate.existsSync()) return dir.parent.parent.path;
+    dir = dir.parent;
+  }
+  return '';
+}
+
+String prettyJson(Object? value) => const JsonEncoder.withIndent('  ').convert(value);

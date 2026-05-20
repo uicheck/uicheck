@@ -50,22 +50,16 @@ class UiCheckScreenshotResult {
   const UiCheckScreenshotResult({
     required this.mimeType,
     required this.base64,
-    this.url,
-    this.title,
     this.width,
     this.height,
   });
 
   final String mimeType;
   final String base64;
-  final String? url;
-  final String? title;
   final int? width;
   final int? height;
 
   Map<String, Object?> toJson() => {
-        'url': url,
-        'title': title,
         'width': width,
         'height': height,
         'mimeType': mimeType,
@@ -76,47 +70,16 @@ class UiCheckScreenshotResult {
 class UiCheckFlutterOptions {
   const UiCheckFlutterOptions({
     this.socket,
-    this.title,
-    this.route,
     this.screenshot,
   });
 
   final UiCheckSocketOptions? socket;
-  final String? title;
-  final String? route;
   final UiCheckScreenshotProvider? screenshot;
-}
-
-class UiCheckFlutterElementRegistration {
-  const UiCheckFlutterElementRegistration({
-    required this.key,
-    this.id,
-    this.tag,
-    this.selector,
-    this.testID,
-    this.text,
-    this.semanticsLabel,
-    this.className,
-    this.visible = true,
-    this.dataset,
-  });
-
-  final GlobalKey key;
-  final String? id;
-  final String? tag;
-  final String? selector;
-  final String? testID;
-  final String? text;
-  final String? semanticsLabel;
-  final String? className;
-  final bool visible;
-  final Map<String, Object?>? dataset;
 }
 
 class UiCheckFlutterElementInfo {
   const UiCheckFlutterElementInfo({
     required this.tag,
-    required this.selector,
     required this.classes,
     required this.visible,
     required this.box,
@@ -128,7 +91,6 @@ class UiCheckFlutterElementInfo {
   });
 
   final String tag;
-  final String selector;
   final String? id;
   final String? testID;
   final String? semanticsLabel;
@@ -140,7 +102,6 @@ class UiCheckFlutterElementInfo {
 
   Map<String, Object?> toJson() => {
         'tag': tag,
-        'selector': selector,
         'id': id,
         'testID': testID,
         'semanticsLabel': semanticsLabel,
@@ -165,15 +126,6 @@ class UiCheckFlutterClient with WidgetsBindingObserver {
   StreamSubscription<dynamic>? _subscription;
   Timer? _reconnectTimer;
   bool _closed = false;
-
-  static int _nextUid = 1;
-  static final Set<_RegisteredFlutterElement> _registry = <_RegisteredFlutterElement>{};
-
-  static VoidCallback registerElement(UiCheckFlutterElementRegistration registration) {
-    final item = _RegisteredFlutterElement(registration, _nextUid++);
-    _registry.add(item);
-    return () => _registry.remove(item);
-  }
 
   void connect() {
     final socket = _options.socket;
@@ -241,8 +193,6 @@ class UiCheckFlutterClient with WidgetsBindingObserver {
   }
 
   Map<String, Object?> _clientInfo() => {
-        'url': _options.route,
-        'title': _options.title,
         'userAgent': 'flutter',
         'viewport': _viewportInfo().toJson(),
       };
@@ -276,7 +226,6 @@ class UiCheckFlutterClient with WidgetsBindingObserver {
   Future<Object?> _callTool(Object? method, Map<String, Object?> params) async {
     if (method == 'capture_page') return (await _capturePage(params)).toJson();
     if (method == 'inspect_elements') return inspectElements(params);
-    if (method == 'get_element_at_point') return getElementAtPoint(params);
     throw StateError('Unknown uicheck method: $method');
   }
 
@@ -289,13 +238,9 @@ class UiCheckFlutterClient with WidgetsBindingObserver {
   }
 
   Map<String, Object?> inspectElements([Map<String, Object?> params = const {}]) {
-    final selector = params['selector'] is String ? params['selector'] as String : '*';
     final includeHidden = params['includeHidden'] == true;
     final limit = _clampLimit(params['limit']);
-    final elements = _registry
-        .where((item) => _matchesSelector(item, selector))
-        .map(_normalizeElement)
-        .whereType<UiCheckFlutterElementInfo>()
+    final elements = _collectRenderElements()
         .where((element) => includeHidden || element.visible)
         .take(limit)
         .map((element) => element.toJson())
@@ -303,36 +248,9 @@ class UiCheckFlutterClient with WidgetsBindingObserver {
 
     return {
       'platform': 'flutter',
-      'url': _options.route,
-      'title': _options.title,
       'viewport': _viewportInfo().toJson(),
       'count': elements.length,
-      'elements': elements,
-    };
-  }
-
-  Map<String, Object?> getElementAtPoint([Map<String, Object?> params = const {}]) {
-    final x = params['x'] is num ? (params['x'] as num).toDouble() : 0.0;
-    final y = params['y'] is num ? (params['y'] as num).toDouble() : 0.0;
-    final result = inspectElements({
-      'selector': params['selector'],
-      'includeHidden': false,
-      'limit': 500,
-    });
-    final elements = (result['elements'] as List<Object?>)
-        .whereType<Map<String, Object?>>()
-        .where((element) => _containsPoint(element, x, y))
-        .toList()
-      ..sort((a, b) => _boxArea(a).compareTo(_boxArea(b)));
-
-    return {
-      'platform': 'flutter',
-      'url': _options.route,
-      'title': _options.title,
-      'viewport': result['viewport'],
-      'point': {'x': x, 'y': y},
-      'element': elements.isEmpty ? null : elements.first,
-      'ancestors': <Object?>[],
+      'tree': _createElementTree(elements),
     };
   }
 
@@ -350,23 +268,14 @@ class UiCheckFlutterClient with WidgetsBindingObserver {
   }
 }
 
-UiCheckFlutterClient installFlutterUiCheck({
-  UiCheckFlutterOptions options = const UiCheckFlutterOptions(),
-  WebSocketChannel Function(Uri uri)? connectSocket,
-}) {
-  final client = UiCheckFlutterClient(options: options, connectSocket: connectSocket);
+UiCheckFlutterClient initUiCheck([UiCheckFlutterOptions options = const UiCheckFlutterOptions()]) {
+  final client = UiCheckFlutterClient(options: options);
   client.connect();
   return client;
 }
 
-VoidCallback registerFlutterUiCheckElement(UiCheckFlutterElementRegistration registration) {
-  return UiCheckFlutterClient.registerElement(registration);
-}
-
 Future<UiCheckScreenshotResult> captureRepaintBoundaryAsPng({
   required GlobalKey repaintBoundaryKey,
-  String? url,
-  String? title,
   double? pixelRatio,
 }) async {
   final context = repaintBoundaryKey.currentContext;
@@ -380,8 +289,6 @@ Future<UiCheckScreenshotResult> captureRepaintBoundaryAsPng({
   if (byteData == null) throw StateError('Unable to encode RepaintBoundary image');
   final bytes = byteData.buffer.asUint8List();
   return UiCheckScreenshotResult(
-    url: url,
-    title: title,
     width: image.width,
     height: image.height,
     mimeType: 'image/png',
@@ -389,17 +296,22 @@ Future<UiCheckScreenshotResult> captureRepaintBoundaryAsPng({
   );
 }
 
-class _RegisteredFlutterElement {
-  const _RegisteredFlutterElement(this.registration, this.uid);
+List<UiCheckFlutterElementInfo> _collectRenderElements() {
+  final root = RendererBinding.instance.renderViews.firstOrNull;
+  if (root == null) return const [];
+  final elements = <UiCheckFlutterElementInfo>[];
 
-  final UiCheckFlutterElementRegistration registration;
-  final int uid;
+  void visit(RenderObject object) {
+    final element = _normalizeRenderObject(object);
+    if (element != null) elements.add(element);
+    object.visitChildren(visit);
+  }
+
+  visit(root);
+  return elements;
 }
 
-UiCheckFlutterElementInfo? _normalizeElement(_RegisteredFlutterElement item) {
-  final registration = item.registration;
-  final context = registration.key.currentContext;
-  final renderObject = context?.findRenderObject();
+UiCheckFlutterElementInfo? _normalizeRenderObject(RenderObject renderObject) {
   if (renderObject is! RenderBox || !renderObject.hasSize) return null;
 
   final offset = renderObject.localToGlobal(Offset.zero);
@@ -412,59 +324,23 @@ UiCheckFlutterElementInfo? _normalizeElement(_RegisteredFlutterElement item) {
     'top': offset.dy.round(),
     'left': offset.dx.round(),
   };
-  final visible = registration.visible && size.width > 0 && size.height > 0;
+  final visible = renderObject.attached && size.width > 0 && size.height > 0;
+  final text = _renderObjectText(renderObject);
+  final tag = renderObject.runtimeType.toString();
 
   return UiCheckFlutterElementInfo(
-    tag: registration.tag ?? 'Widget',
-    selector: _createSelector(item),
-    id: registration.id,
-    testID: registration.testID,
-    semanticsLabel: registration.semanticsLabel,
-    classes: _toClasses(registration.className),
-    text: _compactText(registration.text ?? registration.semanticsLabel),
+    tag: tag,
+    classes: <String>[tag],
+    text: _compactText(text),
+    semanticsLabel: _compactText(text),
     visible: visible,
     box: box,
-    dataset: registration.dataset,
   );
 }
 
-String _createSelector(_RegisteredFlutterElement item) {
-  final registration = item.registration;
-  if (registration.selector != null && registration.selector!.isNotEmpty) return registration.selector!;
-  if (registration.id != null && registration.id!.isNotEmpty) return '#${registration.id}';
-  if (registration.testID != null && registration.testID!.isNotEmpty) return '[testID="${registration.testID}"]';
-  if (registration.semanticsLabel != null && registration.semanticsLabel!.isNotEmpty) {
-    return '[semanticsLabel="${registration.semanticsLabel}"]';
-  }
-  return '${registration.tag ?? 'Widget'}:registered(${item.uid})';
-}
-
-bool _matchesSelector(_RegisteredFlutterElement item, String selector) {
-  final registration = item.registration;
-  if (selector.isEmpty || selector == '*') return true;
-  return registration.selector == selector ||
-      registration.id == selector.replaceFirst(RegExp(r'^#'), '') ||
-      registration.testID == selector ||
-      registration.tag == selector ||
-      _createSelector(item) == selector;
-}
-
-bool _containsPoint(Map<String, Object?> element, double x, double y) {
-  final box = element['box'];
-  if (box is! Map<String, Object?>) return false;
-  final left = (box['x'] as num?)?.toDouble() ?? 0;
-  final top = (box['y'] as num?)?.toDouble() ?? 0;
-  final width = (box['width'] as num?)?.toDouble() ?? 0;
-  final height = (box['height'] as num?)?.toDouble() ?? 0;
-  return x >= left && x <= left + width && y >= top && y <= top + height;
-}
-
-double _boxArea(Map<String, Object?> element) {
-  final box = element['box'];
-  if (box is! Map<String, Object?>) return 0;
-  final width = (box['width'] as num?)?.toDouble() ?? 0;
-  final height = (box['height'] as num?)?.toDouble() ?? 0;
-  return width * height;
+String? _renderObjectText(RenderObject renderObject) {
+  if (renderObject is RenderParagraph) return renderObject.text.toPlainText();
+  return null;
 }
 
 int _clampLimit(Object? value) {
@@ -478,9 +354,70 @@ String? _compactText(String? value) {
   return text.length > 160 ? '${text.substring(0, 157)}...' : text;
 }
 
-List<String> _toClasses(String? className) {
-  if (className == null || className.trim().isEmpty) return const [];
-  return className.split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
+List<Map<String, Object?>> _createElementTree(List<Map<String, Object?>> elements) {
+  final boxes = elements.map((element) => _normalizeTreeBox(element['box'])).toList();
+  final parents = List<int?>.generate(elements.length, (index) => _findTreeParent(index, boxes));
+  final nodes = elements.map((element) => <String, Object?>{...element, 'children': <Map<String, Object?>>[]}).toList();
+  final roots = <Map<String, Object?>>[];
+
+  for (var index = 0; index < nodes.length; index++) {
+    final parent = parents[index];
+    if (parent == null) {
+      roots.add(nodes[index]);
+    } else {
+      (nodes[parent]['children'] as List<Map<String, Object?>>).add(nodes[index]);
+    }
+  }
+
+  return roots;
+}
+
+_TreeBox? _normalizeTreeBox(Object? raw) {
+  if (raw is! Map) return null;
+  final width = _numValue(raw['width']);
+  final height = _numValue(raw['height']);
+  if (width == null || height == null || width <= 0 || height <= 0) return null;
+  final x = _numValue(raw['x']) ?? _numValue(raw['left']) ?? 0;
+  final y = _numValue(raw['y']) ?? _numValue(raw['top']) ?? 0;
+  return _TreeBox(x, y, width, height);
+}
+
+int? _findTreeParent(int index, List<_TreeBox?> boxes) {
+  final child = boxes[index];
+  if (child == null) return null;
+  int? parentIndex;
+  var parentArea = double.infinity;
+  for (var candidateIndex = 0; candidateIndex < boxes.length; candidateIndex++) {
+    if (candidateIndex == index) continue;
+    final candidate = boxes[candidateIndex];
+    if (candidate == null || candidate.area <= child.area || !candidate.contains(child)) continue;
+    if (candidate.area < parentArea) {
+      parentArea = candidate.area;
+      parentIndex = candidateIndex;
+    }
+  }
+  return parentIndex;
+}
+
+double? _numValue(Object? value) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value);
+  return null;
+}
+
+class _TreeBox {
+  const _TreeBox(this.x, this.y, this.width, this.height);
+
+  final double x;
+  final double y;
+  final double width;
+  final double height;
+
+  double get area => width * height;
+
+  bool contains(_TreeBox child) {
+    return child.x >= x && child.y >= y && child.x + child.width <= x + width && child.y + child.height <= y + height;
+  }
 }
 
 String _appendClientId(String rawUrl, String? clientId) {

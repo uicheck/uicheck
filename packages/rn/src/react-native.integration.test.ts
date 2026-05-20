@@ -4,9 +4,10 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { UiCheckMcpServer } from '@uicheck/mcp'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  installReactNativeUiCheck,
-  registerReactNativeUiCheckElement,
+  initUiCheck,
+  type ReactNativeUiCheckOptions,
   type ReactNativeLike,
+  type ReactNativeReactLike,
   type ReactNativeWebSocketLike
 } from './react-native'
 
@@ -27,35 +28,30 @@ describe('react-native client integration', () => {
     servers.push(server)
     await server.listen()
 
-    const reactNative = createReactNative()
-    cleanups.push(
-      registerReactNativeUiCheckElement({
-        ref: {
-          measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) => {
-            callback(12, 24, 120, 44)
-          }
-        },
-        tag: 'Pressable',
-        testID: 'submit-button',
-        text: 'Submit',
-        accessibilityLabel: 'Submit order',
-        dataset: { role: 'primary-action' }
-      })
-    )
-
-    installReactNativeUiCheck(reactNative, {
-      title: 'RN integration',
-      route: 'Home',
+    const React = createReact()
+    initUiCheck({
+      ...createReactNative(),
+      React,
       socket: {
         url: server.socketUrl,
         clientId: 'rn-real'
       },
       screenshot: () => ({
-        title: 'RN integration',
         mimeType: 'image/png',
         base64: 'cm4tcG5n'
       })
+    } as ReactNativeUiCheckOptions)
+    const element = React.createElement('Pressable', {
+      testID: 'submit-button',
+      accessibilityLabel: 'Submit order',
+      children: 'Submit'
+    }) as { props: { ref: (value: unknown) => void } }
+    element.props.ref({
+      measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) => {
+        callback(12, 24, 120, 44)
+      }
     })
+    cleanups.push(() => element.props.ref(null))
 
     await waitForClient(server, 'rn-real')
     const client = new Client({ name: 'rn-vitest', version: '0.0.0' })
@@ -64,39 +60,22 @@ describe('react-native client integration', () => {
 
     const inspected = await client.callTool({
       name: 'inspect_elements',
-      arguments: { clientId: 'rn-real', selector: 'submit-button', limit: 10 }
+      arguments: { clientId: 'rn-real', limit: 10 }
     })
     expect(getJsonToolPayload(inspected)).toMatchObject({
       platform: 'react-native',
       os: 'ios',
-      url: 'Home',
-      title: 'RN integration',
       count: 1,
-      elements: [
+      tree: [
         {
           tag: 'Pressable',
-          selector: '[testID="submit-button"]',
           testID: 'submit-button',
           accessibilityLabel: 'Submit order',
-          text: 'Submit',
+          text: 'Submit order',
           visible: true,
           box: { x: 12, y: 24, width: 120, height: 44 },
-          dataset: { role: 'primary-action' }
         }
       ]
-    })
-
-    const atPoint = await client.callTool({
-      name: 'get_element_at_point',
-      arguments: { clientId: 'rn-real', x: 20, y: 30 }
-    })
-    expect(getJsonToolPayload(atPoint)).toMatchObject({
-      platform: 'react-native',
-      point: { x: 20, y: 30 },
-      element: {
-        selector: '[testID="submit-button"]',
-        text: 'Submit'
-      }
     })
 
     const captured = await client.callTool({
@@ -122,6 +101,18 @@ function createReactNative(): ReactNativeLike {
       addEventListener: () => ({ remove: () => undefined })
     },
     WebSocket: TestWebSocket
+  }
+}
+
+function createReact(): ReactNativeReactLike {
+  return {
+    createElement: (type, props, ...children) => ({
+      type,
+      props: {
+        ...props,
+        children: children.length > 0 ? children : props?.children
+      }
+    })
   }
 }
 

@@ -17,7 +17,6 @@ export default defineConfig(async () => {
     framework: 'react',
     compiler: 'webpack5',
     mini: {},
-    mini: {},
     h5: {}
   }
 

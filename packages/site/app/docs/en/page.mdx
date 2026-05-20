@@ -5,7 +5,13 @@ description: "Documentation for AI-readable UI inspection"
 
 # UI Check Docs
 
-Choose a package to read install notes, APIs, and platform setup.
+UI Check has one connection model: AI clients connect to MCP, and app runtimes connect over WebSocket. Configure @uicheck/mcp in the AI client first, then choose the runtime package for your app platform.
+
+## AI client
+
+- [@uicheck/mcp](./mcp/) - Configure @uicheck/mcp so AI can call list_clients, capture_page, and inspect_elements.
+
+## Platform integrations
 
 - [@uicheck/web](./web/) - Browser DOM client for uicheck
 - [@uicheck/taro](./taro/) - Taro Mini Program client for uicheck
@@ -13,5 +19,4 @@ Choose a package to read install notes, APIs, and platform setup.
 - [uicheck_flutter](./flutter/) - Flutter runtime client for uicheck
 - [uicheck_android](./android/) - Android native runtime client for uicheck
 - [uicheck_apple](./apple/) - Apple native runtime client for uicheck
-- [@uicheck/mcp](./mcp/) - MCP server that communicates with uicheck clients over WebSocket
 - [@uicheck/core](./core/) - Shared protocol runtime and types for uicheck clients

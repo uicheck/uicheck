@@ -163,8 +163,6 @@ export class UiCheckSocketHub {
 
 function pickClientInfo(value: Record<string, unknown>): Partial<UiCheckClientInfo> {
   const result: Partial<UiCheckClientInfo> = {}
-  if (typeof value.url === 'string') result.url = value.url
-  if (typeof value.title === 'string') result.title = value.title
   if (typeof value.userAgent === 'string') result.userAgent = value.userAgent
   if (isObject(value.viewport)) {
     result.viewport = {

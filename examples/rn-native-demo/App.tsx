@@ -1,8 +1,5 @@
 import React, {useRef} from 'react';
-import * as JSXRuntime from 'react/jsx-runtime';
 import {
-  AppState,
-  Dimensions,
   LogBox,
   NativeModules,
   Platform,
@@ -11,11 +8,10 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  UIManager,
   View,
-  findNodeHandle,
 } from 'react-native';
-import {installReactNativeUiCheck} from '@uicheck/rn';
+import {initUiCheck} from '@uicheck/rn';
+import {rnDemoRows, rnDemoText} from './uicheck-demo-model';
 
 LogBox.ignoreAllLogs(true);
 
@@ -30,26 +26,19 @@ interface UicheckScreenshotNativeModule {
 const UicheckScreenshot = NativeModules.UicheckScreenshot as
   | UicheckScreenshotNativeModule
   | undefined;
-
-installReactNativeUiCheck(
-  {
-    AppState,
-    Dimensions,
-    Platform,
-    UIManager,
-    findNodeHandle,
-    WebSocket,
-  },
-  {
-    React,
-    jsxRuntime: JSXRuntime,
-    autoRegister: true,
-    title: 'UICheck RN Native Demo',
-    route: 'rn-native-demo://checkout',
-    platform: Platform.OS,
+const isTestRuntime =
+  (globalThis as {process?: {env?: {NODE_ENV?: string}}}).process?.env
+    ?.NODE_ENV === 'test';
+const socketUrl =
+  !isTestRuntime && (globalThis as {__DEV__?: boolean}).__DEV__ !== false
+    ? Platform.OS === 'android'
+      ? 'ws://10.0.2.2:17322/socket'
+      : 'ws://127.0.0.1:17322/socket'
+    : '';
+if (socketUrl) {
+  initUiCheck({
     socket: {
-      enabled: true,
-      url: Platform.OS === 'android' ? 'ws://10.0.2.2:17322/socket' : 'ws://127.0.0.1:17322/socket',
+      url: socketUrl,
       clientId: 'rn-native-demo',
       reconnectMs: 500,
     },
@@ -59,16 +48,14 @@ installReactNativeUiCheck(
       }
       const screenshot = await UicheckScreenshot.capture();
       return {
-        title: 'UICheck RN Native Demo',
-        url: 'rn-native-demo://checkout',
         width: screenshot.width,
         height: screenshot.height,
         mimeType: 'image/png',
         base64: screenshot.base64,
       };
     },
-  },
-);
+  });
+}
 
 function App() {
   const rootRef = useRef<View>(null);
@@ -86,16 +73,15 @@ function App() {
         nativeID="screen"
         accessibilityLabel="Checkout screen"
         style={styles.screen}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.eyebrow}>UICheck RN</Text>
+          <View style={styles.header}>
+            <View>
+            <Text nativeID="eyebrow" style={styles.eyebrow}>{rnDemoText.eyebrow}</Text>
             <Text
               ref={titleRef}
-              collapsable={false}
               nativeID="title"
               accessibilityLabel="Checkout screen"
               style={styles.title}>
-              Checkout screen
+              {rnDemoText.title}
             </Text>
           </View>
           <View style={styles.badge}>
@@ -108,37 +94,83 @@ function App() {
             ref={cardRef}
             collapsable={false}
             nativeID="summary-card"
-            accessibilityLabel="Registered ref summary"
+            accessibilityLabel={rnDemoText.summaryTitle}
             style={styles.card}>
-            <Text style={styles.cardTitle}>Registered ref summary</Text>
-            <Text style={styles.cardText}>
-              Native components are registered with @uicheck/rn so MCP can read
-              layout boxes, text, testID and accessibility labels.
-            </Text>
+            <Text style={styles.cardTitle}>{rnDemoText.summaryTitle}</Text>
+            <Text style={styles.cardText}>{rnDemoText.summaryText}</Text>
+          </View>
+
+          <View
+            collapsable={false}
+            nativeID="items-card"
+            accessibilityLabel={rnDemoText.itemsTitle}
+            style={styles.card}>
+            <Text nativeID="items-title" style={styles.cardTitle}>{rnDemoText.itemsTitle}</Text>
+            <View nativeID="item-row-1" style={styles.row}>
+              <Text style={styles.rowLabel}>{rnDemoText.starterLicense}</Text>
+              <Text style={styles.rowValue}>$19</Text>
+            </View>
+            <View nativeID="item-row-2" style={styles.row}>
+              <Text style={styles.rowLabel}>{rnDemoText.teamAddon}</Text>
+              <Text style={styles.rowValue}>$8</Text>
+            </View>
+            <View nativeID="total-row" style={[styles.row, styles.totalRow]}>
+              <Text style={styles.totalLabel}>{rnDemoText.total}</Text>
+              <Text style={styles.totalLabel}>$27</Text>
+            </View>
           </View>
 
           <View
             ref={statusRef}
             collapsable={false}
             nativeID="status-card"
-            accessibilityLabel="Ready for MCP inspection"
+            accessibilityLabel={rnDemoText.statusTitle}
             style={styles.card}>
-            <Text style={styles.cardTitle}>Ready for MCP inspection</Text>
-            <Text style={styles.cardText}>
-              This is a real React Native app, not an HTML preview.
-            </Text>
+            <Text style={styles.cardTitle}>{rnDemoText.statusTitle}</Text>
+            <Text style={styles.cardText}>{rnDemoText.statusText}</Text>
           </View>
+
+          <View
+            collapsable={false}
+            nativeID="details-panel"
+            accessibilityLabel={rnDemoText.detailsTitle}
+            style={styles.detailsPanel}>
+            <Text nativeID="details-title" style={styles.detailsTitle}>
+              {rnDemoText.detailsTitle}
+            </Text>
+            <View nativeID="details-grid" style={styles.detailsGrid}>
+              {rnDemoRows.map(row => (
+                <View
+                  key={row.id}
+                  collapsable={false}
+                  nativeID={row.id}
+                  accessibilityLabel={`${row.text} ${row.value}`}
+                  style={styles.detailRow}>
+                  <Text nativeID={row.labelId} style={styles.detailLabel}>
+                    {row.text}
+                  </Text>
+                  <Text nativeID={row.valueId} style={styles.detailValue}>
+                    {row.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <Text nativeID="hint-banner" style={styles.hint}>
+            {rnDemoText.hint}
+          </Text>
 
           <Pressable
             ref={submitRef}
             collapsable={false}
             testID="submit-button"
-            accessibilityLabel="Submit order"
+            accessibilityLabel={rnDemoText.submit}
             style={({pressed}) => [
               styles.button,
               pressed ? styles.buttonPressed : null,
             ]}>
-            <Text style={styles.buttonText}>Submit order</Text>
+            <Text nativeID="submit-label" style={styles.buttonText}>{rnDemoText.submit}</Text>
           </Pressable>
         </View>
       </View>
@@ -157,7 +189,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingVertical: 20,
+    paddingVertical: 12,
     backgroundColor: '#111827',
     flexDirection: 'row',
     alignItems: 'center',
@@ -171,7 +203,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#ffffff',
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '800',
   },
   badge: {
@@ -188,13 +220,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 24,
-    gap: 16,
+    padding: 14,
+    gap: 8,
   },
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 18,
+    borderRadius: 10,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#dbe3ef',
     shadowColor: '#0f172a',
@@ -205,18 +237,97 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     color: '#111827',
-    fontSize: 18,
+    fontSize: 13,
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   cardText: {
     color: '#475569',
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  row: {
+    minHeight: 15,
+    marginTop: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  rowLabel: {
+    color: '#334155',
+    fontSize: 11,
+  },
+  rowValue: {
+    color: '#111827',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  totalRow: {
+    marginTop: 4,
+    paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  totalLabel: {
+    color: '#111827',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  detailsPanel: {
+    height: 370,
+    borderRadius: 10,
+    padding: 8,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#dbe3ef',
+  },
+  detailsTitle: {
+    color: '#111827',
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  detailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 6,
+    rowGap: 3,
+  },
+  detailRow: {
+    width: '48.9%',
+    minHeight: 16,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  detailLabel: {
+    color: '#334155',
+    fontSize: 9,
+    lineHeight: 13,
+  },
+  detailValue: {
+    color: '#0f766e',
+    fontSize: 9,
+    lineHeight: 13,
+    fontWeight: '800',
+  },
+  hint: {
+    minHeight: 34,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: '#ecfeff',
+    color: '#0f766e',
+    fontSize: 11,
+    fontWeight: '800',
   },
   button: {
-    height: 54,
-    borderRadius: 14,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: '#a855f7',
     alignItems: 'center',
     justifyContent: 'center',

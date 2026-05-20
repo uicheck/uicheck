@@ -4,12 +4,11 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.Base64
 import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import java.io.ByteArrayOutputStream
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.util.UUID
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.roundToInt
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -26,7 +25,7 @@ data class UiCheckAndroidSocketOptions(
   val enabled: Boolean = true
 )
 
-data class UiCheckAndroidViewportInfo(
+private data class UiCheckAndroidViewportInfo(
   val width: Int = 0,
   val height: Int = 0,
   val devicePixelRatio: Double = 1.0,
@@ -50,16 +49,12 @@ data class UiCheckAndroidRect(
 )
 
 data class UiCheckAndroidScreenshotResult(
-  val url: String? = null,
-  val title: String? = null,
   val width: Int? = null,
   val height: Int? = null,
   val mimeType: String = "image/png",
   val base64: String
 ) {
   fun toMap(): Map<String, Any?> = compactMap(
-    "url" to url,
-    "title" to title,
     "width" to width,
     "height" to height,
     "mimeType" to mimeType,
@@ -69,29 +64,12 @@ data class UiCheckAndroidScreenshotResult(
 
 data class UiCheckAndroidOptions(
   val socket: UiCheckAndroidSocketOptions? = null,
-  val title: String? = null,
-  val route: String? = null,
-  val platform: String? = null,
-  val viewport: () -> UiCheckAndroidViewportInfo = { UiCheckAndroidViewportInfo() },
+  val rootView: (() -> View?)? = null,
   val screenshot: ((Map<String, Any?>) -> UiCheckAndroidScreenshotResult)? = null
-)
-
-data class UiCheckAndroidElementRegistration(
-  val id: String? = null,
-  val tag: String? = null,
-  val selector: String? = null,
-  val testID: String? = null,
-  val text: String? = null,
-  val accessibilityLabel: String? = null,
-  val className: String? = null,
-  val visible: Boolean = true,
-  val dataset: Map<String, String>? = null,
-  val frame: () -> UiCheckAndroidRect?
 )
 
 data class UiCheckAndroidElementInfo(
   val tag: String,
-  val selector: String,
   val id: String?,
   val testID: String?,
   val accessibilityLabel: String?,
@@ -103,7 +81,6 @@ data class UiCheckAndroidElementInfo(
 ) {
   fun toMap(): Map<String, Any?> = compactMap(
     "tag" to tag,
-    "selector" to selector,
     "id" to id,
     "testID" to testID,
     "accessibilityLabel" to accessibilityLabel,
@@ -114,11 +91,6 @@ data class UiCheckAndroidElementInfo(
     "dataset" to dataset
   )
 }
-
-private data class RegisteredAndroidElement(
-  val uid: String,
-  val registration: UiCheckAndroidElementRegistration
-)
 
 class UiCheckAndroidClient(
   private val options: UiCheckAndroidOptions = UiCheckAndroidOptions(),
@@ -161,20 +133,16 @@ class UiCheckAndroidClient(
   }
 
   fun clientInfo(): Map<String, Any?> = compactMap(
-    "url" to options.route,
-    "title" to options.title,
-    "userAgent" to (options.platform ?: "android-native"),
-    "viewport" to options.viewport().toMap()
+    "userAgent" to "android-native",
+    "viewport" to viewportInfo(options.rootView?.invoke()).toMap()
   )
 
   fun inspectElements(params: Map<String, Any?> = emptyMap()): Map<String, Any?> {
-    val selector = params["selector"] as? String ?: "*"
     val includeHidden = params["includeHidden"] == true
     val limit = clampLimit(params["limit"])
-    val elements = registeredElements
+    val root = options.rootView?.invoke()
+    val elements = collectElements(root)
       .asSequence()
-      .filter { matchesSelector(it, selector) }
-      .mapNotNull { normalizeElement(it) }
       .filter { includeHidden || it.visible }
       .take(limit)
       .map { it.toMap() }
@@ -182,39 +150,9 @@ class UiCheckAndroidClient(
 
     return compactMap(
       "platform" to "android-native",
-      "os" to options.platform,
-      "url" to options.route,
-      "title" to options.title,
-      "viewport" to options.viewport().toMap(),
+      "viewport" to viewportInfo(root).toMap(),
       "count" to elements.size,
-      "elements" to elements
-    )
-  }
-
-  fun getElementAtPoint(params: Map<String, Any?> = emptyMap()): Map<String, Any?> {
-    val x = numberValue(params["x"]) ?: 0.0
-    val y = numberValue(params["y"]) ?: 0.0
-    val result = inspectElements(
-      mapOf(
-        "selector" to (params["selector"] ?: "*"),
-        "includeHidden" to false,
-        "limit" to 500
-      )
-    )
-    val elements = (result["elements"] as? List<*>)?.filterIsInstance<Map<String, Any?>>() ?: emptyList()
-    val element = elements
-      .filter { containsPoint(it, x, y) }
-      .minByOrNull { boxArea(it) }
-
-    return compactMap(
-      "platform" to "android-native",
-      "os" to options.platform,
-      "url" to options.route,
-      "title" to options.title,
-      "viewport" to result["viewport"],
-      "point" to mapOf("x" to x, "y" to y),
-      "element" to element,
-      "ancestors" to emptyList<Any>()
+      "tree" to createElementTree(elements)
     )
   }
 
@@ -236,7 +174,6 @@ class UiCheckAndroidClient(
       val result = when (val method = message.optString("method")) {
         "capture_page" -> capturePage(params).toMap()
         "inspect_elements" -> inspectElements(params)
-        "get_element_at_point" -> getElementAtPoint(params)
         else -> throw UiCheckAndroidException("Unknown uicheck method: $method")
       }
       stringify(mapOf("type" to "response", "id" to id, "result" to result))
@@ -261,61 +198,26 @@ class UiCheckAndroidClient(
       if (!closed) connect()
     }.start()
   }
-
-  companion object {
-    private val registeredElements = CopyOnWriteArrayList<RegisteredAndroidElement>()
-
-    fun registerElement(registration: UiCheckAndroidElementRegistration): () -> Unit {
-      val item = RegisteredAndroidElement(UUID.randomUUID().toString(), registration)
-      registeredElements.add(item)
-      return { registeredElements.remove(item) }
-    }
-  }
 }
 
 class UiCheckAndroidException(message: String) : RuntimeException(message)
 
-fun installAndroidUiCheck(options: UiCheckAndroidOptions = UiCheckAndroidOptions()): UiCheckAndroidClient {
+fun initUiCheck(options: UiCheckAndroidOptions = UiCheckAndroidOptions()): UiCheckAndroidClient {
   val client = UiCheckAndroidClient(options)
   client.connect()
   return client
-}
-
-fun registerAndroidUiCheckElement(registration: UiCheckAndroidElementRegistration): () -> Unit =
-  UiCheckAndroidClient.registerElement(registration)
-
-fun registerAndroidUiCheckView(
-  view: View,
-  id: String? = null,
-  tag: String? = null,
-  selector: String? = null,
-  testID: String? = null,
-  text: String? = null,
-  accessibilityLabel: String? = null,
-  className: String? = null,
-  visible: Boolean = true,
-  dataset: Map<String, String>? = null
-): () -> Unit {
-  return registerAndroidUiCheckElement(
-    UiCheckAndroidElementRegistration(
-      id = id,
-      tag = tag ?: view.javaClass.simpleName,
-      selector = selector,
-      testID = testID ?: resourceEntryName(view),
-      text = text ?: (view as? TextView)?.text?.toString(),
-      accessibilityLabel = accessibilityLabel ?: view.contentDescription?.toString(),
-      className = className,
-      visible = visible,
-      dataset = dataset,
-      frame = { viewFrame(view) }
-    )
-  )
 }
 
 fun createAndroidViewScreenshotProvider(root: View): (Map<String, Any?>) -> UiCheckAndroidScreenshotResult {
   return {
     val bitmap = Bitmap.createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
+    root.measure(
+      View.MeasureSpec.makeMeasureSpec(root.width, View.MeasureSpec.EXACTLY),
+      View.MeasureSpec.makeMeasureSpec(root.height, View.MeasureSpec.EXACTLY)
+    )
+    root.layout(root.left, root.top, root.left + root.width, root.top + root.height)
+    root.invalidate()
     root.draw(canvas)
     val output = ByteArrayOutputStream()
     bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
@@ -328,22 +230,54 @@ fun createAndroidViewScreenshotProvider(root: View): (Map<String, Any?>) -> UiCh
   }
 }
 
-private fun normalizeElement(item: RegisteredAndroidElement): UiCheckAndroidElementInfo? {
-  val frame = item.registration.frame() ?: return null
+private fun collectElements(root: View?): List<UiCheckAndroidElementInfo> {
+  if (root == null) return emptyList()
+  val elements = mutableListOf<UiCheckAndroidElementInfo>()
+
+  fun visit(view: View) {
+    normalizeView(view)?.let(elements::add)
+    if (view is ViewGroup) {
+      for (index in 0 until view.childCount) {
+        visit(view.getChildAt(index))
+      }
+    }
+  }
+
+  visit(root)
+  return elements
+}
+
+private fun viewportInfo(root: View?): UiCheckAndroidViewportInfo {
+  if (root == null) return UiCheckAndroidViewportInfo()
+  val metrics = root.resources.displayMetrics
+  val width = root.width.takeIf { it > 0 } ?: metrics.widthPixels
+  val height = root.height.takeIf { it > 0 } ?: metrics.heightPixels
+  return UiCheckAndroidViewportInfo(
+    width = width,
+    height = height,
+    devicePixelRatio = metrics.density.toDouble(),
+    scrollX = root.scrollX,
+    scrollY = root.scrollY
+  )
+}
+
+private fun normalizeView(view: View): UiCheckAndroidElementInfo? {
+  val frame = viewFrame(view) ?: return null
   val width = frame.width.roundToInt()
   val height = frame.height.roundToInt()
   val x = frame.x.roundToInt()
   val y = frame.y.roundToInt()
-  val visible = item.registration.visible && width > 0 && height > 0
+  val visible = view.visibility == View.VISIBLE && width > 0 && height > 0
+  val resourceName = resourceEntryName(view)
+  val accessibilityLabel = view.contentDescription?.toString()
 
   return UiCheckAndroidElementInfo(
-    tag = item.registration.tag ?: "NativeView",
-    selector = createSelector(item),
-    id = item.registration.id,
-    testID = item.registration.testID,
-    accessibilityLabel = item.registration.accessibilityLabel,
-    classes = classes(item.registration.className),
-    text = compactText(item.registration.text ?: item.registration.accessibilityLabel),
+    tag = view.javaClass.simpleName.ifBlank { "NativeView" },
+    id = resourceName,
+    testID = resourceName,
+    accessibilityLabel = accessibilityLabel,
+    classes = listOf(view.javaClass.name),
+    text = compactText((view as? TextView)?.text?.toString() ?: accessibilityLabel),
     visible = visible,
     box = mapOf(
       "x" to x,
@@ -353,42 +287,31 @@ private fun normalizeElement(item: RegisteredAndroidElement): UiCheckAndroidElem
       "top" to y,
       "left" to x
     ),
-    dataset = item.registration.dataset
+    dataset = null
   )
-}
-
-private fun createSelector(item: RegisteredAndroidElement): String {
-  val registration = item.registration
-  if (!registration.selector.isNullOrBlank()) return registration.selector
-  if (!registration.id.isNullOrBlank()) return "#${registration.id}"
-  if (!registration.testID.isNullOrBlank()) return "[testID=\"${registration.testID}\"]"
-  if (!registration.accessibilityLabel.isNullOrBlank()) {
-    return "[accessibilityLabel=\"${registration.accessibilityLabel}\"]"
-  }
-  return "${registration.tag ?: "NativeView"}:registered(${item.uid})"
-}
-
-private fun matchesSelector(item: RegisteredAndroidElement, selector: String): Boolean {
-  if (selector.isBlank() || selector == "*") return true
-  val registration = item.registration
-  return selector == registration.selector ||
-    selector == registration.tag ||
-    selector == "#${registration.id}" ||
-    selector == "[testID=\"${registration.testID}\"]" ||
-    selector == "[accessibilityLabel=\"${registration.accessibilityLabel}\"]" ||
-    classes(registration.className).any { selector == ".$it" }
 }
 
 private fun viewFrame(view: View): UiCheckAndroidRect? {
   if (view.width <= 0 || view.height <= 0) return null
-  val location = IntArray(2)
-  view.getLocationOnScreen(location)
+  val location = rootRelativeLocation(view)
   return UiCheckAndroidRect(
     x = location[0].toDouble(),
     y = location[1].toDouble(),
     width = view.width.toDouble(),
     height = view.height.toDouble()
   )
+}
+
+private fun rootRelativeLocation(view: View): IntArray {
+  var x = view.left - view.scrollX
+  var y = view.top - view.scrollY
+  var parentView = view.parent as? View
+  while (parentView != null) {
+    x += parentView.left - parentView.scrollX
+    y += parentView.top - parentView.scrollY
+    parentView = parentView.parent as? View
+  }
+  return intArrayOf(x, y)
 }
 
 private fun resourceEntryName(view: View): String? {
@@ -404,8 +327,56 @@ private fun compactText(value: String?): String? {
   return text.ifEmpty { null }?.take(200)
 }
 
-private fun classes(value: String?): List<String> =
-  value?.split(Regex("\\s+"))?.filter { it.isNotBlank() } ?: emptyList()
+private data class TreeBox(val x: Double, val y: Double, val width: Double, val height: Double) {
+  val area: Double get() = width * height
+  fun contains(child: TreeBox): Boolean =
+    child.x >= x && child.y >= y && child.x + child.width <= x + width && child.y + child.height <= y + height
+}
+
+private fun createElementTree(elements: List<Map<String, Any?>>): List<Map<String, Any?>> {
+  val boxes = elements.map { treeBox(it["box"] as? Map<*, *>) }
+  val parents = elements.indices.map { findTreeParent(it, boxes) }
+  val childrenByParent = mutableMapOf<Int, MutableList<Int>>()
+  val roots = mutableListOf<Int>()
+
+  elements.indices.forEach { index ->
+    val parent = parents[index]
+    if (parent == null) roots.add(index)
+    else childrenByParent.getOrPut(parent) { mutableListOf() }.add(index)
+  }
+
+  fun build(index: Int): Map<String, Any?> {
+    return elements[index] + mapOf("children" to childrenByParent[index].orEmpty().map(::build))
+  }
+
+  return roots.map(::build)
+}
+
+private fun treeBox(raw: Map<*, *>?): TreeBox? {
+  val box = raw ?: return null
+  val width = numberValue(box["width"]) ?: return null
+  val height = numberValue(box["height"]) ?: return null
+  if (width <= 0 || height <= 0) return null
+  return TreeBox(
+    x = numberValue(box["x"]) ?: numberValue(box["left"]) ?: 0.0,
+    y = numberValue(box["y"]) ?: numberValue(box["top"]) ?: 0.0,
+    width = width,
+    height = height
+  )
+}
+
+private fun findTreeParent(index: Int, boxes: List<TreeBox?>): Int? {
+  val child = boxes[index] ?: return null
+  var parentIndex: Int? = null
+  var parentArea = Double.POSITIVE_INFINITY
+  boxes.forEachIndexed { candidateIndex, candidate ->
+    if (candidateIndex != index && candidate != null && candidate.area > child.area && candidate.contains(child) && candidate.area < parentArea) {
+      parentArea = candidate.area
+      parentIndex = candidateIndex
+    }
+  }
+  return parentIndex
+}
 
 private fun clampLimit(value: Any?): Int {
   val limit = when (value) {
@@ -420,22 +391,6 @@ private fun numberValue(value: Any?): Double? = when (value) {
   is Number -> value.toDouble()
   is String -> value.toDoubleOrNull()
   else -> null
-}
-
-private fun containsPoint(element: Map<String, Any?>, x: Double, y: Double): Boolean {
-  val box = element["box"] as? Map<*, *> ?: return false
-  val left = numberValue(box["left"]) ?: numberValue(box["x"]) ?: return false
-  val top = numberValue(box["top"]) ?: numberValue(box["y"]) ?: return false
-  val width = numberValue(box["width"]) ?: return false
-  val height = numberValue(box["height"]) ?: return false
-  return x >= left && x <= left + width && y >= top && y <= top + height
-}
-
-private fun boxArea(element: Map<String, Any?>): Double {
-  val box = element["box"] as? Map<*, *> ?: return Double.POSITIVE_INFINITY
-  val width = numberValue(box["width"]) ?: return Double.POSITIVE_INFINITY
-  val height = numberValue(box["height"]) ?: return Double.POSITIVE_INFINITY
-  return width * height
 }
 
 private fun appendClientId(rawUrl: String, clientId: String?): String {

@@ -1,184 +1,109 @@
 package ai.uicheck.android
 
-import java.io.ByteArrayOutputStream
-import java.io.DataOutputStream
-import java.io.File
-import java.util.zip.CRC32
-import java.util.zip.Deflater
+import android.graphics.Color
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 
+@RunWith(RobolectricTestRunner::class)
 class UiCheckAndroidClientTest {
   @Test
-  fun inspectElementsReturnsRegisteredNativeElements() {
-    val unregister = registerAndroidUiCheckElement(
-      UiCheckAndroidElementRegistration(
-        tag = "Button",
-        testID = "submit-button",
-        text = "Submit",
-        frame = { UiCheckAndroidRect(12.0, 24.0, 120.0, 48.0) }
+  fun inspectElementsRealNativeDemo() {
+    val demo = createAndroidDemo()
+    val client = UiCheckAndroidClient(
+      UiCheckAndroidOptions(
+        rootView = { demo.root },
+        screenshot = createAndroidViewScreenshotProvider(demo.root)
       )
     )
 
-    try {
-      val client = UiCheckAndroidClient(
-        UiCheckAndroidOptions(
-          title = "Demo",
-          route = "/home",
-          platform = "android",
-          viewport = { UiCheckAndroidViewportInfo(width = 393, height = 873, devicePixelRatio = 2.75) }
-        )
-      )
+    val result = client.inspectElements()
+    assertEquals("android-native", result["platform"])
+    assertEquals(6, result["count"])
 
-      val result = client.inspectElements(mapOf("selector" to "[testID=\"submit-button\"]"))
-      assertEquals("android-native", result["platform"])
-      assertEquals(1, result["count"])
-      writeEvidenceScreenshot("android-native.png")
-
-      val elements = result["elements"] as List<*>
-      val element = elements.first() as Map<*, *>
-      assertEquals("Button", element["tag"])
-      assertEquals("Submit", element["text"])
-      assertEquals("[testID=\"submit-button\"]", element["selector"])
-    } finally {
-      unregister()
-    }
-  }
-
-  @Test
-  fun getElementAtPointReturnsSmallestElement() {
-    val unregisterContainer = registerAndroidUiCheckElement(
-      UiCheckAndroidElementRegistration(
-        tag = "FrameLayout",
-        testID = "container",
-        frame = { UiCheckAndroidRect(0.0, 0.0, 300.0, 300.0) }
-      )
-    )
-    val unregisterButton = registerAndroidUiCheckElement(
-      UiCheckAndroidElementRegistration(
-        tag = "Button",
-        testID = "submit-button",
-        frame = { UiCheckAndroidRect(40.0, 60.0, 80.0, 40.0) }
-      )
-    )
-
-    try {
-      val client = UiCheckAndroidClient()
-      val result = client.getElementAtPoint(mapOf("x" to 50, "y" to 70))
-      val element = result["element"] as Map<*, *>
-      assertEquals("Button", element["tag"])
-      assertEquals("[testID=\"submit-button\"]", element["selector"])
-    } finally {
-      unregisterContainer()
-      unregisterButton()
-    }
+    val elements = flattenTree(result["tree"] as List<*>)
+    val element = elements.last() as Map<*, *>
+    assertEquals("Button", element["tag"])
+    assertEquals("Submit order", element["text"])
   }
 
   @Test
   fun handleMcpRequestForTestingReturnsResponse() {
-    val unregister = registerAndroidUiCheckElement(
-      UiCheckAndroidElementRegistration(
-        tag = "TextView",
-        testID = "title",
-        text = "Welcome",
-        frame = { UiCheckAndroidRect(8.0, 16.0, 160.0, 32.0) }
-      )
+    val context = RuntimeEnvironment.getApplication()
+    val title = TextView(context).apply {
+      text = "Welcome"
+      layout(8, 16, 168, 48)
+    }
+    val client = UiCheckAndroidClient(UiCheckAndroidOptions(rootView = { title }))
+    val response = client.handleRequestForTesting(
+      """{"type":"request","id":"req-1","method":"inspect_elements","params":{}}"""
     )
 
-    try {
-      val client = UiCheckAndroidClient()
-      val response = client.handleRequestForTesting(
-        """{"type":"request","id":"req-1","method":"inspect_elements","params":{"selector":"[testID=\"title\"]"}}"""
-      )
+    assertNotNull(response)
+    val json = JSONObject(response!!)
+    assertEquals("response", json.getString("type"))
+    assertEquals("req-1", json.getString("id"))
+    assertEquals(1, json.getJSONObject("result").getInt("count"))
+  }
 
-      assertNotNull(response)
-      val json = JSONObject(response!!)
-      assertEquals("response", json.getString("type"))
-      assertEquals("req-1", json.getString("id"))
-      assertEquals(1, json.getJSONObject("result").getInt("count"))
-    } finally {
-      unregister()
+  private fun createAndroidDemo(): AndroidDemo {
+    val context = RuntimeEnvironment.getApplication()
+    val root = LinearLayout(context).apply {
+      orientation = LinearLayout.VERTICAL
+      setBackgroundColor(Color.rgb(247, 249, 252))
+      setPadding(24, 24, 24, 24)
+      layoutParams = ViewGroup.LayoutParams(393, 640)
+      contentDescription = "Android checkout screen"
     }
-  }
-
-  private fun writeEvidenceScreenshot(fileName: String) {
-    val output = File("build/uicheck-test-artifacts/$fileName")
-    output.parentFile?.mkdirs()
-    output.writeBytes(createEvidencePng())
-  }
-
-  private fun createEvidencePng(): ByteArray {
-    val width = 393
-    val height = 240
-    val pixels = IntArray(width * height) { 0xFFF7F9FC.toInt() }
-    fillRect(pixels, width, 24, 76, 180, 56, 0xFF246BFE.toInt())
-    fillRect(pixels, width, 28, 80, 172, 48, 0xFF2F7BFF.toInt())
-    fillRect(pixels, width, 24, 156, 250, 8, 0xFF34A853.toInt())
-    fillRect(pixels, width, 24, 186, 280, 8, 0xFF34A853.toInt())
-    fillRect(pixels, width, 24, 32, 210, 12, 0xFF182A4D.toInt())
-    return encodePng(width, height, pixels)
-  }
-
-  private fun fillRect(pixels: IntArray, width: Int, x: Int, y: Int, rectWidth: Int, rectHeight: Int, color: Int) {
-    for (row in y until y + rectHeight) {
-      for (column in x until x + rectWidth) {
-        pixels[row * width + column] = color
-      }
+    val title = TextView(context).apply {
+      text = "Android checkout"
+      textSize = 22f
+      setTextColor(Color.rgb(17, 24, 39))
     }
-  }
-
-  private fun encodePng(width: Int, height: Int, pixels: IntArray): ByteArray {
-    val output = ByteArrayOutputStream()
-    DataOutputStream(output).use { stream ->
-      stream.write(byteArrayOf(137.toByte(), 80, 78, 71, 13, 10, 26, 10))
-      val header = ByteArrayOutputStream()
-      DataOutputStream(header).use { headerStream ->
-        headerStream.writeInt(width)
-        headerStream.writeInt(height)
-        headerStream.writeByte(8)
-        headerStream.writeByte(6)
-        headerStream.writeByte(0)
-        headerStream.writeByte(0)
-        headerStream.writeByte(0)
-      }
-      writeChunk(stream, "IHDR", header.toByteArray())
-
-      val raw = ByteArrayOutputStream()
-      for (row in 0 until height) {
-        raw.write(0)
-        for (column in 0 until width) {
-          val color = pixels[row * width + column]
-          raw.write((color ushr 16) and 0xff)
-          raw.write((color ushr 8) and 0xff)
-          raw.write(color and 0xff)
-          raw.write((color ushr 24) and 0xff)
-        }
-      }
-      val deflater = Deflater(Deflater.DEFAULT_COMPRESSION)
-      deflater.setInput(raw.toByteArray())
-      deflater.finish()
-      val compressed = ByteArrayOutputStream()
-      val buffer = ByteArray(4096)
-      while (!deflater.finished()) {
-        compressed.write(buffer, 0, deflater.deflate(buffer))
-      }
-      deflater.end()
-      writeChunk(stream, "IDAT", compressed.toByteArray())
-      writeChunk(stream, "IEND", ByteArray(0))
+    val summary = TextView(context).apply {
+      text = "Registered ref summary"
+      setBackgroundColor(Color.WHITE)
+      setPadding(16, 16, 16, 16)
+      setTextColor(Color.rgb(71, 85, 105))
     }
-    return output.toByteArray()
+    val status = TextView(context).apply {
+      text = "Ready for MCP inspection"
+      setBackgroundColor(Color.WHITE)
+      setPadding(16, 16, 16, 16)
+      setTextColor(Color.rgb(71, 85, 105))
+    }
+    val submit = Button(context).apply {
+      text = "Submit order"
+      contentDescription = "Submit order"
+      setBackgroundColor(Color.rgb(37, 99, 235))
+      setTextColor(Color.WHITE)
+    }
+
+    root.addView(title, LinearLayout.LayoutParams(345, 34))
+    root.addView(summary, LinearLayout.LayoutParams(345, 126).apply { topMargin = 16 })
+    root.addView(status, LinearLayout.LayoutParams(345, 104).apply { topMargin = 16 })
+    root.addView(View(context), LinearLayout.LayoutParams(345, 16, 1f))
+    root.addView(submit, LinearLayout.LayoutParams(345, 54))
+    root.measure(View.MeasureSpec.makeMeasureSpec(393, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(640, View.MeasureSpec.EXACTLY))
+    root.layout(0, 0, 393, 640)
+    return AndroidDemo(root, title, summary, status, submit)
   }
 
-  private fun writeChunk(stream: DataOutputStream, type: String, data: ByteArray) {
-    val typeBytes = type.toByteArray(Charsets.US_ASCII)
-    stream.writeInt(data.size)
-    stream.write(typeBytes)
-    stream.write(data)
-    val crc = CRC32()
-    crc.update(typeBytes)
-    crc.update(data)
-    stream.writeInt(crc.value.toInt())
-  }
+  private data class AndroidDemo(val root: LinearLayout, val title: TextView, val summary: TextView, val status: TextView, val submit: Button)
+
+  private fun flattenTree(nodes: List<*>): List<Any?> =
+    nodes.flatMap { node ->
+      val map = node as Map<*, *>
+      listOf(node) + flattenTree(map["children"] as? List<*> ?: emptyList<Any>())
+    }
+
 }
