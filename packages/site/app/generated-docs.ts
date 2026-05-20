@@ -508,32 +508,6 @@ export const generatedDocsByLocale = {
           "code": "uicheck-mcp --host 127.0.0.1 --port 17322"
         }
       ]
-    },
-    {
-      "id": "core",
-      "name": "@uicheck/core",
-      "version": "0.1.4",
-      "description": "uicheck 客户端共享协议 runtime 和类型",
-      "install": "npm install @uicheck/core",
-      "source": "packages/core",
-      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/core/README.zh-CN.md",
-      "blocks": [
-        {
-          "type": "paragraph",
-          "text": "uicheck 平台客户端共享的协议 runtime 和类型。"
-        },
-        {
-          "type": "paragraph",
-          "text": "平台包："
-        },
-        {
-          "type": "list",
-          "items": [
-            "@uicheck/web 用于浏览器 DOM 页面",
-            "@uicheck/taro 用于 Taro 小程序页面"
-          ]
-        }
-      ]
     }
   ],
   "en": [
@@ -1020,32 +994,6 @@ export const generatedDocsByLocale = {
           "type": "code",
           "lang": "sh",
           "code": "uicheck-mcp --host 127.0.0.1 --port 17322"
-        }
-      ]
-    },
-    {
-      "id": "core",
-      "name": "@uicheck/core",
-      "version": "0.1.4",
-      "description": "Shared protocol runtime and types for uicheck clients",
-      "install": "npm install @uicheck/core",
-      "source": "packages/core",
-      "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/core/README.md",
-      "blocks": [
-        {
-          "type": "paragraph",
-          "text": "Shared protocol runtime and types for uicheck platform clients."
-        },
-        {
-          "type": "paragraph",
-          "text": "Platform packages:"
-        },
-        {
-          "type": "list",
-          "items": [
-            "@uicheck/web for browser DOM pages",
-            "@uicheck/taro for Taro Mini Program pages"
-          ]
         }
       ]
     }

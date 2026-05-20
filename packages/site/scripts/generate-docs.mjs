@@ -65,14 +65,6 @@ const packages = [
       'zh-CN': '通过 WebSocket 连接 uicheck 客户端的 MCP 服务',
       en: 'MCP server that communicates with uicheck clients over WebSocket'
     }
-  },
-  {
-    id: 'core',
-    path: 'packages/core',
-    descriptions: {
-      'zh-CN': 'uicheck 客户端共享协议 runtime 和类型',
-      en: 'Shared protocol runtime and types for uicheck clients'
-    }
   }
 ]
 
@@ -285,7 +277,7 @@ export default meta
         ? {
             title: 'UI Check 文档',
             description: 'AI 可读的 UI 检查工具文档',
-            lead: 'UI Check 的连接模型很简单：AI 客户端接 MCP，应用运行环境接 WebSocket。先把 @uicheck/mcp 配到 AI 客户端，再根据应用平台选择对应接入包。',
+            lead: 'UI Check 的连接模型很简单：AI 客户端接 MCP，应用运行环境接 WebSocket。快速开始以 @uicheck/web 为例；其他应用平台可以在多平台接入里选择对应包。',
             mcpHeading: 'AI 客户端',
             mcpText: '配置 @uicheck/mcp，让 AI 可以调用 list_clients、capture_page 和 inspect_elements。',
             platformHeading: '多平台接入'
@@ -293,7 +285,7 @@ export default meta
         : {
             title: 'UI Check Docs',
             description: 'Documentation for AI-readable UI inspection',
-            lead: 'UI Check has one connection model: AI clients connect to MCP, and app runtimes connect over WebSocket. Configure @uicheck/mcp in the AI client first, then choose the runtime package for your app platform.',
+            lead: 'UI Check has one connection model: AI clients connect to MCP, and app runtimes connect over WebSocket. The quick start uses @uicheck/web as the app example; choose another platform package under Platform integrations when needed.',
             mcpHeading: 'AI client',
             mcpText: 'Configure @uicheck/mcp so AI can call list_clients, capture_page, and inspect_elements.',
             platformHeading: 'Platform integrations'

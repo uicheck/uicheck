@@ -7,7 +7,6 @@ const meta = {
   "flutter": "uicheck_flutter",
   "android": "uicheck_android",
   "apple": "uicheck_apple",
-  "core": "@uicheck/core",
 }
 
 export default meta
