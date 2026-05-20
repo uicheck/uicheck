@@ -2,6 +2,10 @@ import AppKit
 
 public struct UICheckAppleDemoView {
   public let window: NSWindow
+  public let content: UICheckAppleDemoContent
+}
+
+public struct UICheckAppleDemoContent {
   public let screen: NSView
   public let title: NSTextField
   public let summary: NSView
@@ -15,7 +19,15 @@ public struct UICheckAppleDemoView {
 public func createUICheckAppleDemoView() -> UICheckAppleDemoView {
   let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 390, height: 844), styleMask: [.titled, .closable], backing: .buffered, defer: false)
   window.title = "UICheck Apple Demo"
-  let screen = NSView(frame: window.contentView!.bounds)
+  let content = createUICheckAppleDemoContent()
+  window.contentView = content.screen
+  window.makeKeyAndOrderFront(nil)
+  return UICheckAppleDemoView(window: window, content: content)
+}
+
+@MainActor
+public func createUICheckAppleDemoContent() -> UICheckAppleDemoContent {
+  let screen = NSView(frame: NSRect(x: 0, y: 0, width: 390, height: 844))
   screen.identifier = NSUserInterfaceItemIdentifier("screen")
   screen.wantsLayer = true
   screen.layer?.backgroundColor = NSColor(calibratedRed: 0.97, green: 0.98, blue: 0.99, alpha: 1).cgColor
@@ -61,9 +73,7 @@ public func createUICheckAppleDemoView() -> UICheckAppleDemoView {
   )
 
   [header, summary, items, status, details, hintBox, submit].forEach(screen.addSubview)
-  window.contentView = screen
-  window.makeKeyAndOrderFront(nil)
-  return UICheckAppleDemoView(window: window, screen: screen, title: title, summary: summary, items: items, status: status, details: details, submit: submit)
+  return UICheckAppleDemoContent(screen: screen, title: title, summary: summary, items: items, status: status, details: details, submit: submit)
 }
 
 @MainActor

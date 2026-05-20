@@ -1,15 +1,14 @@
 import XCTest
-import UICheckApple
+@testable import UICheckApple
 import UICheckAppleDemoSupport
 
 final class UICheckAppleDemoTests: XCTestCase {
   @MainActor
   func testInspectsRealExampleDemoWithUiCheck() async throws {
-    let demo = createUICheckAppleDemoView()
-    defer { demo.window.close() }
+    let demo = createUICheckAppleDemoContent()
 
     let client = UiCheckAppleClient()
-    let inspected = client.inspectElements(["limit": 500])
+    let inspected = client.inspectElementsForTesting(["limit": 500], roots: [demo.screen])
     XCTAssertEqual(inspected["platform"] as? String, "apple-native")
     XCTAssertGreaterThanOrEqual(inspected["count"] as? Int ?? 0, 5)
     let inspectedJson = Self.stableJson(inspected)

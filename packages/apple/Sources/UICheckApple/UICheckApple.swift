@@ -149,9 +149,17 @@ public final class UiCheckAppleClient: NSObject, URLSessionWebSocketDelegate, @u
   }
 
   public func inspectElements(_ params: [String: Any] = [:]) -> [String: Any] {
+    inspectElements(params, roots: defaultAppleRootViews())
+  }
+
+  internal func inspectElementsForTesting(_ params: [String: Any] = [:], roots: [Any]) -> [String: Any] {
+    inspectElements(params, roots: roots)
+  }
+
+  private func inspectElements(_ params: [String: Any], roots: [Any]) -> [String: Any] {
     let includeHidden = params["includeHidden"] as? Bool == true
     let limit = clampLimit(params["limit"])
-    let elements = collectAppleElements(defaultAppleRootViews())
+    let elements = collectAppleElements(roots)
       .filter { includeHidden || $0.visible }
       .prefix(limit)
       .map { $0.jsonValue }

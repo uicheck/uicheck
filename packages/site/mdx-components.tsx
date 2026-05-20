@@ -1,11 +1,17 @@
 import type { MDXComponents } from 'mdx/types'
 
+function withoutLegacyRef<T extends { ref?: unknown }>(props: T): Omit<T, 'ref'> {
+  const next = { ...props }
+  delete next.ref
+  return next
+}
+
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
-    a: ({ ref: _ref, ...props }) => <a {...props} />,
-    code: ({ ref: _ref, ...props }) => <code {...props} />,
-    pre: ({ ref: _ref, ...props }) => <pre {...props} />,
-    table: ({ ref: _ref, ...props }) => <table {...props} />,
+    a: (props) => <a {...withoutLegacyRef(props)} />,
+    code: (props) => <code {...withoutLegacyRef(props)} />,
+    pre: (props) => <pre {...withoutLegacyRef(props)} />,
+    table: (props) => <table {...withoutLegacyRef(props)} />,
     ...components
   }
 }

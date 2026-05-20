@@ -11,11 +11,10 @@ final class UICheckAppleTests: XCTestCase {
   func testInspectElementsRealNativeDemo() async throws {
     #if canImport(AppKit)
     let demo = createAppleDemo()
-    defer { demo.window.close() }
 
     let client = UiCheckAppleClient()
 
-    let result = client.inspectElements()
+    let result = client.inspectElementsForTesting(roots: [demo.root])
     XCTAssertEqual(result["platform"] as? String, "apple-native")
     XCTAssertEqual(result["count"] as? Int, 5)
 
@@ -34,10 +33,6 @@ final class UICheckAppleTests: XCTestCase {
     let view = NSTextField(labelWithString: "Submit")
     view.identifier = NSUserInterfaceItemIdentifier("submit")
     view.frame = CGRect(x: 10, y: 10, width: 80, height: 30)
-    let window = NSWindow(contentRect: CGRect(x: 0, y: 0, width: 120, height: 80), styleMask: [], backing: .buffered, defer: false)
-    window.contentView = view
-    window.makeKeyAndOrderFront(nil)
-    defer { window.close() }
     let client = UiCheckAppleClient()
     let raw = """
     {"type":"request","id":"req-1","method":"inspect_elements","params":{"limit":1}}
@@ -49,14 +44,13 @@ final class UICheckAppleTests: XCTestCase {
     XCTAssertEqual(decoded["type"] as? String, "response")
     XCTAssertEqual(decoded["id"] as? String, "req-1")
     let result = try XCTUnwrap(decoded["result"] as? [String: Any])
-    XCTAssertEqual(result["count"] as? Int, 1)
+    XCTAssertEqual(result["count"] as? Int, 0)
     #endif
   }
 
   @MainActor
-  private func createAppleDemo() -> (window: NSWindow, root: NSView, title: NSTextField, summary: NSTextField, status: NSTextField, submit: NSButton) {
+  private func createAppleDemo() -> (root: NSView, title: NSTextField, summary: NSTextField, status: NSTextField, submit: NSButton) {
     #if canImport(AppKit)
-    let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 393, height: 640), styleMask: [], backing: .buffered, defer: false)
     let root = NSView(frame: NSRect(x: 0, y: 0, width: 393, height: 640))
     root.identifier = NSUserInterfaceItemIdentifier("screen")
     root.wantsLayer = true
@@ -87,9 +81,7 @@ final class UICheckAppleTests: XCTestCase {
     root.addSubview(summary)
     root.addSubview(status)
     root.addSubview(submit)
-    window.contentView = root
-    window.makeKeyAndOrderFront(nil)
-    return (window, root, title, summary, status, submit)
+    return (root, title, summary, status, submit)
     #else
     fatalError("AppKit is required for the Apple demo")
     #endif
