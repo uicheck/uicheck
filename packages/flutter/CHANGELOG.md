@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+
+- Use explicit npm registry authentication in the release workflow.
+
 ## 0.1.6
 
 - Align Flutter package release metadata with pub.dev requirements.

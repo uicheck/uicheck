@@ -34,6 +34,17 @@ jobs:
           scope: '@uicheck'
           cache: pnpm
 
+      - name: Configure npm authentication
+        run: |
+          {
+            echo "@uicheck:registry=https://registry.npmjs.org/"
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
+            echo "always-auth=true"
+          } > "$RUNNER_TEMP/.npmrc"
+          echo "NPM_CONFIG_USERCONFIG=$RUNNER_TEMP/.npmrc" >> "$GITHUB_ENV"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
@@ -41,39 +52,27 @@ jobs:
         run: pnpm run prepare:workspace
 
       - name: Verify npm authentication
-        run: npm whoami
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm whoami --registry=https://registry.npmjs.org/
 
       - name: Publish core
         working-directory: packages/core
-        run: pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --registry https://registry.npmjs.org --access public --no-git-checks
 
       - name: Publish web
         working-directory: packages/web
-        run: pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --registry https://registry.npmjs.org --access public --no-git-checks
 
       - name: Publish taro
         working-directory: packages/taro
-        run: pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --registry https://registry.npmjs.org --access public --no-git-checks
 
       - name: Publish rn
         working-directory: packages/rn
-        run: pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --registry https://registry.npmjs.org --access public --no-git-checks
 
       - name: Publish mcp
         working-directory: packages/mcp
-        run: pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --registry https://registry.npmjs.org --access public --no-git-checks
 
   publish-flutter:
     name: Publish Flutter package

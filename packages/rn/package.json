@@ -1,6 +1,6 @@
 {
   "name": "@uicheck/rn",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "React Native client for uicheck",
   "type": "module",
   "main": "./dist/index.js",

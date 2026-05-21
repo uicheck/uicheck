@@ -1,6 +1,6 @@
 {
   "name": "@uicheck/core",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Shared protocol runtime and types for uicheck clients",
   "type": "module",
   "main": "./dist/index.js",
