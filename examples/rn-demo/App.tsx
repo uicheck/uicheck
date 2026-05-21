@@ -39,7 +39,7 @@ if (socketUrl) {
   initUiCheck({
     socket: {
       url: socketUrl,
-      clientId: 'rn-native-demo',
+      clientId: 'rn-demo',
       reconnectMs: 500,
     },
     screenshot: async () => {
