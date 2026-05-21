@@ -51,9 +51,6 @@ jobs:
       - name: Build workspace dependencies
         run: pnpm run prepare:workspace
 
-      - name: Verify npm authentication
-        run: npm whoami --registry=https://registry.npmjs.org/
-
       - name: Publish core
         working-directory: packages/core
         run: pnpm publish --registry https://registry.npmjs.org --access public --no-git-checks
