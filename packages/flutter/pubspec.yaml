@@ -1,6 +1,6 @@
 name: uicheck_flutter
 description: Flutter runtime client for UI Check MCP inspection.
-version: 0.1.5
+version: 0.1.6
 homepage: https://uicheck.ai
 repository: https://github.com/uicheck/uicheck
 

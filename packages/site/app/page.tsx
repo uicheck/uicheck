@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import type { GeneratedLocale } from './generated-docs'
 
 const locales = ['zh-CN', 'en'] as const satisfies GeneratedLocale[]
@@ -181,7 +181,7 @@ function getPreferredLocale(): Locale {
   return navigator.language.toLowerCase().startsWith('zh') ? 'zh-CN' : 'en'
 }
 
-function highlightExampleLine(line: string): ReactNode {
+function highlightExampleLine(line: string) {
   if (!line) return '\u00a0'
   if (line.startsWith('#')) return <span className="home-code-comment">{line}</span>
   if (line.startsWith('npm ') || line === 'uicheck-mcp' || line.startsWith('http')) return <span className="home-code-command">{line}</span>
