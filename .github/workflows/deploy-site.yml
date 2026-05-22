@@ -3,6 +3,8 @@ name: Deploy Site
 on:
   push:
     branches: [master, main]
+    paths-ignore:
+      - '.github/**'
   workflow_dispatch:
 
 permissions:
