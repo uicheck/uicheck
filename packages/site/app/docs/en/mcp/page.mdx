@@ -10,7 +10,7 @@ description: "MCP server that communicates with uicheck clients over WebSocket"
 ## Install
 
 ```bash
-npm install -g @uicheck/mcp
+npx @uicheck/mcp
 ```
 
 Local MCP server for uicheck clients. Runtime clients connect to this server through WebSocket, and AI agents call MCP tools to request screenshots and tree-shaped element info from Web, Taro, React Native, Flutter, Apple native, or Android native apps.
@@ -18,8 +18,7 @@ Local MCP server for uicheck clients. Runtime clients connect to this server thr
 ## Start
 
 ```sh
-npm install -g @uicheck/mcp
-uicheck-mcp
+npx @uicheck/mcp
 ```
 
 Default endpoints:
@@ -68,5 +67,5 @@ Use `@uicheck/taro` for Taro Mini Program pages, `@uicheck/rn` for React Native 
 ## CLI
 
 ```sh
-uicheck-mcp --host 127.0.0.1 --port 17322
+npx @uicheck/mcp -- --host 127.0.0.1 --port 17322
 ```

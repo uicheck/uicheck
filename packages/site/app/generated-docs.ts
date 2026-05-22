@@ -26,7 +26,7 @@ export const generatedDocsByLocale = {
     {
       "id": "web",
       "name": "@uicheck/web",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "浏览器 DOM 页面客户端",
       "install": "npm install @uicheck/web",
       "source": "packages/web",
@@ -85,7 +85,7 @@ export const generatedDocsByLocale = {
     {
       "id": "taro",
       "name": "@uicheck/taro",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "Taro 小程序页面客户端",
       "install": "npm install @uicheck/taro",
       "source": "packages/taro",
@@ -145,7 +145,7 @@ export const generatedDocsByLocale = {
     {
       "id": "rn",
       "name": "@uicheck/rn",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "React Native 页面客户端",
       "install": "npm install @uicheck/rn",
       "source": "packages/rn",
@@ -219,7 +219,7 @@ export const generatedDocsByLocale = {
     {
       "id": "flutter",
       "name": "uicheck_flutter",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "Flutter 应用运行环境客户端",
       "install": "flutter pub add uicheck_flutter",
       "source": "packages/flutter",
@@ -250,7 +250,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "sh",
-          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+          "code": "npx @uicheck/mcp"
         },
         {
           "type": "paragraph",
@@ -324,7 +324,7 @@ export const generatedDocsByLocale = {
     {
       "id": "android",
       "name": "uicheck_android",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "Android 原生应用运行环境客户端",
       "install": "Android library: https://github.com/uicheck/uicheck, path packages/android",
       "source": "packages/android",
@@ -364,7 +364,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "sh",
-          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+          "code": "npx @uicheck/mcp"
         },
         {
           "type": "heading",
@@ -440,7 +440,7 @@ export const generatedDocsByLocale = {
     {
       "id": "apple",
       "name": "uicheck_apple",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "Apple 原生应用运行环境客户端",
       "install": "Swift Package: https://github.com/uicheck/uicheck, product UICheckApple",
       "source": "packages/apple",
@@ -480,7 +480,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "sh",
-          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+          "code": "npx @uicheck/mcp"
         },
         {
           "type": "heading",
@@ -550,9 +550,9 @@ export const generatedDocsByLocale = {
     {
       "id": "mcp",
       "name": "@uicheck/mcp",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "通过 WebSocket 连接 uicheck 客户端的 MCP 服务",
-      "install": "npm install -g @uicheck/mcp",
+      "install": "npx @uicheck/mcp",
       "source": "packages/mcp",
       "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/mcp/README.zh-CN.md",
       "blocks": [
@@ -568,7 +568,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "sh",
-          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+          "code": "npx @uicheck/mcp"
         },
         {
           "type": "paragraph",
@@ -653,7 +653,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "sh",
-          "code": "uicheck-mcp --host 127.0.0.1 --port 17322"
+          "code": "npx @uicheck/mcp -- --host 127.0.0.1 --port 17322"
         }
       ]
     }
@@ -662,7 +662,7 @@ export const generatedDocsByLocale = {
     {
       "id": "web",
       "name": "@uicheck/web",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "Browser DOM client for uicheck",
       "install": "npm install @uicheck/web",
       "source": "packages/web",
@@ -721,7 +721,7 @@ export const generatedDocsByLocale = {
     {
       "id": "taro",
       "name": "@uicheck/taro",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "Taro Mini Program client for uicheck",
       "install": "npm install @uicheck/taro",
       "source": "packages/taro",
@@ -781,7 +781,7 @@ export const generatedDocsByLocale = {
     {
       "id": "rn",
       "name": "@uicheck/rn",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "React Native client for uicheck",
       "install": "npm install @uicheck/rn",
       "source": "packages/rn",
@@ -855,7 +855,7 @@ export const generatedDocsByLocale = {
     {
       "id": "flutter",
       "name": "uicheck_flutter",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "Flutter runtime client for uicheck",
       "install": "flutter pub add uicheck_flutter",
       "source": "packages/flutter",
@@ -886,7 +886,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "sh",
-          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+          "code": "npx @uicheck/mcp"
         },
         {
           "type": "paragraph",
@@ -960,7 +960,7 @@ export const generatedDocsByLocale = {
     {
       "id": "android",
       "name": "uicheck_android",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "Android native runtime client for uicheck",
       "install": "Android library: https://github.com/uicheck/uicheck, path packages/android",
       "source": "packages/android",
@@ -1000,7 +1000,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "sh",
-          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+          "code": "npx @uicheck/mcp"
         },
         {
           "type": "heading",
@@ -1076,7 +1076,7 @@ export const generatedDocsByLocale = {
     {
       "id": "apple",
       "name": "uicheck_apple",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "Apple native runtime client for uicheck",
       "install": "Swift Package: https://github.com/uicheck/uicheck, product UICheckApple",
       "source": "packages/apple",
@@ -1116,7 +1116,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "sh",
-          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+          "code": "npx @uicheck/mcp"
         },
         {
           "type": "heading",
@@ -1186,9 +1186,9 @@ export const generatedDocsByLocale = {
     {
       "id": "mcp",
       "name": "@uicheck/mcp",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "description": "MCP server that communicates with uicheck clients over WebSocket",
-      "install": "npm install -g @uicheck/mcp",
+      "install": "npx @uicheck/mcp",
       "source": "packages/mcp",
       "readmeUrl": "https://github.com/uicheck/uicheck/blob/main/packages/mcp/README.md",
       "blocks": [
@@ -1204,7 +1204,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "sh",
-          "code": "npm install -g @uicheck/mcp\nuicheck-mcp"
+          "code": "npx @uicheck/mcp"
         },
         {
           "type": "paragraph",
@@ -1289,7 +1289,7 @@ export const generatedDocsByLocale = {
         {
           "type": "code",
           "lang": "sh",
-          "code": "uicheck-mcp --host 127.0.0.1 --port 17322"
+          "code": "npx @uicheck/mcp -- --host 127.0.0.1 --port 17322"
         }
       ]
     }

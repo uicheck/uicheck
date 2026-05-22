@@ -5,8 +5,7 @@
 ## 启动
 
 ```sh
-npm install -g @uicheck/mcp
-uicheck-mcp
+npx @uicheck/mcp
 ```
 
 默认端点：
@@ -55,5 +54,5 @@ Taro 小程序使用 `@uicheck/taro`，React Native 使用 `@uicheck/rn`，Flutt
 ## CLI
 
 ```sh
-uicheck-mcp --host 127.0.0.1 --port 17322
+npx @uicheck/mcp -- --host 127.0.0.1 --port 17322
 ```

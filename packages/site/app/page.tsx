@@ -61,9 +61,9 @@ const dictionaries = {
     },
     languageLabel: '语言',
     hero: {
-      eyebrow: '@uicheck/mcp + @uicheck/web',
-      title: '让 AI 看懂真实浏览器页面',
-      lead: 'UI Check 把页面截图、DOM 元素、布局盒、间距和坐标暴露给 AI。AI 可以通过 MCP 查询页面，也可以接收人工标注后的图片证据，再回到代码里修复 UI。',
+      eyebrow: '@uicheck/mcp',
+      title: '让 AI 看懂真实应用界面',
+      lead: 'UI Check 把页面截图、DOM 元素树、布局盒、间距和坐标暴露给 AI。AI 可以通过 MCP 查询真实页面，定位目标元素，再回到代码里修复 UI。',
       primary: '开始接入',
       secondary: '查看工具',
       previewLabel: 'UI Check 产品预览',
@@ -93,8 +93,7 @@ const dictionaries = {
     example: {
       title: '在 Web 端接入',
       body: `# 1. 启动 MCP 服务
-npm install -g @uicheck/mcp
-uicheck-mcp
+npx @uicheck/mcp
 
 # 2. AI 客户端配置 MCP
 http://127.0.0.1:17322/mcp
@@ -120,9 +119,9 @@ initUiCheck({
     },
     languageLabel: 'Language',
     hero: {
-      eyebrow: '@uicheck/mcp + @uicheck/web',
-      title: 'Help AI understand real browser pages',
-      lead: 'UI Check exposes screenshots, DOM elements, layout boxes, spacing, and coordinates to AI. Agents can query the live page through MCP or use manually annotated visual evidence before fixing UI code.',
+      eyebrow: '@uicheck/mcp',
+      title: 'Help AI understand real app interfaces',
+      lead: 'UI Check exposes screenshots, DOM trees, layout boxes, spacing, and coordinates to AI. Agents can query the live page through MCP, locate target elements, and then fix the UI in code.',
       primary: 'Get started',
       secondary: 'View tools',
       previewLabel: 'UI Check product preview',
@@ -152,8 +151,7 @@ initUiCheck({
     example: {
       title: 'Connect on Web',
       body: `# 1. Start the MCP server
-npm install -g @uicheck/mcp
-uicheck-mcp
+npx @uicheck/mcp
 
 # 2. Configure MCP in the AI client
 http://127.0.0.1:17322/mcp
@@ -184,7 +182,7 @@ function getPreferredLocale(): Locale {
 function highlightExampleLine(line: string) {
   if (!line) return '\u00a0'
   if (line.startsWith('#')) return <span className="home-code-comment">{line}</span>
-  if (line.startsWith('npm ') || line === 'uicheck-mcp' || line.startsWith('http')) return <span className="home-code-command">{line}</span>
+  if (line.startsWith('npm ') || line.startsWith('npx ') || line === 'uicheck-mcp' || line.startsWith('http')) return <span className="home-code-command">{line}</span>
   if (line.startsWith('import')) return <span className="home-code-keyword">{line}</span>
   if (line.includes("'ws://")) return <span className="home-code-string">{line}</span>
   if (/^\s*[{}),]+$/.test(line)) return <span className="home-code-punctuation">{line}</span>
@@ -340,8 +338,10 @@ export default function Home() {
                 <span className="status-dot" />
                 <span>AI Agent</span>
               </div>
-              <pre>{`inspect_elements({
-  selector: ".mock-grid",
+              <pre>{`list_clients()
+
+inspect_elements({
+  query: "Revenue",
   limit: 20
 })
 

@@ -10,7 +10,7 @@ description: "通过 WebSocket 连接 uicheck 客户端的 MCP 服务"
 ## Install
 
 ```bash
-npm install -g @uicheck/mcp
+npx @uicheck/mcp
 ```
 
 本地 MCP 服务，用于通过 WebSocket 连接 uicheck 运行环境客户端。Web、Taro 小程序、React Native、Flutter、Apple 原生或 Android 原生应用连接后，AI 可以调用 MCP 工具请求截图和树状元素信息。
@@ -18,8 +18,7 @@ npm install -g @uicheck/mcp
 ## 启动
 
 ```sh
-npm install -g @uicheck/mcp
-uicheck-mcp
+npx @uicheck/mcp
 ```
 
 默认端点：
@@ -68,5 +67,5 @@ Taro 小程序使用 `@uicheck/taro`，React Native 使用 `@uicheck/rn`，Flutt
 ## CLI
 
 ```sh
-uicheck-mcp --host 127.0.0.1 --port 17322
+npx @uicheck/mcp -- --host 127.0.0.1 --port 17322
 ```

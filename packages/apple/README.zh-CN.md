@@ -19,8 +19,7 @@ packages/apple
 单独启动 MCP 服务：
 
 ```sh
-npm install -g @uicheck/mcp
-uicheck-mcp
+npx @uicheck/mcp
 ```
 
 ## 使用

@@ -19,8 +19,7 @@ packages/apple
 Start the MCP server separately:
 
 ```sh
-npm install -g @uicheck/mcp
-uicheck-mcp
+npx @uicheck/mcp
 ```
 
 ## Usage

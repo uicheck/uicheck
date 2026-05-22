@@ -5,8 +5,7 @@ Local MCP server for uicheck clients. Runtime clients connect to this server thr
 ## Start
 
 ```sh
-npm install -g @uicheck/mcp
-uicheck-mcp
+npx @uicheck/mcp
 ```
 
 Default endpoints:
@@ -55,5 +54,5 @@ Use `@uicheck/taro` for Taro Mini Program pages, `@uicheck/rn` for React Native 
 ## CLI
 
 ```sh
-uicheck-mcp --host 127.0.0.1 --port 17322
+npx @uicheck/mcp -- --host 127.0.0.1 --port 17322
 ```

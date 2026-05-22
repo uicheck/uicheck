@@ -4,7 +4,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'UI Check - AI-readable browser UI inspector',
   description:
-    'UI Check connects live browser pages to AI agents through MCP, exposing screenshots, DOM layout, element metadata, and manual visual annotations.'
+    'UI Check connects live browser pages to AI agents through MCP, exposing screenshots, DOM trees, layout boxes, and element metadata.'
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

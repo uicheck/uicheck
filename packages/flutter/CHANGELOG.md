@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.8
+
+- Update documentation for npx-based MCP startup.
+
 ## 0.1.7
 
 - Use explicit npm registry authentication in the release workflow.
