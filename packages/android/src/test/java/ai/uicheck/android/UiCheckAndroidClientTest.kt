@@ -37,6 +37,21 @@ class UiCheckAndroidClientTest {
   }
 
   @Test
+  fun inspectElementsCanReturnOnlyMatchingParentTree() {
+    val demo = createAndroidDemo()
+    val client = UiCheckAndroidClient(UiCheckAndroidOptions(rootView = { demo.root }))
+
+    val result = client.inspectElements(mapOf("text" to "Submit order"))
+    val elements = flattenTree(result["tree"] as List<*>)
+
+    assertEquals(2, result["count"])
+    assertEquals(2, elements.size)
+    assertEquals("LinearLayout", (elements[0] as Map<*, *>)["tag"])
+    assertEquals("Button", (elements[1] as Map<*, *>)["tag"])
+    assertEquals("Submit order", (elements[1] as Map<*, *>)["text"])
+  }
+
+  @Test
   fun handleMcpRequestForTestingReturnsResponse() {
     val context = RuntimeEnvironment.getApplication()
     val title = TextView(context).apply {

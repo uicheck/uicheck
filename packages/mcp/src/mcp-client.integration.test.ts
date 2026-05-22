@@ -41,12 +41,15 @@ describe('MCP tool integration', () => {
     const requestPromise = waitForSocketMessage(socket)
     const toolPromise = client.callTool({
       name: 'inspect_elements',
-      arguments: { clientId: 'page-a' }
+      arguments: { clientId: 'page-a', selector: '#submit', text: 'Submit' }
     })
     const request = JSON.parse(await requestPromise) as { id: string; method: string; params: Record<string, unknown> }
     expect(request).toMatchObject({
       method: 'inspect_elements',
-      params: {}
+      params: {
+        selector: '#submit',
+        text: 'Submit'
+      }
     })
 
     socket.send(

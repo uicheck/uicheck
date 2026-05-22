@@ -28,6 +28,23 @@ final class UICheckAppleTests: XCTestCase {
   }
 
   @MainActor
+  func testInspectElementsCanReturnOnlyMatchingParentTree() async throws {
+    #if canImport(AppKit)
+    let demo = createAppleDemo()
+    let client = UiCheckAppleClient()
+
+    let result = client.inspectElementsForTesting(["testId": "submit-button"], roots: [demo.root])
+    XCTAssertEqual(result["count"] as? Int, 2)
+    let tree = try XCTUnwrap(result["tree"] as? [[String: Any]])
+    let elements = flattenTree(tree)
+    XCTAssertEqual(elements.count, 2)
+    XCTAssertEqual(elements[0]["tag"] as? String, "NSView")
+    XCTAssertEqual(elements[1]["tag"] as? String, "NSButton")
+    XCTAssertEqual(elements[1]["testID"] as? String, "submit-button")
+    #endif
+  }
+
+  @MainActor
   func testHandlesMcpToolRequest() async throws {
     #if canImport(AppKit)
     let view = NSTextField(labelWithString: "Submit")

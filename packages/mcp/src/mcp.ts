@@ -214,7 +214,16 @@ export class UiCheckMcpServer {
         inputSchema: {
           ...clientArgs,
           limit: z.number().int().min(1).max(500).optional().describe('Maximum elements to return. Defaults to 80.'),
-          includeHidden: z.boolean().optional().describe('Include hidden or zero-size elements. Defaults to false.')
+          includeHidden: z.boolean().optional().describe('Include hidden or zero-size elements. Defaults to false.'),
+          query: z.string().optional().describe('Search across id, test id, text, accessibility label, role, tag, href, and classes.'),
+          selector: z.string().optional().describe('Find nodes by a simple selector such as #id, .class, tag, or [data-testid=value].'),
+          id: z.string().optional().describe('Find nodes whose id contains this value.'),
+          testId: z.string().optional().describe('Find nodes whose test id contains this value.'),
+          text: z.string().optional().describe('Find nodes whose text contains this value.'),
+          accessibilityLabel: z.string().optional().describe('Find nodes whose accessibility label contains this value.'),
+          className: z.string().optional().describe('Find nodes whose class list contains this value.'),
+          role: z.string().optional().describe('Find nodes whose role contains this value.'),
+          tag: z.string().optional().describe('Find nodes whose tag contains this value.')
         },
         annotations: {
           readOnlyHint: true,
@@ -226,7 +235,16 @@ export class UiCheckMcpServer {
           'inspect_elements',
           {
             limit: args.limit,
-            includeHidden: args.includeHidden
+            includeHidden: args.includeHidden,
+            query: args.query,
+            selector: args.selector,
+            id: args.id,
+            testId: args.testId,
+            text: args.text,
+            accessibilityLabel: args.accessibilityLabel,
+            className: args.className,
+            role: args.role,
+            tag: args.tag
           },
           args.clientId,
           args.timeoutMs

@@ -1,4 +1,4 @@
-import { connectUiCheckRuntime, createElementTree } from '@uicheck/core'
+import { connectUiCheckRuntime, countElementTree, createFilteredElementTree, normalizeElementSearch } from '@uicheck/core'
 import type { UiCheckSocketTransport } from '@uicheck/core/protocol'
 import type { UiCheckClientSnapshot, UiCheckScreenshotResult, UiCheckSocketOptions, UiCheckToolAdapter } from '@uicheck/core'
 
@@ -172,17 +172,18 @@ async function inspectTaroElements(
 ): Promise<Record<string, unknown>> {
   const includeHidden = params.includeHidden === true
   const limit = clampLimit(params.limit)
+  const search = normalizeElementSearch(params)
   const { nodes, scroll } = await queryElements(taro, '*')
   const elements = nodes
     .map((node) => normalizeNode(node))
     .filter((element) => includeHidden || element.visible)
-    .slice(0, limit)
+  const tree = createFilteredElementTree(search ? elements : elements.slice(0, limit), search)
 
   return {
     platform: 'taro',
     viewport: getViewportInfo(taro, scroll),
-    count: elements.length,
-    tree: createElementTree(elements)
+    count: countElementTree(tree),
+    tree
   }
 }
 

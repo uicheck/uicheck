@@ -159,16 +159,17 @@ public final class UiCheckAppleClient: NSObject, URLSessionWebSocketDelegate, @u
   private func inspectElements(_ params: [String: Any], roots: [Any]) -> [String: Any] {
     let includeHidden = params["includeHidden"] as? Bool == true
     let limit = clampLimit(params["limit"])
+    let search = elementSearch(params)
     let elements = collectAppleElements(roots)
       .filter { includeHidden || $0.visible }
-      .prefix(limit)
       .map { $0.jsonValue }
+    let tree = filterElementTree(createElementTree(search == nil ? Array(elements.prefix(limit)) : elements), search: search)
 
     return removeNilValues([
       "platform": "apple-native",
       "viewport": defaultAppleViewportInfo().jsonValue,
-      "count": elements.count,
-      "tree": createElementTree(Array(elements))
+      "count": countElementTree(tree),
+      "tree": tree
     ])
   }
 
@@ -329,6 +330,93 @@ private func createElementTree(_ elements: [[String: Any]]) -> [[String: Any]] {
   }
 
   return roots.map(build)
+}
+
+private func elementSearch(_ params: [String: Any]) -> [String: String]? {
+  var search: [String: String] = [:]
+  for key in ["query", "selector", "id", "testId", "text", "accessibilityLabel", "className", "role", "tag"] {
+    if let value = params[key] as? String {
+      let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !trimmed.isEmpty {
+        search[key] = trimmed
+      }
+    }
+  }
+  return search.isEmpty ? nil : search
+}
+
+private func filterElementTree(_ tree: [[String: Any]], search: [String: String]?) -> [[String: Any]] {
+  guard let search else { return tree }
+  return tree.compactMap { node in
+    let children = node["children"] as? [[String: Any]] ?? []
+    let filteredChildren = filterElementTree(children, search: search)
+    if matchesElementSearch(node, search: search) || !filteredChildren.isEmpty {
+      var next = node
+      next["children"] = filteredChildren
+      return next
+    }
+    return nil
+  }
+}
+
+private func countElementTree(_ tree: [[String: Any]]) -> Int {
+  tree.reduce(0) { count, node in
+    count + 1 + countElementTree(node["children"] as? [[String: Any]] ?? [])
+  }
+}
+
+private func matchesElementSearch(_ element: [String: Any], search: [String: String]) -> Bool {
+  if let query = search["query"], !matchesAnyText(element, query: query) { return false }
+  if let selector = search["selector"], !matchesSelectorText(element, selector: selector) { return false }
+  if let id = search["id"], !matchesField(element["id"], query: id) { return false }
+  if let testId = search["testId"], !matchesField(element["testId"] ?? element["testID"], query: testId) { return false }
+  if let text = search["text"], !matchesField(element["text"], query: text) { return false }
+  if let label = search["accessibilityLabel"], !matchesField(element["accessibilityLabel"] ?? element["ariaLabel"] ?? element["semanticsLabel"], query: label) { return false }
+  if let className = search["className"], !matchesClasses(element["classes"], query: className) { return false }
+  if let role = search["role"], !matchesField(element["role"], query: role) { return false }
+  if let tag = search["tag"], !matchesField(element["tag"], query: tag) { return false }
+  return true
+}
+
+private func matchesSelectorText(_ element: [String: Any], selector: String) -> Bool {
+  let value = selector.trimmingCharacters(in: .whitespacesAndNewlines)
+  if value.isEmpty { return true }
+  if value.hasPrefix("#") { return matchesField(element["id"], query: String(value.dropFirst())) }
+  if value.hasPrefix(".") { return matchesClasses(element["classes"], query: String(value.dropFirst())) }
+  if value.hasPrefix("[data-testid=") || value.hasPrefix("[data-test-id=") {
+    let testId = value
+      .replacingOccurrences(of: #"^\[data-test-?id=['"]?"#, with: "", options: .regularExpression)
+      .replacingOccurrences(of: #"['"]?\]$"#, with: "", options: .regularExpression)
+    return matchesField(element["testId"] ?? element["testID"], query: testId)
+  }
+  return matchesField(element["tag"], query: value) || matchesField(element["id"], query: value) || matchesClasses(element["classes"], query: value)
+}
+
+private func matchesAnyText(_ element: [String: Any], query: String) -> Bool {
+  let values: [Any?] = [
+    element["id"],
+    element["testId"],
+    element["testID"],
+    element["text"],
+    element["accessibilityLabel"],
+    element["ariaLabel"],
+    element["semanticsLabel"],
+    element["role"],
+    element["tag"]
+  ]
+  return values.contains { matchesField($0, query: query) } || matchesClasses(element["classes"], query: query)
+}
+
+private func matchesField(_ value: Any?, query: String) -> Bool {
+  guard let value else { return false }
+  return String(describing: value).range(of: query, options: [.caseInsensitive]) != nil
+}
+
+private func matchesClasses(_ value: Any?, query: String) -> Bool {
+  if let classes = value as? [Any] {
+    return classes.contains { matchesField($0, query: query) }
+  }
+  return matchesField(value, query: query)
 }
 
 private func treeBox(_ raw: [String: Any]?) -> TreeBox? {

@@ -1,4 +1,4 @@
-import { connectUiCheckRuntime, createElementTree } from '@uicheck/core'
+import { connectUiCheckRuntime, countElementTree, createFilteredElementTree, normalizeElementSearch } from '@uicheck/core'
 import type { UiCheckSocketTransport } from '@uicheck/core/protocol'
 import type { UiCheckClientSnapshot, UiCheckScreenshotResult, UiCheckSocketOptions, UiCheckToolAdapter } from '@uicheck/core'
 
@@ -404,17 +404,18 @@ async function inspectReactNativeElements(
 ): Promise<Record<string, unknown>> {
   const includeHidden = params.includeHidden === true
   const limit = clampLimit(params.limit)
+  const search = normalizeElementSearch(params)
   const elements = (await Promise.all([...registry].map((item) => normalizeElement(reactNative, item))))
     .filter((element): element is ReactNativeElementInfo => Boolean(element))
     .filter((element) => includeHidden || element.visible)
-    .slice(0, limit)
+  const tree = createFilteredElementTree(search ? elements : elements.slice(0, limit), search)
 
   return {
     platform: 'react-native',
     os: reactNative.Platform?.OS,
     viewport: getViewportInfo(reactNative),
-    count: elements.length,
-    tree: createElementTree(elements)
+    count: countElementTree(tree),
+    tree
   }
 }
 

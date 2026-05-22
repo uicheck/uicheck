@@ -27,6 +27,12 @@ void main() {
     final inspectedJson = prettyJson(inspected);
     expect(inspectedJson, contains('Runtime check 34'));
     expect(inspectedJson, contains('Submit order'));
+
+    final searched = client.inspectElements({'text': 'Submit order'});
+    expect(searched['count'] as int, greaterThanOrEqualTo(1));
+    final searchedJson = prettyJson(searched);
+    expect(searchedJson, contains('Submit order'));
+    expect(searchedJson, isNot(contains('Runtime check 34')));
   });
 }
 

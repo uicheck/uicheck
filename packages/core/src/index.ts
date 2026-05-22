@@ -7,5 +7,5 @@ export type {
   UiCheckToolAdapter,
   UiCheckViewportInfo
 } from './types'
-export { createElementTree } from './tree'
-export type { UiCheckBoxLike, UiCheckTreeElement } from './tree'
+export { countElementTree, createElementTree, createFilteredElementTree, elementMatchesSearch, flattenElementTree, normalizeElementSearch } from './tree'
+export type { UiCheckBoxLike, UiCheckElementSearch, UiCheckTreeElement, UiCheckTreeNode } from './tree'

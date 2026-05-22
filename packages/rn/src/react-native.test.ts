@@ -126,6 +126,59 @@ describe('createReactNativeUiCheckAdapter', () => {
       ]
     })
   })
+
+  it('filters inspect results to the matching node parent tree', async () => {
+    const React = createReact()
+    initUiCheck({
+      ...createReactNative(),
+      WebSocket: TestWebSocket,
+      React,
+      socket: { enabled: false }
+    } as ReactNativeUiCheckOptions)
+    const page = React.createElement('View', {
+      nativeID: 'page-root',
+      children: 'Page'
+    }) as { props: { ref: (value: unknown) => void } }
+    const submit = React.createElement('Pressable', {
+      testID: 'submit-order',
+      children: 'Submit order'
+    }) as { props: { ref: (value: unknown) => void } }
+    const ignored = React.createElement('Text', {
+      nativeID: 'ignored',
+      children: 'Ignored'
+    }) as { props: { ref: (value: unknown) => void } }
+    page.props.ref({
+      measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) => callback(0, 0, 300, 300)
+    })
+    submit.props.ref({
+      measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) => callback(20, 20, 120, 40)
+    })
+    ignored.props.ref({
+      measureInWindow: (callback: (x: number, y: number, width: number, height: number) => void) => callback(20, 80, 120, 20)
+    })
+
+    const adapter = createReactNativeUiCheckAdapter(createReactNative())
+    const result = await adapter.inspectElements({ testId: 'submit-order' })
+    page.props.ref(null)
+    submit.props.ref(null)
+    ignored.props.ref(null)
+
+    expect(result).toMatchObject({
+      count: 2,
+      tree: [
+        {
+          id: 'page-root',
+          children: [
+            {
+              tag: 'Pressable',
+              testID: 'submit-order',
+              children: []
+            }
+          ]
+        }
+      ]
+    })
+  })
 })
 
 function createReact(): ReactNativeReactLike {

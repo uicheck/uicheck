@@ -40,4 +40,13 @@ export interface CapturePageRequest extends UiCheckClientRequest {
 export interface InspectElementsRequest extends UiCheckClientRequest {
   limit?: number
   includeHidden?: boolean
+  query?: string
+  selector?: string
+  id?: string
+  testId?: string
+  text?: string
+  accessibilityLabel?: string
+  className?: string
+  role?: string
+  tag?: string
 }

@@ -142,19 +142,20 @@ class UiCheckAndroidClient(
   fun inspectElements(params: Map<String, Any?> = emptyMap()): Map<String, Any?> {
     val includeHidden = params["includeHidden"] == true
     val limit = clampLimit(params["limit"])
+    val search = elementSearch(params)
     val root = resolveRootView()
     val elements = collectElements(root)
       .asSequence()
       .filter { includeHidden || it.visible }
-      .take(limit)
       .map { it.toMap() }
       .toList()
+    val tree = filterElementTree(createElementTree(if (search == null) elements.take(limit) else elements), search)
 
     return compactMap(
       "platform" to "android-native",
       "viewport" to viewportInfo(root).toMap(),
-      "count" to elements.size,
-      "tree" to createElementTree(elements)
+      "count" to countElementTree(tree),
+      "tree" to tree
     )
   }
 
@@ -362,6 +363,76 @@ private fun createElementTree(elements: List<Map<String, Any?>>): List<Map<Strin
 
   return roots.map(::build)
 }
+
+private fun elementSearch(params: Map<String, Any?>): Map<String, String>? {
+  val search = mutableMapOf<String, String>()
+  listOf("query", "selector", "id", "testId", "text", "accessibilityLabel", "className", "role", "tag").forEach { key ->
+    val value = params[key] as? String
+    if (!value.isNullOrBlank()) search[key] = value.trim()
+  }
+  return search.ifEmpty { null }
+}
+
+private fun filterElementTree(tree: List<Map<String, Any?>>, search: Map<String, String>?): List<Map<String, Any?>> {
+  if (search == null) return tree
+  return tree.mapNotNull { node ->
+    val children = (node["children"] as? List<*>)?.filterIsInstance<Map<String, Any?>>() ?: emptyList()
+    val filteredChildren = filterElementTree(children, search)
+    if (matchesElementSearch(node, search) || filteredChildren.isNotEmpty()) node + mapOf("children" to filteredChildren) else null
+  }
+}
+
+private fun countElementTree(tree: List<Map<String, Any?>>): Int =
+  tree.sumOf { node ->
+    1 + countElementTree((node["children"] as? List<*>)?.filterIsInstance<Map<String, Any?>>() ?: emptyList())
+  }
+
+private fun matchesElementSearch(element: Map<String, Any?>, search: Map<String, String>): Boolean {
+  search["query"]?.let { if (!matchesAnyText(element, it)) return false }
+  search["selector"]?.let { if (!matchesSelectorText(element, it)) return false }
+  search["id"]?.let { if (!matchesField(element["id"], it)) return false }
+  search["testId"]?.let { if (!matchesField(element["testId"] ?: element["testID"], it)) return false }
+  search["text"]?.let { if (!matchesField(element["text"], it)) return false }
+  search["accessibilityLabel"]?.let { if (!matchesField(element["accessibilityLabel"] ?: element["ariaLabel"] ?: element["semanticsLabel"], it)) return false }
+  search["className"]?.let { if (!matchesClasses(element["classes"], it)) return false }
+  search["role"]?.let { if (!matchesField(element["role"], it)) return false }
+  search["tag"]?.let { if (!matchesField(element["tag"], it)) return false }
+  return true
+}
+
+private fun matchesSelectorText(element: Map<String, Any?>, selector: String): Boolean {
+  val value = selector.trim()
+  if (value.isEmpty()) return true
+  if (value.startsWith("#")) return matchesField(element["id"], value.drop(1))
+  if (value.startsWith(".")) return matchesClasses(element["classes"], value.drop(1))
+  if (value.startsWith("[data-testid=") || value.startsWith("[data-test-id=")) {
+    val testId = value.replace(Regex("^\\[data-test-?id=['\\\"]?"), "").replace(Regex("['\\\"]?]$"), "")
+    return matchesField(element["testId"] ?: element["testID"], testId)
+  }
+  return matchesField(element["tag"], value) || matchesField(element["id"], value) || matchesClasses(element["classes"], value)
+}
+
+private fun matchesAnyText(element: Map<String, Any?>, query: String): Boolean =
+  listOf(
+    element["id"],
+    element["testId"],
+    element["testID"],
+    element["text"],
+    element["accessibilityLabel"],
+    element["ariaLabel"],
+    element["semanticsLabel"],
+    element["role"],
+    element["tag"]
+  ).any { matchesField(it, query) } || matchesClasses(element["classes"], query)
+
+private fun matchesField(value: Any?, query: String): Boolean =
+  value?.toString()?.contains(query, ignoreCase = true) == true
+
+private fun matchesClasses(value: Any?, query: String): Boolean =
+  when (value) {
+    is List<*> -> value.any { matchesField(it, query) }
+    else -> matchesField(value, query)
+  }
 
 private fun treeBox(raw: Map<*, *>?): TreeBox? {
   val box = raw ?: return null

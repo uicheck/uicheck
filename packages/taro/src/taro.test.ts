@@ -101,4 +101,51 @@ describe('createTaroUiCheckAdapter', () => {
     }
   })
 
+  it('filters inspect results to the matching node parent tree', async () => {
+    const adapter = createTaroUiCheckAdapter({ taro: createTaro([
+      {
+        id: 'page',
+        dataset: { uicheckTag: 'view' },
+        left: 0,
+        top: 0,
+        width: 300,
+        height: 300
+      },
+      {
+        id: 'submit',
+        dataset: { uicheckTag: 'button', text: 'Submit order' },
+        left: 20,
+        top: 20,
+        width: 120,
+        height: 40
+      },
+      {
+        id: 'ignored',
+        dataset: { uicheckTag: 'text', text: 'Ignored' },
+        left: 20,
+        top: 80,
+        width: 120,
+        height: 20
+      }
+    ]) })
+
+    const result = await adapter.inspectElements({ text: 'Submit' })
+
+    expect(result).toMatchObject({
+      count: 2,
+      tree: [
+        {
+          id: 'page',
+          children: [
+            {
+              id: 'submit',
+              text: 'Submit order',
+              children: []
+            }
+          ]
+        }
+      ]
+    })
+  })
+
 })

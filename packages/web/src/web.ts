@@ -1,5 +1,5 @@
 import html2canvas from 'html2canvas'
-import { connectUiCheckRuntime, createElementTree } from '@uicheck/core'
+import { connectUiCheckRuntime, countElementTree, createFilteredElementTree, normalizeElementSearch } from '@uicheck/core'
 import type { UiCheckSocketTransport } from '@uicheck/core/protocol'
 import type { UiCheckClientSnapshot, UiCheckScreenshotResult, UiCheckToolAdapter } from '@uicheck/core'
 import type { ResolvedUiCheckOptions, UiCheckOptions } from './types'
@@ -494,6 +494,7 @@ function getSerializableElementInfo(element: Element): Record<string, unknown> {
 function inspectSerializableElements(options: ResolvedUiCheckOptions, params: Record<string, unknown> = {}): Record<string, unknown> {
   const limit = typeof params.limit === 'number' ? Math.min(Math.max(Math.floor(params.limit), 1), 500) : 80
   const includeHidden = params.includeHidden === true
+  const search = normalizeElementSearch(params)
   const root = document.body
   if (!root) {
     return {
@@ -511,14 +512,15 @@ function inspectSerializableElements(options: ResolvedUiCheckOptions, params: Re
     const info = getSerializableElementInfo(element)
     if (!includeHidden && info.visible !== true) continue
     elements.push(info)
-    if (elements.length >= limit) break
+    if (!search && elements.length >= limit) break
   }
+  const tree = createFilteredElementTree(search ? elements : elements.slice(0, limit), search)
 
   return {
     platform: 'web',
     viewport: getViewportInfo(),
-    count: elements.length,
-    tree: createElementTree(elements)
+    count: countElementTree(tree),
+    tree
   }
 }
 

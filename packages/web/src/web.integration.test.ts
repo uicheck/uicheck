@@ -110,6 +110,27 @@ describe('web client integration', () => {
         }
       ]
     })
+    const searched = await client.callTool({
+      name: 'inspect_elements',
+      arguments: { clientId: 'web-real', testId: 'submit-button' }
+    })
+    const searchedPayload = getJsonToolPayload(searched)
+    expect(searchedPayload).toMatchObject({
+      count: 2,
+      tree: [
+        {
+          tag: 'main',
+          id: 'app',
+          children: [
+            {
+              tag: 'button',
+              testId: 'submit-button',
+              children: []
+            }
+          ]
+        }
+      ]
+    })
 
     const captured = await client.callTool({
       name: 'capture_page',

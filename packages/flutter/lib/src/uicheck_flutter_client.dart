@@ -240,17 +240,18 @@ class UiCheckFlutterClient with WidgetsBindingObserver {
   Map<String, Object?> inspectElements([Map<String, Object?> params = const {}]) {
     final includeHidden = params['includeHidden'] == true;
     final limit = _clampLimit(params['limit']);
+    final search = _elementSearch(params);
     final elements = _collectRenderElements()
         .where((element) => includeHidden || element.visible)
-        .take(limit)
         .map((element) => element.toJson())
         .toList();
+    final tree = _filterElementTree(_createElementTree(search == null ? elements.take(limit).toList() : elements), search);
 
     return {
       'platform': 'flutter',
       'viewport': _viewportInfo().toJson(),
-      'count': elements.length,
-      'tree': _createElementTree(elements),
+      'count': _countElementTree(tree),
+      'tree': tree,
     };
   }
 
@@ -370,6 +371,106 @@ List<Map<String, Object?>> _createElementTree(List<Map<String, Object?>> element
   }
 
   return roots;
+}
+
+Map<String, String>? _elementSearch(Map<String, Object?> params) {
+  final search = <String, String>{};
+  for (final key in ['query', 'selector', 'id', 'testId', 'text', 'accessibilityLabel', 'className', 'role', 'tag']) {
+    final value = params[key];
+    if (value is String && value.trim().isNotEmpty) search[key] = value.trim();
+  }
+  return search.isEmpty ? null : search;
+}
+
+List<Map<String, Object?>> _filterElementTree(List<Map<String, Object?>> tree, Map<String, String>? search) {
+  if (search == null) return tree;
+  final result = <Map<String, Object?>>[];
+  for (final node in tree) {
+    final rawChildren = node['children'];
+    final children = rawChildren is List
+        ? _filterElementTree(rawChildren.whereType<Map<String, Object?>>().toList(), search)
+        : <Map<String, Object?>>[];
+    if (_matchesElementSearch(node, search) || children.isNotEmpty) {
+      result.add({...node, 'children': children});
+    }
+  }
+  return result;
+}
+
+int _countElementTree(List<Map<String, Object?>> tree) {
+  var count = 0;
+  for (final node in tree) {
+    count += 1;
+    final children = node['children'];
+    if (children is List) count += _countElementTree(children.whereType<Map<String, Object?>>().toList());
+  }
+  return count;
+}
+
+bool _matchesElementSearch(Map<String, Object?> element, Map<String, String> search) {
+  if (search['query'] case final query?) {
+    if (!_matchesAnyText(element, query)) return false;
+  }
+  if (search['selector'] case final selector?) {
+    if (!_matchesSelectorText(element, selector)) return false;
+  }
+  if (search['id'] case final id?) {
+    if (!_matchesField(element['id'], id)) return false;
+  }
+  if (search['testId'] case final testId?) {
+    if (!_matchesField(element['testId'] ?? element['testID'], testId)) return false;
+  }
+  if (search['text'] case final text?) {
+    if (!_matchesField(element['text'], text)) return false;
+  }
+  if (search['accessibilityLabel'] case final label?) {
+    if (!_matchesField(element['accessibilityLabel'] ?? element['ariaLabel'] ?? element['semanticsLabel'], label)) return false;
+  }
+  if (search['className'] case final className?) {
+    if (!_matchesClasses(element['classes'], className)) return false;
+  }
+  if (search['role'] case final role?) {
+    if (!_matchesField(element['role'], role)) return false;
+  }
+  if (search['tag'] case final tag?) {
+    if (!_matchesField(element['tag'], tag)) return false;
+  }
+  return true;
+}
+
+bool _matchesSelectorText(Map<String, Object?> element, String selector) {
+  final value = selector.trim();
+  if (value.isEmpty) return true;
+  if (value.startsWith('#')) return _matchesField(element['id'], value.substring(1));
+  if (value.startsWith('.')) return _matchesClasses(element['classes'], value.substring(1));
+  if (value.startsWith('[data-testid=') || value.startsWith('[data-test-id=')) {
+    final testId = value.replaceFirst(RegExp("^\\[data-test-?id=[\"']?"), '').replaceFirst(RegExp("[\"']?\\]\$"), '');
+    return _matchesField(element['testId'] ?? element['testID'], testId);
+  }
+  return _matchesField(element['tag'], value) || _matchesField(element['id'], value) || _matchesClasses(element['classes'], value);
+}
+
+bool _matchesAnyText(Map<String, Object?> element, String query) {
+  final values = <Object?>[
+    element['id'],
+    element['testId'],
+    element['testID'],
+    element['text'],
+    element['accessibilityLabel'],
+    element['ariaLabel'],
+    element['semanticsLabel'],
+    element['role'],
+    element['tag'],
+    ...(element['classes'] is List ? element['classes'] as List : const []),
+  ];
+  return values.any((value) => _matchesField(value, query));
+}
+
+bool _matchesField(Object? value, String query) => value != null && value.toString().toLowerCase().contains(query.toLowerCase());
+
+bool _matchesClasses(Object? value, String query) {
+  if (value is List) return value.any((item) => _matchesField(item, query));
+  return _matchesField(value, query);
 }
 
 _TreeBox? _normalizeTreeBox(Object? raw) {
