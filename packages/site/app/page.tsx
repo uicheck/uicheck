@@ -68,7 +68,7 @@ const dictionaries = {
       secondary: '查看工具',
       previewLabel: 'UI Check 产品预览',
       agentPromptLabel: '给 Agent',
-      agentPrompt: '安装 uicheck.ai，并使用 uicheck 检查元素',
+      agentPrompt: '查看 uicheck.ai，并使用 uicheck 检查元素',
       copyPrompt: '复制',
       copiedPrompt: '已复制',
       copyFailedPrompt: '复制失败'
@@ -127,7 +127,7 @@ initUiCheck({
       secondary: 'View tools',
       previewLabel: 'UI Check product preview',
       agentPromptLabel: 'For agents',
-      agentPrompt: 'Install uicheck.ai and use uicheck to inspect elements',
+      agentPrompt: 'View uicheck.ai and use uicheck to inspect elements',
       copyPrompt: 'Copy',
       copiedPrompt: 'Copied',
       copyFailedPrompt: 'Failed'
