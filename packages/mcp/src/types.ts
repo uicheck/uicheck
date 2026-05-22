@@ -42,6 +42,9 @@ export interface InspectElementsRequest extends UiCheckClientRequest {
   includeHidden?: boolean
   query?: string
   selector?: string
+  styleName?: string
+  styleValue?: string
+  styles?: Record<string, string>
   id?: string
   testId?: string
   text?: string

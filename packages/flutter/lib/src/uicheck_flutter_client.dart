@@ -373,16 +373,26 @@ List<Map<String, Object?>> _createElementTree(List<Map<String, Object?>> element
   return roots;
 }
 
-Map<String, String>? _elementSearch(Map<String, Object?> params) {
-  final search = <String, String>{};
-  for (final key in ['query', 'selector', 'id', 'testId', 'text', 'accessibilityLabel', 'className', 'role', 'tag']) {
+Map<String, Object?>? _elementSearch(Map<String, Object?> params) {
+  final search = <String, Object?>{};
+  for (final key in ['query', 'selector', 'styleName', 'styleValue', 'id', 'testId', 'text', 'accessibilityLabel', 'className', 'role', 'tag']) {
     final value = params[key];
     if (value is String && value.trim().isNotEmpty) search[key] = value.trim();
+  }
+  final styles = params['styles'];
+  if (styles is Map) {
+    final normalized = <String, String>{};
+    for (final entry in styles.entries) {
+      final key = entry.key.toString().trim();
+      final value = entry.value;
+      if (key.isNotEmpty && value is String && value.trim().isNotEmpty) normalized[key] = value.trim();
+    }
+    if (normalized.isNotEmpty) search['styles'] = normalized;
   }
   return search.isEmpty ? null : search;
 }
 
-List<Map<String, Object?>> _filterElementTree(List<Map<String, Object?>> tree, Map<String, String>? search) {
+List<Map<String, Object?>> _filterElementTree(List<Map<String, Object?>> tree, Map<String, Object?>? search) {
   if (search == null) return tree;
   final result = <Map<String, Object?>>[];
   for (final node in tree) {
@@ -407,32 +417,40 @@ int _countElementTree(List<Map<String, Object?>> tree) {
   return count;
 }
 
-bool _matchesElementSearch(Map<String, Object?> element, Map<String, String> search) {
-  if (search['query'] case final query?) {
+bool _matchesElementSearch(Map<String, Object?> element, Map<String, Object?> search) {
+  if (search['query'] case final String query) {
     if (!_matchesAnyText(element, query)) return false;
   }
-  if (search['selector'] case final selector?) {
+  if (search['selector'] case final String selector) {
     if (!_matchesSelectorText(element, selector)) return false;
   }
-  if (search['id'] case final id?) {
+  if (search['styleName'] case final String styleName) {
+    if (!_matchesStyle(element, styleName, search['styleValue'] as String?)) return false;
+  }
+  if (search['styles'] case final Map<String, String> styles) {
+    for (final entry in styles.entries) {
+      if (!_matchesStyle(element, entry.key, entry.value)) return false;
+    }
+  }
+  if (search['id'] case final String id) {
     if (!_matchesField(element['id'], id)) return false;
   }
-  if (search['testId'] case final testId?) {
+  if (search['testId'] case final String testId) {
     if (!_matchesField(element['testId'] ?? element['testID'], testId)) return false;
   }
-  if (search['text'] case final text?) {
+  if (search['text'] case final String text) {
     if (!_matchesField(element['text'], text)) return false;
   }
-  if (search['accessibilityLabel'] case final label?) {
+  if (search['accessibilityLabel'] case final String label) {
     if (!_matchesField(element['accessibilityLabel'] ?? element['ariaLabel'] ?? element['semanticsLabel'], label)) return false;
   }
-  if (search['className'] case final className?) {
+  if (search['className'] case final String className) {
     if (!_matchesClasses(element['classes'], className)) return false;
   }
-  if (search['role'] case final role?) {
+  if (search['role'] case final String role) {
     if (!_matchesField(element['role'], role)) return false;
   }
-  if (search['tag'] case final tag?) {
+  if (search['tag'] case final String tag) {
     if (!_matchesField(element['tag'], tag)) return false;
   }
   return true;
@@ -464,6 +482,32 @@ bool _matchesAnyText(Map<String, Object?> element, String query) {
     ...(element['classes'] is List ? element['classes'] as List : const []),
   ];
   return values.any((value) => _matchesField(value, query));
+}
+
+bool _matchesStyle(Map<String, Object?> element, String name, String? query) {
+  final value = _styleValue(element, name);
+  if (query == null || query.isEmpty) return value != null;
+  return _matchesField(value, query);
+}
+
+Object? _styleValue(Map<String, Object?> element, String name) {
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) return null;
+  final style = element['style'];
+  if (style is Map) {
+    final value = _pathValue(style.cast<String, Object?>(), trimmed);
+    if (value != null) return value;
+  }
+  return null;
+}
+
+Object? _pathValue(Map<String, Object?> source, String path) {
+  Object? current = source;
+  for (final part in path.split('.').where((part) => part.isNotEmpty)) {
+    if (current is! Map) return null;
+    current = current[part];
+  }
+  return current;
 }
 
 bool _matchesField(Object? value, String query) => value != null && value.toString().toLowerCase().contains(query.toLowerCase());

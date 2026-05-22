@@ -16,6 +16,9 @@ export interface UiCheckTreeElement {
 export interface UiCheckElementSearch {
   query?: string
   selector?: string
+  styleName?: string
+  styleValue?: string
+  styles?: Record<string, string>
   id?: string
   testId?: string
   text?: string
@@ -63,10 +66,12 @@ export function createFilteredElementTree<T extends { box?: UiCheckBoxLike }>(
 
 export function normalizeElementSearch(params: Record<string, unknown> = {}): UiCheckElementSearch | undefined {
   const search: UiCheckElementSearch = {}
-  for (const key of ['query', 'selector', 'id', 'testId', 'text', 'accessibilityLabel', 'className', 'role', 'tag'] as const) {
+  for (const key of ['query', 'selector', 'styleName', 'styleValue', 'id', 'testId', 'text', 'accessibilityLabel', 'className', 'role', 'tag'] as const) {
     const value = params[key]
     if (typeof value === 'string' && value.trim()) search[key] = value.trim()
   }
+  const styles = normalizeSearchMap(params.styles)
+  if (styles) search.styles = styles
   return hasSearch(search) ? search : undefined
 }
 
@@ -94,6 +99,12 @@ export function elementMatchesSearch(element: Record<string, unknown>, search: U
   if (!hasSearch(search)) return true
   if (search.query && !matchesAnyText(element, search.query)) return false
   if (search.selector && !matchesSelectorText(element, search.selector)) return false
+  if (search.styleName && !matchesStyle(element, search.styleName, search.styleValue)) return false
+  if (search.styles) {
+    for (const [name, value] of Object.entries(search.styles)) {
+      if (!matchesStyle(element, name, value)) return false
+    }
+  }
   if (search.id && !matchesField(element.id, search.id)) return false
   if (search.testId && !matchesField(element.testId ?? element.testID, search.testId)) return false
   if (search.text && !matchesField(element.text, search.text)) return false
@@ -129,6 +140,9 @@ function hasSearch(search: UiCheckElementSearch | undefined): search is UiCheckE
     search &&
       (search.query ||
         search.selector ||
+        search.styleName ||
+        search.styleValue ||
+        search.styles ||
         search.id ||
         search.testId ||
         search.text ||
@@ -137,6 +151,16 @@ function hasSearch(search: UiCheckElementSearch | undefined): search is UiCheckE
         search.role ||
         search.tag)
   )
+}
+
+function normalizeSearchMap(value: unknown): Record<string, string> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const entries: Record<string, string> = {}
+  for (const [key, raw] of Object.entries(value)) {
+    if (!key.trim()) continue
+    if (typeof raw === 'string' && raw.trim()) entries[key.trim()] = raw.trim()
+  }
+  return Object.keys(entries).length > 0 ? entries : undefined
 }
 
 function matchesSelectorText(element: Record<string, unknown>, selector: string): boolean {
@@ -165,6 +189,28 @@ function matchesAnyText(element: Record<string, unknown>, query: string): boolea
     element.href,
     ...(Array.isArray(element.classes) ? element.classes : [])
   ].some((value) => matchesField(value, query))
+}
+
+function matchesStyle(element: Record<string, unknown>, name: string, query: string | undefined): boolean {
+  const value = getStyleValue(element, name)
+  if (query === undefined || query === '') return value !== undefined && value !== null
+  return matchesField(value, query)
+}
+
+function getStyleValue(element: Record<string, unknown>, name: string): unknown {
+  const style = element.style
+  if (!style || typeof style !== 'object' || Array.isArray(style)) return undefined
+  return getPathValue(style as Record<string, unknown>, name.trim())
+}
+
+function getPathValue(source: Record<string, unknown>, path: string): unknown {
+  const parts = path.split('.').filter(Boolean)
+  let current: unknown = source
+  for (const part of parts) {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) return undefined
+    current = (current as Record<string, unknown>)[part]
+  }
+  return current
 }
 
 function matchesField(value: unknown, query: string): boolean {

@@ -32,4 +32,28 @@ describe('element tree search', () => {
       }
     ])
   })
+
+  it('matches specified styles without returning unrelated nodes', () => {
+    const tree = createFilteredElementTree(
+      [
+        { tag: 'main', id: 'app', box: { x: 0, y: 0, width: 300, height: 300 } },
+        {
+          tag: 'button',
+          id: 'submit',
+          style: { color: 'rgb(255, 0, 0)', display: 'block' },
+          box: { x: 20, y: 20, width: 100, height: 32 }
+        },
+        {
+          tag: 'button',
+          id: 'cancel',
+          style: { color: 'rgb(0, 0, 0)', display: 'block' },
+          box: { x: 20, y: 70, width: 100, height: 32 }
+        }
+      ],
+      normalizeElementSearch({ styles: { color: '255, 0, 0', display: 'block' } })
+    )
+
+    expect(countElementTree(tree)).toBe(2)
+    expect(flattenElementTree(tree).map((node) => node.id)).toEqual(['app', 'submit'])
+  })
 })

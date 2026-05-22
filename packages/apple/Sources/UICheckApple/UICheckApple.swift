@@ -332,9 +332,9 @@ private func createElementTree(_ elements: [[String: Any]]) -> [[String: Any]] {
   return roots.map(build)
 }
 
-private func elementSearch(_ params: [String: Any]) -> [String: String]? {
-  var search: [String: String] = [:]
-  for key in ["query", "selector", "id", "testId", "text", "accessibilityLabel", "className", "role", "tag"] {
+private func elementSearch(_ params: [String: Any]) -> [String: Any]? {
+  var search: [String: Any] = [:]
+  for key in ["query", "selector", "styleName", "styleValue", "id", "testId", "text", "accessibilityLabel", "className", "role", "tag"] {
     if let value = params[key] as? String {
       let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
       if !trimmed.isEmpty {
@@ -342,10 +342,25 @@ private func elementSearch(_ params: [String: Any]) -> [String: String]? {
       }
     }
   }
+  if let styles = params["styles"] as? [String: Any] {
+    var normalized: [String: String] = [:]
+    for (key, value) in styles {
+      let name = key.trimmingCharacters(in: .whitespacesAndNewlines)
+      if let text = value as? String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !name.isEmpty && !trimmed.isEmpty {
+          normalized[name] = trimmed
+        }
+      }
+    }
+    if !normalized.isEmpty {
+      search["styles"] = normalized
+    }
+  }
   return search.isEmpty ? nil : search
 }
 
-private func filterElementTree(_ tree: [[String: Any]], search: [String: String]?) -> [[String: Any]] {
+private func filterElementTree(_ tree: [[String: Any]], search: [String: Any]?) -> [[String: Any]] {
   guard let search else { return tree }
   return tree.compactMap { node in
     let children = node["children"] as? [[String: Any]] ?? []
@@ -365,16 +380,22 @@ private func countElementTree(_ tree: [[String: Any]]) -> Int {
   }
 }
 
-private func matchesElementSearch(_ element: [String: Any], search: [String: String]) -> Bool {
-  if let query = search["query"], !matchesAnyText(element, query: query) { return false }
-  if let selector = search["selector"], !matchesSelectorText(element, selector: selector) { return false }
-  if let id = search["id"], !matchesField(element["id"], query: id) { return false }
-  if let testId = search["testId"], !matchesField(element["testId"] ?? element["testID"], query: testId) { return false }
-  if let text = search["text"], !matchesField(element["text"], query: text) { return false }
-  if let label = search["accessibilityLabel"], !matchesField(element["accessibilityLabel"] ?? element["ariaLabel"] ?? element["semanticsLabel"], query: label) { return false }
-  if let className = search["className"], !matchesClasses(element["classes"], query: className) { return false }
-  if let role = search["role"], !matchesField(element["role"], query: role) { return false }
-  if let tag = search["tag"], !matchesField(element["tag"], query: tag) { return false }
+private func matchesElementSearch(_ element: [String: Any], search: [String: Any]) -> Bool {
+  if let query = search["query"] as? String, !matchesAnyText(element, query: query) { return false }
+  if let selector = search["selector"] as? String, !matchesSelectorText(element, selector: selector) { return false }
+  if let styleName = search["styleName"] as? String, !matchesStyle(element, name: styleName, query: search["styleValue"] as? String) { return false }
+  if let styles = search["styles"] as? [String: String] {
+    for (name, value) in styles {
+      if !matchesStyle(element, name: name, query: value) { return false }
+    }
+  }
+  if let id = search["id"] as? String, !matchesField(element["id"], query: id) { return false }
+  if let testId = search["testId"] as? String, !matchesField(element["testId"] ?? element["testID"], query: testId) { return false }
+  if let text = search["text"] as? String, !matchesField(element["text"], query: text) { return false }
+  if let label = search["accessibilityLabel"] as? String, !matchesField(element["accessibilityLabel"] ?? element["ariaLabel"] ?? element["semanticsLabel"], query: label) { return false }
+  if let className = search["className"] as? String, !matchesClasses(element["classes"], query: className) { return false }
+  if let role = search["role"] as? String, !matchesField(element["role"], query: role) { return false }
+  if let tag = search["tag"] as? String, !matchesField(element["tag"], query: tag) { return false }
   return true
 }
 
@@ -405,6 +426,28 @@ private func matchesAnyText(_ element: [String: Any], query: String) -> Bool {
     element["tag"]
   ]
   return values.contains { matchesField($0, query: query) } || matchesClasses(element["classes"], query: query)
+}
+
+private func matchesStyle(_ element: [String: Any], name: String, query: String?) -> Bool {
+  let value = styleValue(element, name: name)
+  guard let query, !query.isEmpty else { return value != nil }
+  return matchesField(value, query: query)
+}
+
+private func styleValue(_ element: [String: Any], name: String) -> Any? {
+  let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+  if trimmed.isEmpty { return nil }
+  if let style = element["style"] as? [String: Any], let value = pathValue(style, path: trimmed) { return value }
+  return nil
+}
+
+private func pathValue(_ source: [String: Any], path: String) -> Any? {
+  var current: Any? = source
+  for part in path.split(separator: ".").map(String.init) where !part.isEmpty {
+    guard let object = current as? [String: Any] else { return nil }
+    current = object[part]
+  }
+  return current
 }
 
 private func matchesField(_ value: Any?, query: String) -> Bool {

@@ -364,16 +364,24 @@ private fun createElementTree(elements: List<Map<String, Any?>>): List<Map<Strin
   return roots.map(::build)
 }
 
-private fun elementSearch(params: Map<String, Any?>): Map<String, String>? {
-  val search = mutableMapOf<String, String>()
-  listOf("query", "selector", "id", "testId", "text", "accessibilityLabel", "className", "role", "tag").forEach { key ->
+private fun elementSearch(params: Map<String, Any?>): Map<String, Any?>? {
+  val search = mutableMapOf<String, Any?>()
+  listOf("query", "selector", "styleName", "styleValue", "id", "testId", "text", "accessibilityLabel", "className", "role", "tag").forEach { key ->
     val value = params[key] as? String
     if (!value.isNullOrBlank()) search[key] = value.trim()
   }
+  val styles = (params["styles"] as? Map<*, *>)
+    ?.mapNotNull { (key, value) ->
+      val name = key?.toString()?.trim().orEmpty()
+      val text = value as? String
+      if (name.isNotEmpty() && !text.isNullOrBlank()) name to text.trim() else null
+    }
+    ?.toMap()
+  if (!styles.isNullOrEmpty()) search["styles"] = styles
   return search.ifEmpty { null }
 }
 
-private fun filterElementTree(tree: List<Map<String, Any?>>, search: Map<String, String>?): List<Map<String, Any?>> {
+private fun filterElementTree(tree: List<Map<String, Any?>>, search: Map<String, Any?>?): List<Map<String, Any?>> {
   if (search == null) return tree
   return tree.mapNotNull { node ->
     val children = (node["children"] as? List<*>)?.filterIsInstance<Map<String, Any?>>() ?: emptyList()
@@ -387,16 +395,20 @@ private fun countElementTree(tree: List<Map<String, Any?>>): Int =
     1 + countElementTree((node["children"] as? List<*>)?.filterIsInstance<Map<String, Any?>>() ?: emptyList())
   }
 
-private fun matchesElementSearch(element: Map<String, Any?>, search: Map<String, String>): Boolean {
-  search["query"]?.let { if (!matchesAnyText(element, it)) return false }
-  search["selector"]?.let { if (!matchesSelectorText(element, it)) return false }
-  search["id"]?.let { if (!matchesField(element["id"], it)) return false }
-  search["testId"]?.let { if (!matchesField(element["testId"] ?: element["testID"], it)) return false }
-  search["text"]?.let { if (!matchesField(element["text"], it)) return false }
-  search["accessibilityLabel"]?.let { if (!matchesField(element["accessibilityLabel"] ?: element["ariaLabel"] ?: element["semanticsLabel"], it)) return false }
-  search["className"]?.let { if (!matchesClasses(element["classes"], it)) return false }
-  search["role"]?.let { if (!matchesField(element["role"], it)) return false }
-  search["tag"]?.let { if (!matchesField(element["tag"], it)) return false }
+private fun matchesElementSearch(element: Map<String, Any?>, search: Map<String, Any?>): Boolean {
+  (search["query"] as? String)?.let { if (!matchesAnyText(element, it)) return false }
+  (search["selector"] as? String)?.let { if (!matchesSelectorText(element, it)) return false }
+  (search["styleName"] as? String)?.let { if (!matchesStyle(element, it, search["styleValue"] as? String)) return false }
+  (search["styles"] as? Map<*, *>)?.forEach { (name, value) ->
+    if (!matchesStyle(element, name.toString(), value as? String)) return false
+  }
+  (search["id"] as? String)?.let { if (!matchesField(element["id"], it)) return false }
+  (search["testId"] as? String)?.let { if (!matchesField(element["testId"] ?: element["testID"], it)) return false }
+  (search["text"] as? String)?.let { if (!matchesField(element["text"], it)) return false }
+  (search["accessibilityLabel"] as? String)?.let { if (!matchesField(element["accessibilityLabel"] ?: element["ariaLabel"] ?: element["semanticsLabel"], it)) return false }
+  (search["className"] as? String)?.let { if (!matchesClasses(element["classes"], it)) return false }
+  (search["role"] as? String)?.let { if (!matchesField(element["role"], it)) return false }
+  (search["tag"] as? String)?.let { if (!matchesField(element["tag"], it)) return false }
   return true
 }
 
@@ -424,6 +436,29 @@ private fun matchesAnyText(element: Map<String, Any?>, query: String): Boolean =
     element["role"],
     element["tag"]
   ).any { matchesField(it, query) } || matchesClasses(element["classes"], query)
+
+private fun matchesStyle(element: Map<String, Any?>, name: String, query: String?): Boolean {
+  val value = styleValue(element, name)
+  if (query.isNullOrEmpty()) return value != null
+  return matchesField(value, query)
+}
+
+private fun styleValue(element: Map<String, Any?>, name: String): Any? {
+  val trimmed = name.trim()
+  if (trimmed.isEmpty()) return null
+  (element["style"] as? Map<*, *>)?.let { style ->
+    pathValue(style, trimmed)?.let { return it }
+  }
+  return null
+}
+
+private fun pathValue(source: Map<*, *>, path: String): Any? {
+  var current: Any? = source
+  path.split(".").filter { it.isNotEmpty() }.forEach { part ->
+    current = (current as? Map<*, *>)?.get(part) ?: return null
+  }
+  return current
+}
 
 private fun matchesField(value: Any?, query: String): Boolean =
   value?.toString()?.contains(query, ignoreCase = true) == true

@@ -640,7 +640,7 @@ export const generatedDocsByLocale = {
             [
               "inspect_elements",
               "返回树状节点、文本、布局盒和元数据。传入查找参数时，只保留命中节点和它的父级树。",
-              "clientId 可选目标客户端 ID；timeoutMs MCP 等待超时；limit 最大节点数，默认 80；includeHidden 是否包含隐藏或零尺寸节点；query 搜索常见节点字段；selector、id、testId、text、accessibilityLabel、className、role、tag 用于缩小匹配范围。",
+              "clientId 可选目标客户端 ID；timeoutMs MCP 等待超时；limit 最大节点数，默认 80；includeHidden 是否包含隐藏或零尺寸节点；query 搜索常见节点字段；selector、styleName 加可选 styleValue、styles、id、testId、text、accessibilityLabel、className、role、tag 用于缩小匹配范围。",
               "JSON 文本。包含 count 和树状 tree，节点包含文本、可见性、布局盒、测试 ID、无障碍标签、类名和子节点等运行环境可提供的信息。"
             ]
           ]
@@ -1276,7 +1276,7 @@ export const generatedDocsByLocale = {
             [
               "inspect_elements",
               "Returns tree-shaped nodes, text, layout boxes, and metadata. When search parameters are provided, the result keeps only matching nodes and their parent tree.",
-              "clientId optional target client id; timeoutMs MCP wait timeout; limit maximum nodes, default 80; includeHidden includes hidden or zero-size nodes; query searches common node fields; selector, id, testId, text, accessibilityLabel, className, role, and tag narrow matches.",
+              "clientId optional target client id; timeoutMs MCP wait timeout; limit maximum nodes, default 80; includeHidden includes hidden or zero-size nodes; query searches common node fields; selector, styleName plus optional styleValue, styles, id, testId, text, accessibilityLabel, className, role, and tag narrow matches.",
               "JSON text. Includes count and tree-shaped tree; nodes include runtime-provided text, visibility, layout boxes, test IDs, accessibility labels, classes, and children."
             ]
           ]

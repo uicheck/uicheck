@@ -64,7 +64,7 @@ describe('web client integration', () => {
     })
 
     document.title = 'Web integration'
-    document.body.innerHTML = '<main id="app"><button id="submit" data-testid="submit-button">Submit</button></main>'
+    document.body.innerHTML = '<main id="app"><button id="submit" data-testid="submit-button" style="color: rgb(255, 0, 0)">Submit</button></main>'
     setRect(document.getElementById('app'), { x: 0, y: 0, width: 240, height: 120 })
     setRect(document.getElementById('submit'), { x: 20, y: 16, width: 100, height: 32 })
 
@@ -125,6 +125,27 @@ describe('web client integration', () => {
             {
               tag: 'button',
               testId: 'submit-button',
+              children: []
+            }
+          ]
+        }
+      ]
+    })
+    const styleSearched = await client.callTool({
+      name: 'inspect_elements',
+      arguments: { clientId: 'web-real', styles: { color: '255, 0, 0' } }
+    })
+    const stylePayload = getJsonToolPayload(styleSearched)
+    expect(stylePayload).toMatchObject({
+      count: 2,
+      tree: [
+        {
+          tag: 'main',
+          id: 'app',
+          children: [
+            {
+              tag: 'button',
+              style: { color: 'rgb(255, 0, 0)' },
               children: []
             }
           ]
