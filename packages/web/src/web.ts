@@ -77,6 +77,8 @@ interface Html2CanvasOptions {
   scale: number
   useCORS: boolean
   logging: boolean
+  imageTimeout?: number
+  removeContainer?: boolean
   width: number
   height: number
   windowWidth: number
@@ -85,6 +87,7 @@ interface Html2CanvasOptions {
   scrollY: number
   x: number
   y: number
+  onclone?: (document: Document) => void
   ignoreElements?: (element: Element) => boolean
 }
 
@@ -541,24 +544,46 @@ async function captureSerializablePage(
 
   try {
     await waitForNextPaint()
+    const captureTarget = document.body ?? document.documentElement
     const canvasWidth = Math.max(1, window.innerWidth)
     const canvasHeight = Math.max(1, window.innerHeight)
-    const scale = Math.max(1, window.devicePixelRatio || 1)
+    const captureScrollX = window.scrollX
+    const captureScrollY = window.scrollY
+    const documentWidth = Math.max(canvasWidth + captureScrollX, document.documentElement.scrollWidth, document.body?.scrollWidth ?? 0)
+    const documentHeight = Math.max(canvasHeight + captureScrollY, document.documentElement.scrollHeight, document.body?.scrollHeight ?? 0)
+    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1))
     const screenshot = await withTimeout(
       () =>
-        html2canvas(document.documentElement, {
+        html2canvas(captureTarget, {
           backgroundColor: null,
           scale,
           useCORS: true,
           logging: false,
+          imageTimeout: Math.min(timeoutMs, 5_000),
+          removeContainer: true,
           width: canvasWidth,
           height: canvasHeight,
           windowWidth: canvasWidth,
           windowHeight: canvasHeight,
-          scrollX: window.scrollX,
-          scrollY: window.scrollY,
+          scrollX: 0,
+          scrollY: 0,
           x: 0,
           y: 0,
+          onclone: (clonedDocument) => {
+            const clonedRoot = clonedDocument.documentElement
+            const clonedBody = clonedDocument.body
+            clonedRoot.style.width = `${canvasWidth}px`
+            clonedRoot.style.height = `${canvasHeight}px`
+            clonedRoot.style.overflow = 'hidden'
+            if (clonedBody) {
+              clonedBody.style.width = `${documentWidth}px`
+              clonedBody.style.minWidth = `${documentWidth}px`
+              clonedBody.style.height = `${documentHeight}px`
+              clonedBody.style.minHeight = `${documentHeight}px`
+              clonedBody.style.transform = `translate(${-captureScrollX}px, ${-captureScrollY}px)`
+              clonedBody.style.transformOrigin = '0 0'
+            }
+          },
           ignoreElements: isUiCheckElement
         }),
       timeoutMs,

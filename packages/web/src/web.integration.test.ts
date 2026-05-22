@@ -4,7 +4,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { UiCheckMcpServer } from '@uicheck/mcp'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { WebSocket } from 'ws'
-import { initUiCheck } from './web'
+import { createWebUiCheckAdapter, initUiCheck } from './web'
 import type { ResolvedUiCheckOptions } from './types'
 
 const servers: UiCheckMcpServer[] = []
@@ -20,6 +20,37 @@ afterEach(async () => {
 })
 
 describe('web client integration', () => {
+  it('captures the current viewport without asking html2canvas to render the full document element', async () => {
+    document.body.innerHTML = '<main id="app"><button id="submit">Submit</button></main>'
+
+    const html2canvas = vi.fn(async () => ({
+      width: 640,
+      height: 480,
+      toDataURL: () => 'data:image/png;base64,ZmFrZS1wbmc='
+    })) as unknown as Parameters<typeof createWebUiCheckAdapter>[0]
+
+    const adapter = createWebUiCheckAdapter(html2canvas)
+    const result = await adapter.capturePage({ timeoutMs: 1000, forceHtml2Canvas: true })
+    const [target, options] = vi.mocked(html2canvas).mock.calls[0]
+
+    expect(target).toBe(document.body)
+    expect(options).toMatchObject({
+      width: window.innerWidth,
+      height: window.innerHeight,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
+      imageTimeout: 1000,
+      removeContainer: true
+    })
+    expect(options.scale).toBeLessThanOrEqual(2)
+    expect(result).toMatchObject({
+      width: 640,
+      height: 480,
+      mimeType: 'image/png',
+      base64: 'ZmFrZS1wbmc='
+    })
+  })
+
   it('connects to MCP over WebSocket and serves real DOM inspect/capture requests', async () => {
     const port = await getFreePort()
     const server = new UiCheckMcpServer({ port })
