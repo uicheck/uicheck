@@ -137,6 +137,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Create GitHub Release
         run: gh release create "$GITHUB_REF_NAME" --title "uicheck $GITHUB_REF_NAME" --generate-notes
         env:
