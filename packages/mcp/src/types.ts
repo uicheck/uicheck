@@ -37,6 +37,22 @@ export interface CapturePageRequest extends UiCheckClientRequest {
   waitMs?: number
 }
 
+export interface CaptureElementRequest extends CapturePageRequest {
+  includeHidden?: boolean
+  query?: string
+  selector?: string
+  styleName?: string
+  styleValue?: string
+  styles?: Record<string, string>
+  id?: string
+  testId?: string
+  text?: string
+  accessibilityLabel?: string
+  className?: string
+  role?: string
+  tag?: string
+}
+
 export interface InspectElementsRequest extends UiCheckClientRequest {
   limit?: number
   includeHidden?: boolean
@@ -52,4 +68,10 @@ export interface InspectElementsRequest extends UiCheckClientRequest {
   className?: string
   role?: string
   tag?: string
+}
+
+export interface CompareScreenshotRequest extends CaptureElementRequest {
+  expectedImageBase64: string
+  target?: 'page' | 'element'
+  threshold?: number
 }

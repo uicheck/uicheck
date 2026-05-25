@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type Server as HttpServer, type Ser
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import * as z from 'zod/v4'
+import { comparePngScreenshots } from './image-compare'
 import { UiCheckSocketHub } from './socket-hub'
 import type { ResolvedUiCheckMcpServerOptions, UiCheckMcpServerOptions } from './types'
 
@@ -135,6 +136,35 @@ export class UiCheckMcpServer {
       clientId: z.string().optional().describe('Target uicheck socket client id. Defaults to the first connected client.'),
       timeoutMs: z.number().int().min(500).max(120_000).optional().describe('Request timeout. Defaults to the server timeout.')
     }
+    const captureArgs = {
+      waitMs: z.number().int().min(0).max(30_000).optional().describe('Extra wait time before capture.'),
+      captureTimeoutMs: z
+        .number()
+        .int()
+        .min(500)
+        .max(120_000)
+        .optional()
+        .describe('Runtime-side screenshot timeout. Defaults to 10000.'),
+      forceHtml2Canvas: z
+        .boolean()
+        .optional()
+        .describe('Force html2canvas capture in environments where it is normally skipped, such as Electron.')
+    }
+    const elementSearchArgs = {
+      includeHidden: z.boolean().optional().describe('Include hidden or zero-size elements. Defaults to false.'),
+      query: z.string().optional().describe('Search across id, test id, text, accessibility label, role, tag, href, and classes.'),
+      selector: z.string().optional().describe('Find nodes by a simple selector such as #id, .class, tag, or [data-testid=value].'),
+      styleName: z.string().optional().describe('Find nodes that have this computed style name, such as color, display, margin, or padding.'),
+      styleValue: z.string().optional().describe('Optional value that the selected style must contain.'),
+      styles: z.record(z.string(), z.string()).optional().describe('Find nodes matching all provided computed style values.'),
+      id: z.string().optional().describe('Find nodes whose id contains this value.'),
+      testId: z.string().optional().describe('Find nodes whose test id contains this value.'),
+      text: z.string().optional().describe('Find nodes whose text contains this value.'),
+      accessibilityLabel: z.string().optional().describe('Find nodes whose accessibility label contains this value.'),
+      className: z.string().optional().describe('Find nodes whose class list contains this value.'),
+      role: z.string().optional().describe('Find nodes whose role contains this value.'),
+      tag: z.string().optional().describe('Find nodes whose tag contains this value.')
+    }
 
     server.registerTool(
       'list_clients',
@@ -164,18 +194,7 @@ export class UiCheckMcpServer {
         description: 'Ask the connected uicheck client to return a PNG screenshot.',
         inputSchema: {
           ...clientArgs,
-          waitMs: z.number().int().min(0).max(30_000).optional().describe('Extra wait time before capture.'),
-          captureTimeoutMs: z
-            .number()
-            .int()
-            .min(500)
-            .max(120_000)
-            .optional()
-            .describe('Browser-side screenshot timeout. Defaults to 10000.'),
-          forceHtml2Canvas: z
-            .boolean()
-            .optional()
-            .describe('Force html2canvas capture in environments where it is normally skipped, such as Electron.')
+          ...captureArgs
         },
         annotations: {
           readOnlyHint: true,
@@ -207,6 +226,134 @@ export class UiCheckMcpServer {
     )
 
     server.registerTool(
+      'capture_element',
+      {
+        title: 'Capture Connected Element Screenshot',
+        description: 'Ask the connected uicheck client to return a PNG screenshot for the first element matching the query.',
+        inputSchema: {
+          ...clientArgs,
+          ...captureArgs,
+          ...elementSearchArgs
+        },
+        annotations: {
+          readOnlyHint: true,
+          openWorldHint: false
+        }
+      },
+      async (args) => {
+        const result = await this.hub.request(
+          'capture_element',
+          {
+            waitMs: args.waitMs,
+            timeoutMs: args.captureTimeoutMs,
+            forceHtml2Canvas: args.forceHtml2Canvas,
+            includeHidden: args.includeHidden,
+            query: args.query,
+            selector: args.selector,
+            styleName: args.styleName,
+            styleValue: args.styleValue,
+            styles: args.styles,
+            id: args.id,
+            testId: args.testId,
+            text: args.text,
+            accessibilityLabel: args.accessibilityLabel,
+            className: args.className,
+            role: args.role,
+            tag: args.tag
+          },
+          args.clientId,
+          args.timeoutMs
+        )
+        const screenshot = asScreenshot(result)
+        return {
+          content: [
+            {
+              type: 'image',
+              mimeType: screenshot.mimeType,
+              data: screenshot.base64
+            },
+            {
+              type: 'text',
+              text: JSON.stringify({ width: screenshot.width, height: screenshot.height }, null, 2)
+            }
+          ]
+        }
+      }
+    )
+
+    server.registerTool(
+      'compare_screenshot',
+      {
+        title: 'Compare Current UI Screenshot',
+        description: 'Capture the current page or a matching element, compare it with a provided PNG image, and return mismatch metrics plus a diff image.',
+        inputSchema: {
+          ...clientArgs,
+          ...captureArgs,
+          ...elementSearchArgs,
+          target: z.enum(['page', 'element']).optional().describe('Compare the full page viewport or a matching element. Defaults to page.'),
+          expectedImageBase64: z.string().describe('Expected PNG image as base64 or a data URL.'),
+          threshold: z.number().min(0).max(1).optional().describe('Pixelmatch threshold. Defaults to 0.1.')
+        },
+        annotations: {
+          readOnlyHint: true,
+          openWorldHint: false
+        }
+      },
+      async (args) => {
+        const method = args.target === 'element' ? 'capture_element' : 'capture_page'
+        const result = await this.hub.request(
+          method,
+          {
+            waitMs: args.waitMs,
+            timeoutMs: args.captureTimeoutMs,
+            forceHtml2Canvas: args.forceHtml2Canvas,
+            includeHidden: args.includeHidden,
+            query: args.query,
+            selector: args.selector,
+            styleName: args.styleName,
+            styleValue: args.styleValue,
+            styles: args.styles,
+            id: args.id,
+            testId: args.testId,
+            text: args.text,
+            accessibilityLabel: args.accessibilityLabel,
+            className: args.className,
+            role: args.role,
+            tag: args.tag
+          },
+          args.clientId,
+          args.timeoutMs
+        )
+        const screenshot = asScreenshot(result)
+        const comparison = comparePngScreenshots(screenshot, args.expectedImageBase64, { threshold: args.threshold })
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  width: comparison.width,
+                  height: comparison.height,
+                  mismatchedPixels: comparison.mismatchedPixels,
+                  totalPixels: comparison.totalPixels,
+                  mismatchRatio: comparison.mismatchRatio,
+                  passed: comparison.passed
+                },
+                null,
+                2
+              )
+            },
+            {
+              type: 'image',
+              mimeType: 'image/png',
+              data: comparison.diffBase64
+            }
+          ]
+        }
+      }
+    )
+
+    server.registerTool(
       'inspect_elements',
       {
         title: 'Inspect Connected Page Elements',
@@ -214,19 +361,7 @@ export class UiCheckMcpServer {
         inputSchema: {
           ...clientArgs,
           limit: z.number().int().min(1).max(500).optional().describe('Maximum elements to return. Defaults to 80.'),
-          includeHidden: z.boolean().optional().describe('Include hidden or zero-size elements. Defaults to false.'),
-          query: z.string().optional().describe('Search across id, test id, text, accessibility label, role, tag, href, and classes.'),
-          selector: z.string().optional().describe('Find nodes by a simple selector such as #id, .class, tag, or [data-testid=value].'),
-          styleName: z.string().optional().describe('Find nodes that have this computed style name, such as color, display, margin, or padding.'),
-          styleValue: z.string().optional().describe('Optional value that the selected style must contain.'),
-          styles: z.record(z.string(), z.string()).optional().describe('Find nodes matching all provided computed style values.'),
-          id: z.string().optional().describe('Find nodes whose id contains this value.'),
-          testId: z.string().optional().describe('Find nodes whose test id contains this value.'),
-          text: z.string().optional().describe('Find nodes whose text contains this value.'),
-          accessibilityLabel: z.string().optional().describe('Find nodes whose accessibility label contains this value.'),
-          className: z.string().optional().describe('Find nodes whose class list contains this value.'),
-          role: z.string().optional().describe('Find nodes whose role contains this value.'),
-          tag: z.string().optional().describe('Find nodes whose tag contains this value.')
+          ...elementSearchArgs
         },
         annotations: {
           readOnlyHint: true,

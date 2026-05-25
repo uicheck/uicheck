@@ -34,11 +34,14 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
     "ws": "^8.20.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^22.19.19",
+    "@types/pngjs": "^6.0.5",
     "@types/ws": "^8.18.1",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",

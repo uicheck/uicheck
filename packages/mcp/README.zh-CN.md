@@ -49,6 +49,8 @@ Taro 小程序使用 `@uicheck/taro`，React Native 使用 `@uicheck/rn`，Flutt
 | --- | --- | --- | --- |
 | `list_clients` | 查看已连接的 uicheck 运行环境客户端。 | 无 | JSON 文本数组。每项包含 `id`、`connectedAt`、`lastSeenAt`，以及可选的 `userAgent`、`viewport`。 |
 | `capture_page` | 请求已连接运行环境返回 PNG 截图。 | `clientId` 可选目标客户端 ID；`timeoutMs` MCP 等待超时；`waitMs` 截图前等待时间；`captureTimeoutMs` 运行环境截图超时；`forceHtml2Canvas` 强制 Web 端使用 html2canvas。 | MCP image 内容，`mimeType` 为 `image/png`；附带 JSON 文本 `{ width, height }`。 |
+| `capture_element` | 截取第一个命中查询条件的元素 PNG 图。 | 与 `capture_page` 相同的截图参数；额外支持 `includeHidden`、`query`、`selector`、`styleName` 加可选 `styleValue`、`styles`、`id`、`testId`、`text`、`accessibilityLabel`、`className`、`role`、`tag`。 | MCP image 内容，`mimeType` 为 `image/png`；附带 JSON 文本 `{ width, height }`。 |
+| `compare_screenshot` | 截取当前页面或命中元素，并和传入的 PNG 图片做像素对比。 | 与 `capture_element` 相同的截图和查询参数；`target` 可为 `page` 或 `element`，默认 `page`；`expectedImageBase64` 必填；`threshold` 为 pixelmatch 阈值。 | JSON 文本，包含 `width`、`height`、`mismatchedPixels`、`totalPixels`、`mismatchRatio`、`passed`；附带 PNG diff 图。 |
 | `inspect_elements` | 返回树状节点、文本、布局盒和元数据。传入查找参数时，只保留命中节点和它的父级树。 | `clientId` 可选目标客户端 ID；`timeoutMs` MCP 等待超时；`limit` 最大节点数，默认 80；`includeHidden` 是否包含隐藏或零尺寸节点；`query` 搜索常见节点字段；`selector`、`styleName` 加可选 `styleValue`、`styles`、`id`、`testId`、`text`、`accessibilityLabel`、`className`、`role`、`tag` 用于缩小匹配范围。 | JSON 文本。包含 `count` 和树状 `tree`，节点包含文本、可见性、布局盒、测试 ID、无障碍标签、类名和子节点等运行环境可提供的信息。 |
 
 ## CLI

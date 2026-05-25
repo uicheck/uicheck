@@ -638,6 +638,18 @@ export const generatedDocsByLocale = {
               "MCP image 内容，mimeType 为 image/png；附带 JSON 文本 { width, height }。"
             ],
             [
+              "capture_element",
+              "截取第一个命中查询条件的元素 PNG 图。",
+              "与 capture_page 相同的截图参数；额外支持 includeHidden、query、selector、styleName 加可选 styleValue、styles、id、testId、text、accessibilityLabel、className、role、tag。",
+              "MCP image 内容，mimeType 为 image/png；附带 JSON 文本 { width, height }。"
+            ],
+            [
+              "compare_screenshot",
+              "截取当前页面或命中元素，并和传入的 PNG 图片做像素对比。",
+              "与 capture_element 相同的截图和查询参数；target 可为 page 或 element，默认 page；expectedImageBase64 必填；threshold 为 pixelmatch 阈值。",
+              "JSON 文本，包含 width、height、mismatchedPixels、totalPixels、mismatchRatio、passed；附带 PNG diff 图。"
+            ],
+            [
               "inspect_elements",
               "返回树状节点、文本、布局盒和元数据。传入查找参数时，只保留命中节点和它的父级树。",
               "clientId 可选目标客户端 ID；timeoutMs MCP 等待超时；limit 最大节点数，默认 80；includeHidden 是否包含隐藏或零尺寸节点；query 搜索常见节点字段；selector、styleName 加可选 styleValue、styles、id、testId、text、accessibilityLabel、className、role、tag 用于缩小匹配范围。",
@@ -1272,6 +1284,18 @@ export const generatedDocsByLocale = {
               "Asks a connected runtime to return a PNG screenshot.",
               "clientId optional target client id; timeoutMs MCP wait timeout; waitMs extra wait before capture; captureTimeoutMs runtime screenshot timeout; forceHtml2Canvas forces the Web client to use html2canvas.",
               "MCP image content with image/png; plus JSON text { width, height }."
+            ],
+            [
+              "capture_element",
+              "Captures a PNG screenshot of the first element matching the query.",
+              "Same capture parameters as capture_page; plus includeHidden, query, selector, styleName with optional styleValue, styles, id, testId, text, accessibilityLabel, className, role, and tag.",
+              "MCP image content with image/png; plus JSON text { width, height }."
+            ],
+            [
+              "compare_screenshot",
+              "Captures the current page or a matching element and compares it with a provided PNG.",
+              "Same capture and search parameters as capture_element; target is page or element, default page; expectedImageBase64 is required; threshold is the pixelmatch threshold.",
+              "JSON text with width, height, mismatchedPixels, totalPixels, mismatchRatio, and passed; plus a PNG diff image."
             ],
             [
               "inspect_elements",

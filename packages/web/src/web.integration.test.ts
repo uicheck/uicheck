@@ -51,6 +51,43 @@ describe('web client integration', () => {
     })
   })
 
+  it('captures the first matching element by search parameters', async () => {
+    document.body.innerHTML = '<main id="app" style="background: rgb(32, 34, 38)"><button id="submit" data-testid="submit-button">Submit</button></main>'
+    setRect(document.getElementById('app'), { x: 0, y: 0, width: 240, height: 120 })
+    setRect(document.getElementById('submit'), { x: 20, y: 16, width: 100, height: 32 })
+
+    const html2canvas = vi.fn(async () => ({
+      width: 100,
+      height: 32,
+      toDataURL: () => 'data:image/png;base64,ZWxlbWVudA=='
+    })) as unknown as Parameters<typeof createWebUiCheckAdapter>[0]
+
+    const adapter = createWebUiCheckAdapter(html2canvas)
+    const result = await adapter.captureElement?.({ testId: 'submit-button', forceHtml2Canvas: true, timeoutMs: 1000 })
+    const [target, options] = vi.mocked(html2canvas).mock.calls[0]
+
+    expect(target).toBe(document.getElementById('submit'))
+    expect(options).toMatchObject({
+      imageTimeout: 1000,
+      removeContainer: true
+    })
+    expect(options).toMatchObject({
+      width: 100,
+      height: 32,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0,
+      backgroundColor: 'rgb(32, 34, 38)'
+    })
+    expect(result).toMatchObject({
+      width: 100,
+      height: 32,
+      mimeType: 'image/png',
+      base64: 'ZWxlbWVudA=='
+    })
+  })
+
   it('connects to MCP over WebSocket and serves real DOM inspect/capture requests', async () => {
     const port = await getFreePort()
     const server = new UiCheckMcpServer({ port })

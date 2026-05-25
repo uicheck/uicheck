@@ -32,5 +32,6 @@ export interface UiCheckScreenshotResult {
 export interface UiCheckToolAdapter {
   getClientInfo(): UiCheckClientSnapshot
   capturePage(params?: Record<string, unknown>): Promise<UiCheckScreenshotResult> | UiCheckScreenshotResult
+  captureElement?(params?: Record<string, unknown>): Promise<UiCheckScreenshotResult> | UiCheckScreenshotResult
   inspectElements(params?: Record<string, unknown>): Promise<Record<string, unknown>> | Record<string, unknown>
 }

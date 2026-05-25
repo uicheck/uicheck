@@ -1,6 +1,7 @@
 import { createServer } from 'node:net'
 import { Client } from '@modelcontextprotocol/sdk/client'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
+import { PNG } from 'pngjs'
 import { afterEach, describe, expect, it } from 'vitest'
 import { WebSocket } from 'ws'
 import { UiCheckMcpServer } from './mcp'
@@ -87,6 +88,79 @@ describe('MCP tool integration', () => {
         )
       }
     ])
+
+    const png = createPngBase64([255, 255, 255, 255])
+    const elementRequestPromise = waitForSocketMessage(socket)
+    const elementToolPromise = client.callTool({
+      name: 'capture_element',
+      arguments: {
+        clientId: 'page-a',
+        text: 'Submit'
+      }
+    })
+    const elementRequest = JSON.parse(await elementRequestPromise) as { id: string; method: string; params: Record<string, unknown> }
+    expect(elementRequest).toMatchObject({
+      method: 'capture_element',
+      params: { text: 'Submit' }
+    })
+    socket.send(
+      JSON.stringify({
+        type: 'response',
+        id: elementRequest.id,
+        result: {
+          width: 1,
+          height: 1,
+          mimeType: 'image/png',
+          base64: png
+        }
+      })
+    )
+
+    const elementResponse = await elementToolPromise
+    expect(elementResponse.content).toEqual([
+      { type: 'image', mimeType: 'image/png', data: png },
+      { type: 'text', text: JSON.stringify({ width: 1, height: 1 }, null, 2) }
+    ])
+
+    const compareRequestPromise = waitForSocketMessage(socket)
+    const compareToolPromise = client.callTool({
+      name: 'compare_screenshot',
+      arguments: {
+        clientId: 'page-a',
+        target: 'element',
+        text: 'Submit',
+        expectedImageBase64: png
+      }
+    })
+    const compareRequest = JSON.parse(await compareRequestPromise) as { id: string; method: string; params: Record<string, unknown> }
+    expect(compareRequest).toMatchObject({
+      method: 'capture_element',
+      params: { text: 'Submit' }
+    })
+    socket.send(
+      JSON.stringify({
+        type: 'response',
+        id: compareRequest.id,
+        result: {
+          width: 1,
+          height: 1,
+          mimeType: 'image/png',
+          base64: png
+        }
+      })
+    )
+
+    const compareResponse = await compareToolPromise
+    const compareContent = getToolContent(compareResponse)
+    expect(JSON.parse(compareContent[0].text ?? '{}')).toMatchObject({
+      width: 1,
+      height: 1,
+      mismatchedPixels: 0,
+      totalPixels: 1,
+      mismatchRatio: 0,
+      passed: true
+    })
+    expect(compareContent[1]).toMatchObject({ type: 'image', mimeType: 'image/png' })
   })
 })
 
@@ -111,4 +185,17 @@ function waitForSocketMessage(socket: WebSocket): Promise<string> {
     socket.once('message', (raw) => resolve(raw.toString()))
     socket.once('error', reject)
   })
+}
+
+function getToolContent(response: unknown): Array<{ type: string; text?: string; mimeType?: string; data?: string }> {
+  if (!response || typeof response !== 'object' || !('content' in response) || !Array.isArray(response.content)) {
+    throw new Error('Missing tool response content')
+  }
+  return response.content as Array<{ type: string; text?: string; mimeType?: string; data?: string }>
+}
+
+function createPngBase64(color: [number, number, number, number]): string {
+  const image = new PNG({ width: 1, height: 1 })
+  image.data.set(color, 0)
+  return PNG.sync.write(image).toString('base64')
 }

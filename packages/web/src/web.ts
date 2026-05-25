@@ -1,5 +1,5 @@
 import html2canvas from 'html2canvas'
-import { connectUiCheckRuntime, countElementTree, createFilteredElementTree, normalizeElementSearch } from '@uicheck/core'
+import { connectUiCheckRuntime, countElementTree, createFilteredElementTree, elementMatchesSearch, normalizeElementSearch } from '@uicheck/core'
 import type { UiCheckSocketTransport } from '@uicheck/core/protocol'
 import type { UiCheckClientSnapshot, UiCheckScreenshotResult, UiCheckToolAdapter } from '@uicheck/core'
 import type { ResolvedUiCheckOptions, UiCheckOptions } from './types'
@@ -93,6 +93,10 @@ interface Html2CanvasOptions {
 
 type Html2Canvas = (element: HTMLElement, options: Html2CanvasOptions) => Promise<HTMLCanvasElement>
 
+type WebUiCheckToolAdapter = UiCheckToolAdapter & {
+  captureElement(params?: Record<string, unknown>): Promise<UiCheckScreenshotResult> | UiCheckScreenshotResult
+}
+
 const MIN_ZOOM = 0.2
 const MAX_ZOOM = 2.5
 
@@ -146,6 +150,22 @@ function collectNodes(element: Element, result: NodeInfo[]): void {
 
 function isUiCheckElement(element: Element): boolean {
   return Boolean(element.closest('[data-uicheck-internal="true"]'))
+}
+
+function isTransparentBackground(color: string): boolean {
+  return color === '' || color === 'transparent' || color === 'rgba(0, 0, 0, 0)'
+}
+
+function resolveElementBackgroundColor(element: Element): string | null {
+  let current: Element | null = element
+  while (current) {
+    const backgroundColor = window.getComputedStyle(current).backgroundColor
+    if (!isTransparentBackground(backgroundColor)) return backgroundColor
+    current = current.parentElement
+  }
+
+  const documentBackgroundColor = window.getComputedStyle(document.documentElement).backgroundColor
+  return isTransparentBackground(documentBackgroundColor) ? null : documentBackgroundColor
 }
 
 function buildNodeSignature(nodeInfo: NodeInfo): string {
@@ -524,6 +544,20 @@ function inspectSerializableElements(options: ResolvedUiCheckOptions, params: Re
   }
 }
 
+function findSerializableElement(params: Record<string, unknown>): Element {
+  const search = normalizeElementSearch(params)
+  if (!search) throw new Error('capture_element requires a query parameter such as selector, text, testId, id, role, tag, or styles')
+
+  for (const element of Array.from(document.body?.querySelectorAll('*') ?? [])) {
+    if (isUiCheckElement(element)) continue
+    const info = getSerializableElementInfo(element)
+    if (info.visible !== true && params.includeHidden !== true) continue
+    if (elementMatchesSearch(info, search)) return element
+  }
+
+  throw new Error('capture_element target element not found')
+}
+
 async function captureSerializablePage(
   html2canvas: Html2Canvas,
   options: ResolvedUiCheckOptions,
@@ -605,6 +639,52 @@ async function captureSerializablePage(
   }
 }
 
+async function captureSerializableElement(html2canvas: Html2Canvas, params: Record<string, unknown> = {}): Promise<UiCheckScreenshotResult> {
+  const waitMs = typeof params.waitMs === 'number' ? params.waitMs : 0
+  const timeoutMs = typeof params.timeoutMs === 'number' ? Math.max(500, params.timeoutMs) : 10_000
+  const forceHtml2Canvas = params.forceHtml2Canvas === true
+  if (!forceHtml2Canvas && navigator.userAgent.includes('Electron/')) {
+    throw new Error('capture_element is not available in Electron renderer because html2canvas can block the page; use inspect_elements for layout debugging.')
+  }
+  if (waitMs > 0) await new Promise((resolve) => window.setTimeout(resolve, waitMs))
+
+  await waitForNextPaint()
+  const element = findSerializableElement(params)
+  const rect = element.getBoundingClientRect()
+  if (rect.width <= 0 || rect.height <= 0) throw new Error('capture_element target element has no visible box')
+
+  const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1))
+  const screenshot = await withTimeout(
+    () =>
+      html2canvas(element as HTMLElement, {
+        backgroundColor: resolveElementBackgroundColor(element),
+        scale,
+        useCORS: true,
+        logging: false,
+        imageTimeout: Math.min(timeoutMs, 5_000),
+        removeContainer: true,
+        width: Math.ceil(rect.width),
+        height: Math.ceil(rect.height),
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        ignoreElements: isUiCheckElement
+      }),
+    timeoutMs,
+    'capture_element'
+  )
+
+  return {
+    width: screenshot.width,
+    height: screenshot.height,
+    mimeType: 'image/png',
+    base64: screenshot.toDataURL('image/png').split(',')[1]
+  }
+}
+
 function createWebSocketTransport(url: string): UiCheckSocketTransport {
   const socket = new WebSocket(url)
   return {
@@ -622,7 +702,7 @@ export function createWebUiCheckAdapter(
   html2canvas: Html2Canvas,
   options: ResolvedUiCheckOptions = {},
   elementsToHide: HTMLElement[] = []
-): UiCheckToolAdapter {
+): WebUiCheckToolAdapter {
   return {
     getClientInfo: () => ({
       platform: 'web',
@@ -630,6 +710,7 @@ export function createWebUiCheckAdapter(
       viewport: getViewportInfo()
     }),
     capturePage: (params) => captureSerializablePage(html2canvas, options, params, elementsToHide),
+    captureElement: (params) => captureSerializableElement(html2canvas, params),
     inspectElements: (params) => inspectSerializableElements(options, params)
   }
 }
