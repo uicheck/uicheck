@@ -1,6 +1,6 @@
 {
   "name": "uicheck_apple",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Apple native client for uicheck",
   "private": true,
   "type": "module",

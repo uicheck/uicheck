@@ -1,6 +1,6 @@
 {
   "name": "@uicheck/mcp",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "MCP server that communicates with uicheck clients over WebSocket",
   "type": "module",
   "main": "./dist/index.js",

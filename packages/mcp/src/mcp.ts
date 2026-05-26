@@ -129,7 +129,7 @@ export class UiCheckMcpServer {
   private createMcpServer(): McpServer {
     const server = new McpServer({
       name: 'uicheck-mcp',
-      version: '0.1.8'
+      version: '0.1.9'
     })
 
     const clientArgs = {

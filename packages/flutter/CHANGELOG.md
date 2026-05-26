@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.9
+
+- Add element capture support for screenshot comparison workflows.
+
 ## 0.1.8
 
 - Update documentation for npx-based MCP startup.
