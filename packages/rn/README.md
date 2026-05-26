@@ -14,7 +14,7 @@ initUiCheck({
 
 ## Screenshot
 
-React Native screenshots depend on the host app. To support `capture_page`, pass a `screenshot` function that returns PNG base64.
+React Native screenshots depend on the host app. To support `capture_page`, `capture_element`, and `compare_screenshot`, pass a `screenshot` function that returns PNG base64.
 
 ```ts
 initUiCheck({
@@ -32,4 +32,4 @@ initUiCheck({
 | `socket.url` | `string` | - | `@uicheck/mcp` WebSocket URL |
 | `socket.clientId` | `string` | - | Optional stable client id |
 | `socket.reconnectMs` | `number` | `1000` | Reconnect interval |
-| `screenshot` | `function` | - | Optional screenshot function that returns PNG base64 |
+| `screenshot` | `function` | - | Optional screenshot function for `capture_page`, `capture_element`, and `compare_screenshot`, returning PNG base64 |

@@ -31,16 +31,17 @@ describe('taro client integration', () => {
         height: 32
       }
     ])
+    const screenshot = vi.fn(() => ({
+      mimeType: 'image/png',
+      base64: 'dGFyby1wbmc='
+    }))
     initUiCheck({
       taro,
       socket: {
         url: server.socketUrl,
         clientId: 'taro-real'
       },
-      screenshot: () => ({
-        mimeType: 'image/png',
-        base64: 'dGFyby1wbmc='
-      })
+      screenshot
     })
 
     await waitForClient(server, 'taro-real')
@@ -74,6 +75,17 @@ describe('taro client integration', () => {
       mimeType: 'image/png',
       data: 'dGFyby1wbmc='
     })
+
+    const capturedElement = await client.callTool({
+      name: 'capture_element',
+      arguments: { clientId: 'taro-real', text: '提交' }
+    })
+    expect(getToolContent(capturedElement).find((item) => item.type === 'image')).toMatchObject({
+      type: 'image',
+      mimeType: 'image/png',
+      data: 'dGFyby1wbmc='
+    })
+    expect(screenshot).toHaveBeenLastCalledWith({ text: '提交' })
   })
 })
 

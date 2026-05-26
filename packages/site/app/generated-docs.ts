@@ -136,7 +136,7 @@ export const generatedDocsByLocale = {
               "screenshot",
               "function",
               "-",
-              "可选截图函数，返回 PNG base64"
+              "可选截图函数，用于 capture_page、capture_element 和 compare_screenshot，返回 PNG base64"
             ]
           ]
         }
@@ -167,7 +167,7 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "React Native 截图依赖宿主应用。需要支持 capture_page 时传入返回 PNG base64 的 screenshot 函数。"
+          "text": "React Native 截图依赖宿主应用。需要支持 capture_page、capture_element 和 compare_screenshot 时传入返回 PNG base64 的 screenshot 函数。"
         },
         {
           "type": "code",
@@ -210,7 +210,7 @@ export const generatedDocsByLocale = {
               "screenshot",
               "function",
               "-",
-              "可选截图函数，返回 PNG base64"
+              "可选截图函数，用于 capture_page、capture_element 和 compare_screenshot，返回 PNG base64"
             ]
           ]
         }
@@ -315,7 +315,7 @@ export const generatedDocsByLocale = {
               "screenshot",
               "UiCheckScreenshotProvider",
               "-",
-              "可选截图函数，返回 PNG base64"
+              "可选截图函数，用于 capture_page、capture_element 和 compare_screenshot，返回 PNG base64"
             ]
           ]
         }
@@ -431,7 +431,7 @@ export const generatedDocsByLocale = {
               "screenshot",
               "function",
               "-",
-              "可选截图 provider，返回 PNG base64"
+              "可选截图 provider，用于 capture_page、capture_element 和 compare_screenshot，返回 PNG base64"
             ]
           ]
         }
@@ -541,7 +541,7 @@ export const generatedDocsByLocale = {
               "screenshot",
               "function",
               "-",
-              "可选截图函数，返回 PNG base64"
+              "可选截图函数，用于 capture_page、capture_element 和 compare_screenshot，返回 PNG base64"
             ]
           ]
         }
@@ -784,7 +784,7 @@ export const generatedDocsByLocale = {
               "screenshot",
               "function",
               "-",
-              "Optional screenshot function that returns PNG base64"
+              "Optional screenshot function for capture_page, capture_element, and compare_screenshot, returning PNG base64"
             ]
           ]
         }
@@ -815,7 +815,7 @@ export const generatedDocsByLocale = {
         },
         {
           "type": "paragraph",
-          "text": "React Native screenshots depend on the host app. To support capture_page, pass a screenshot function that returns PNG base64."
+          "text": "React Native screenshots depend on the host app. To support capture_page, capture_element, and compare_screenshot, pass a screenshot function that returns PNG base64."
         },
         {
           "type": "code",
@@ -858,7 +858,7 @@ export const generatedDocsByLocale = {
               "screenshot",
               "function",
               "-",
-              "Optional screenshot function that returns PNG base64"
+              "Optional screenshot function for capture_page, capture_element, and compare_screenshot, returning PNG base64"
             ]
           ]
         }
@@ -963,7 +963,7 @@ export const generatedDocsByLocale = {
               "screenshot",
               "UiCheckScreenshotProvider",
               "-",
-              "Optional screenshot function that returns PNG base64"
+              "Optional screenshot function for capture_page, capture_element, and compare_screenshot, returning PNG base64"
             ]
           ]
         }
@@ -1079,7 +1079,7 @@ export const generatedDocsByLocale = {
               "screenshot",
               "function",
               "-",
-              "Optional screenshot provider that returns PNG base64"
+              "Optional screenshot provider for capture_page, capture_element, and compare_screenshot, returning PNG base64"
             ]
           ]
         }
@@ -1189,7 +1189,7 @@ export const generatedDocsByLocale = {
               "screenshot",
               "function",
               "-",
-              "Optional screenshot function that returns PNG base64"
+              "Optional screenshot function for capture_page, capture_element, and compare_screenshot, returning PNG base64"
             ]
           ]
         }

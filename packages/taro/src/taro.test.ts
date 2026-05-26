@@ -148,4 +148,18 @@ describe('createTaroUiCheckAdapter', () => {
     })
   })
 
+  it('uses the screenshot provider for element captures with search params', async () => {
+    const screenshot = vi.fn(() => ({
+      mimeType: 'image/png',
+      base64: 'dGFyby1lbGVtZW50'
+    }))
+    const adapter = createTaroUiCheckAdapter({ taro: createTaro([]), screenshot })
+
+    await expect(adapter.captureElement({ text: 'Submit order' })).resolves.toMatchObject({
+      mimeType: 'image/png',
+      base64: 'dGFyby1lbGVtZW50'
+    })
+    expect(screenshot).toHaveBeenCalledWith({ text: 'Submit order' })
+  })
+
 })

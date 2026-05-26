@@ -69,4 +69,4 @@ client.close()
 | `socket.clientId` | `String` | - | 可选的稳定客户端 ID |
 | `socket.reconnectMs` | `Long` | `1000` | 断线重连间隔 |
 | `activity` | `Activity` | - | 当前 Activity，用来自动读取根 View 和截图 |
-| `screenshot` | `function` | - | 可选截图 provider，返回 PNG base64 |
+| `screenshot` | `function` | - | 可选截图 provider，用于 `capture_page`、`capture_element` 和 `compare_screenshot`，返回 PNG base64 |

@@ -2,6 +2,10 @@ import { connectUiCheckRuntime, countElementTree, createFilteredElementTree, nor
 import type { UiCheckSocketTransport } from '@uicheck/core/protocol'
 import type { UiCheckClientSnapshot, UiCheckScreenshotResult, UiCheckSocketOptions, UiCheckToolAdapter } from '@uicheck/core'
 
+type ReactNativeUiCheckToolAdapter = UiCheckToolAdapter & {
+  captureElement(params?: Record<string, unknown>): Promise<UiCheckScreenshotResult> | UiCheckScreenshotResult
+}
+
 export interface ReactNativeWebSocketLike {
   readyState?: number
   send(message: string): void
@@ -424,6 +428,10 @@ function captureReactNativePage(options: ReactNativeRuntimeOptions, params: Reco
   throw new Error('capture_page requires a React Native screenshot option')
 }
 
+function captureReactNativeElement(options: ReactNativeRuntimeOptions, params: Record<string, unknown> = {}): UiCheckScreenshotResult | Promise<UiCheckScreenshotResult> {
+  return captureReactNativePage(options, params)
+}
+
 function createReactNativeSocketTransport(SocketCtor: ReactNativeWebSocketConstructor, url: string): UiCheckSocketTransport {
   const socket = new SocketCtor(url)
   const pendingMessages: string[] = []
@@ -498,13 +506,14 @@ function addLifecycleListener(source: { addEventListener?: (event: 'change', lis
   source?.addEventListener?.('change', listener)
 }
 
-export function createReactNativeUiCheckAdapter(reactNative: ReactNativeLike, options: ReactNativeRuntimeOptions = {}): UiCheckToolAdapter {
+export function createReactNativeUiCheckAdapter(reactNative: ReactNativeLike, options: ReactNativeRuntimeOptions = {}): ReactNativeUiCheckToolAdapter {
   return {
     getClientInfo: () => ({
       userAgent: reactNative.Platform?.OS,
       viewport: getViewportInfo(reactNative)
     }),
     capturePage: (params) => captureReactNativePage(options, params),
+    captureElement: (params) => captureReactNativeElement(options, params),
     inspectElements: (params) => inspectReactNativeElements(reactNative, options, params)
   }
 }

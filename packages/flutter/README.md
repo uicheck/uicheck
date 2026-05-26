@@ -58,4 +58,4 @@ uicheckClient.dispose();
 | `socket.url` | `String` | - | `@uicheck/mcp` WebSocket URL |
 | `socket.clientId` | `String` | - | Optional stable client id |
 | `socket.reconnectMs` | `int` | `1000` | Reconnect interval |
-| `screenshot` | `UiCheckScreenshotProvider` | - | Optional screenshot function that returns PNG base64 |
+| `screenshot` | `UiCheckScreenshotProvider` | - | Optional screenshot function for `capture_page`, `capture_element`, and `compare_screenshot`, returning PNG base64 |

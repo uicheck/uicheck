@@ -9,6 +9,26 @@ import 'package:uicheck_flutter/uicheck_flutter.dart';
 import '../../../examples/flutter-demo/lib/main.dart';
 
 void main() {
+  test('captureElement uses the screenshot provider with search params', () async {
+    Map<String, Object?>? receivedParams;
+    final client = UiCheckFlutterClient(
+      options: UiCheckFlutterOptions(
+        screenshot: (params) {
+          receivedParams = params;
+          return const UiCheckScreenshotResult(
+            mimeType: 'image/png',
+            base64: 'Zmx1dHRlci1lbGVtZW50',
+          );
+        },
+      ),
+    );
+
+    final result = await client.captureElement({'text': 'Submit order'});
+
+    expect(result.base64, 'Zmx1dHRlci1lbGVtZW50');
+    expect(receivedParams, {'text': 'Submit order'});
+  });
+
   testWidgets('inspects the real Flutter example demo', (tester) async {
     await loadRobotoFont();
     tester.view.physicalSize = const Size(390, 844);

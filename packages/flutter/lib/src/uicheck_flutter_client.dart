@@ -224,17 +224,22 @@ class UiCheckFlutterClient with WidgetsBindingObserver {
   }
 
   Future<Object?> _callTool(Object? method, Map<String, Object?> params) async {
-    if (method == 'capture_page') return (await _capturePage(params)).toJson();
+    if (method == 'capture_page') return (await capturePage(params)).toJson();
+    if (method == 'capture_element') return (await captureElement(params)).toJson();
     if (method == 'inspect_elements') return inspectElements(params);
     throw StateError('Unknown uicheck method: $method');
   }
 
-  Future<UiCheckScreenshotResult> _capturePage(Map<String, Object?> params) async {
+  Future<UiCheckScreenshotResult> capturePage([Map<String, Object?> params = const {}]) async {
     final screenshot = _options.screenshot;
     if (screenshot == null) {
       throw StateError('capture_page requires a Flutter screenshot option');
     }
     return screenshot(params);
+  }
+
+  Future<UiCheckScreenshotResult> captureElement([Map<String, Object?> params = const {}]) async {
+    return capturePage(params);
   }
 
   Map<String, Object?> inspectElements([Map<String, Object?> params = const {}]) {

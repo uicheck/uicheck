@@ -2,6 +2,10 @@ import { connectUiCheckRuntime, countElementTree, createFilteredElementTree, nor
 import type { UiCheckSocketTransport } from '@uicheck/core/protocol'
 import type { UiCheckClientSnapshot, UiCheckScreenshotResult, UiCheckSocketOptions, UiCheckToolAdapter } from '@uicheck/core'
 
+type TaroUiCheckToolAdapter = UiCheckToolAdapter & {
+  captureElement(params?: Record<string, unknown>): Promise<UiCheckScreenshotResult> | UiCheckScreenshotResult
+}
+
 export interface TaroSocketTask {
   send(options: { data: string }): void
   close(): void
@@ -196,6 +200,14 @@ async function captureTaroPage(
   throw new Error('capture_page requires a Taro screenshot option')
 }
 
+async function captureTaroElement(
+  taro: TaroLike,
+  options: TaroUiCheckOptions,
+  params: Record<string, unknown> = {}
+): Promise<UiCheckScreenshotResult> {
+  return captureTaroPage(taro, options, params)
+}
+
 function createTaroSocketTransport(taro: TaroLike, url: string): UiCheckSocketTransport {
   const pendingMessages: string[] = []
   let socket: TaroSocketTask | undefined
@@ -262,13 +274,14 @@ function resolveTaro(taro?: TaroLike): TaroLike {
   throw new Error('initUiCheck requires a Taro runtime. Pass { taro } when globalThis.Taro is unavailable.')
 }
 
-export function createTaroUiCheckAdapter(options: TaroUiCheckOptions): UiCheckToolAdapter {
+export function createTaroUiCheckAdapter(options: TaroUiCheckOptions): TaroUiCheckToolAdapter {
   const taro = resolveTaro(options.taro)
   return {
     getClientInfo: () => ({
       viewport: getViewportInfo(taro)
     }),
     capturePage: (params) => captureTaroPage(taro, options, params),
+    captureElement: (params) => captureTaroElement(taro, options, params),
     inspectElements: (params) => inspectTaroElements(taro, options, params)
   }
 }

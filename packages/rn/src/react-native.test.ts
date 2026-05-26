@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   createReactNativeUiCheckAdapter,
   initUiCheck,
@@ -178,6 +178,20 @@ describe('createReactNativeUiCheckAdapter', () => {
         }
       ]
     })
+  })
+
+  it('uses the screenshot provider for element captures with search params', async () => {
+    const screenshot = vi.fn(() => ({
+      mimeType: 'image/png',
+      base64: 'cm4tZWxlbWVudA=='
+    }))
+    const adapter = createReactNativeUiCheckAdapter(createReactNative(), { screenshot })
+
+    expect(await Promise.resolve(adapter.captureElement({ testId: 'submit-order' }))).toMatchObject({
+      mimeType: 'image/png',
+      base64: 'cm4tZWxlbWVudA=='
+    })
+    expect(screenshot).toHaveBeenCalledWith({ testId: 'submit-order' })
   })
 })
 

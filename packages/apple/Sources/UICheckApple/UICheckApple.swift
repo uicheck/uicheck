@@ -180,6 +180,10 @@ public final class UiCheckAppleClient: NSObject, URLSessionWebSocketDelegate, @u
     return try await screenshot(params)
   }
 
+  public func captureElement(_ params: [String: Any] = [:]) async throws -> UiCheckAppleScreenshotResult {
+    try await capturePage(params)
+  }
+
   internal func handleRequestForTesting(_ raw: String) async -> String? {
     await handleRequest(raw)
   }
@@ -229,6 +233,8 @@ public final class UiCheckAppleClient: NSObject, URLSessionWebSocketDelegate, @u
       switch method {
       case "capture_page":
         result = try await capturePage(params).jsonValue
+      case "capture_element":
+        result = try await captureElement(params).jsonValue
       case "inspect_elements":
         result = inspectElements(params)
       default:

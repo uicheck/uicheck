@@ -2,7 +2,7 @@ import { createServer } from 'node:net'
 import { Client } from '@modelcontextprotocol/sdk/client'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { UiCheckMcpServer } from '@uicheck/mcp'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   initUiCheck,
   type ReactNativeUiCheckOptions,
@@ -29,6 +29,10 @@ describe('react-native client integration', () => {
     await server.listen()
 
     const React = createReact()
+    const screenshot = vi.fn(() => ({
+      mimeType: 'image/png',
+      base64: 'cm4tcG5n'
+    }))
     initUiCheck({
       ...createReactNative(),
       React,
@@ -36,10 +40,7 @@ describe('react-native client integration', () => {
         url: server.socketUrl,
         clientId: 'rn-real'
       },
-      screenshot: () => ({
-        mimeType: 'image/png',
-        base64: 'cm4tcG5n'
-      })
+      screenshot
     } as ReactNativeUiCheckOptions)
     const element = React.createElement('Pressable', {
       testID: 'submit-button',
@@ -87,6 +88,17 @@ describe('react-native client integration', () => {
       mimeType: 'image/png',
       data: 'cm4tcG5n'
     })
+
+    const capturedElement = await client.callTool({
+      name: 'capture_element',
+      arguments: { clientId: 'rn-real', testId: 'submit-button' }
+    })
+    expect(getToolContent(capturedElement).find((item) => item.type === 'image')).toMatchObject({
+      type: 'image',
+      mimeType: 'image/png',
+      data: 'cm4tcG5n'
+    })
+    expect(screenshot).toHaveBeenLastCalledWith({ testId: 'submit-button' })
   })
 })
 

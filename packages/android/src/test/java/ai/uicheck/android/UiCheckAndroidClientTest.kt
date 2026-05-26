@@ -17,6 +17,24 @@ import org.robolectric.RuntimeEnvironment
 @RunWith(RobolectricTestRunner::class)
 class UiCheckAndroidClientTest {
   @Test
+  fun captureElementUsesScreenshotProviderWithSearchParams() {
+    var receivedParams: Map<String, Any?> = emptyMap()
+    val client = UiCheckAndroidClient(
+      UiCheckAndroidOptions(
+        screenshot = { params ->
+          receivedParams = params
+          UiCheckAndroidScreenshotResult(base64 = "YW5kcm9pZC1lbGVtZW50")
+        }
+      )
+    )
+
+    val result = client.captureElement(mapOf("text" to "Submit order"))
+
+    assertEquals("YW5kcm9pZC1lbGVtZW50", result.base64)
+    assertEquals("Submit order", receivedParams["text"])
+  }
+
+  @Test
   fun inspectElementsRealNativeDemo() {
     val demo = createAndroidDemo()
     val client = UiCheckAndroidClient(

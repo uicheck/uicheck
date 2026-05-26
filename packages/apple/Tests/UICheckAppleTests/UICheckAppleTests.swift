@@ -8,6 +8,24 @@ import AppKit
 
 final class UICheckAppleTests: XCTestCase {
   @MainActor
+  func testCaptureElementUsesScreenshotProviderWithSearchParams() async throws {
+    var receivedParams: [String: Any] = [:]
+    let client = UiCheckAppleClient(
+      options: UiCheckAppleOptions(
+        screenshot: { params in
+          receivedParams = params
+          return UiCheckAppleScreenshotResult(mimeType: "image/png", base64: "YXBwbGUtZWxlbWVudA==")
+        }
+      )
+    )
+
+    let result = try await client.captureElement(["text": "Submit order"])
+
+    XCTAssertEqual(result.base64, "YXBwbGUtZWxlbWVudA==")
+    XCTAssertEqual(receivedParams["text"] as? String, "Submit order")
+  }
+
+  @MainActor
   func testInspectElementsRealNativeDemo() async throws {
     #if canImport(AppKit)
     let demo = createAppleDemo()

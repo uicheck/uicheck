@@ -71,4 +71,4 @@ uicheckClient.dispose();
 | `socket.url` | `String` | - | `@uicheck/mcp` WebSocket 地址 |
 | `socket.clientId` | `String` | - | 可选的稳定客户端 ID |
 | `socket.reconnectMs` | `int` | `1000` | 断线重连间隔 |
-| `screenshot` | `UiCheckScreenshotProvider` | - | 可选截图函数，返回 PNG base64 |
+| `screenshot` | `UiCheckScreenshotProvider` | - | 可选截图函数，用于 `capture_page`、`capture_element` 和 `compare_screenshot`，返回 PNG base64 |

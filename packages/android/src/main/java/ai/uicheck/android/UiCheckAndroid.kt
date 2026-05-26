@@ -165,6 +165,8 @@ class UiCheckAndroidClient(
     return captureAndroidView(root)
   }
 
+  fun captureElement(params: Map<String, Any?> = emptyMap()): UiCheckAndroidScreenshotResult = capturePage(params)
+
   fun handleRequestForTesting(raw: String): String? = handleRequest(raw)
 
   private fun handleRequest(raw: String): String? {
@@ -177,6 +179,7 @@ class UiCheckAndroidClient(
       val params = message.optJSONObject("params")?.toPlainMap() ?: emptyMap()
       val result = when (val method = message.optString("method")) {
         "capture_page" -> capturePage(params).toMap()
+        "capture_element" -> captureElement(params).toMap()
         "inspect_elements" -> inspectElements(params)
         else -> throw UiCheckAndroidException("Unknown uicheck method: $method")
       }
